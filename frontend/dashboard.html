@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Dashboard quản trị cửa hàng thiết bị di động - Tổng quan doanh thu và quản lý đơn hàng">
+    <title>MobiStore Dashboard - Quản Trị Cửa Hàng Di Động</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-mobile-alt"></i></div>
+                <span class="logo-text">MobiStore</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="nav-item active" id="nav-dashboard">
+                    <a href="#"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
+                </li>
+                <li class="nav-item" id="nav-products">
+                    <a href="#"><i class="fas fa-box"></i><span>Sản phẩm</span></a>
+                </li>
+                <li class="nav-item" id="nav-orders">
+                    <a href="#"><i class="fas fa-shopping-cart"></i><span>Đơn hàng</span>
+                        <span class="badge">12</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="nav-customers">
+                    <a href="#"><i class="fas fa-users"></i><span>Khách hàng</span></a>
+                </li>
+                <li class="nav-item" id="nav-analytics">
+                    <a href="#"><i class="fas fa-chart-line"></i><span>Phân tích</span></a>
+                </li>
+                <li class="nav-item" id="nav-inventory">
+                    <a href="#"><i class="fas fa-warehouse"></i><span>Kho hàng</span></a>
+                </li>
+                <li class="nav-item" id="nav-promotions">
+                    <a href="#"><i class="fas fa-tags"></i><span>Khuyến mãi</span></a>
+                </li>
+                <li class="nav-item" id="nav-settings">
+                    <a href="#"><i class="fas fa-cog"></i><span>Cài đặt</span></a>
+                </li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=7c3aed&color=fff&rounded=true&size=40"
+                        alt="Admin Avatar">
+                </div>
+                <div class="user-details">
+                    <span class="user-name">Nguyễn Admin</span>
+                    <span class="user-role">Quản trị viên</span>
+                </div>
+            </div>
+            <button class="logout-btn" id="logoutBtn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Đăng xuất</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <header class="topbar" id="topbar">
+            <div class="topbar-left">
+                <h1 class="page-title">Dashboard</h1>
+                <span class="page-subtitle">Tổng quan hoạt động kinh doanh</span>
+            </div>
+            <div class="topbar-right">
+                <div class="search-box" id="searchBox">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Tìm kiếm..." id="searchInput">
+                </div>
+                <div class="topbar-actions">
+                    <button class="action-btn" id="notificationBtn" aria-label="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-dot"></span>
+                    </button>
+                    <button class="action-btn" id="messageBtn" aria-label="Messages">
+                        <i class="fas fa-envelope"></i>
+                        <span class="notification-dot"></span>
+                    </button>
+                    <div class="date-display" id="dateDisplay">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="currentDate"></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <!-- KPI Cards -->
+            <section class="kpi-section" id="kpiSection">
+                <div class="kpi-card" id="kpiRevenue">
+                    <div class="kpi-icon revenue-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Tổng Doanh Thu</span>
+                        <span class="kpi-value" id="totalRevenue">2.85 tỷ</span>
+                        <div class="kpi-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+12.5%</span>
+                            <span class="kpi-period">so với tháng trước</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="kpi-card" id="kpiOrders">
+                    <div class="kpi-icon orders-icon">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Đơn Hàng</span>
+                        <span class="kpi-value" id="totalOrders">1,284</span>
+                        <div class="kpi-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+8.3%</span>
+                            <span class="kpi-period">so với tháng trước</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="kpi-card" id="kpiCustomers">
+                    <div class="kpi-icon customers-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Khách Hàng Mới</span>
+                        <span class="kpi-value" id="newCustomers">356</span>
+                        <div class="kpi-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+23.1%</span>
+                            <span class="kpi-period">so với tháng trước</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="kpi-card" id="kpiConversion">
+                    <div class="kpi-icon conversion-icon">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Tỷ Lệ Chuyển Đổi</span>
+                        <span class="kpi-value" id="conversionRate">3.2%</span>
+                        <div class="kpi-change negative">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>-1.8%</span>
+                            <span class="kpi-period">so với tháng trước</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts Row -->
+            <section class="charts-section">
+                <div class="chart-card main-chart" id="revenueChartCard">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <h2 class="card-title">Doanh Thu Theo Tháng</h2>
+                            <span class="card-subtitle">Biểu đồ tổng quan doanh thu năm 2026</span>
+                        </div>
+                        <div class="chart-filters" id="chartFilters">
+                            <button class="filter-btn active" data-period="monthly">Tháng</button>
+                            <button class="filter-btn" data-period="weekly">Tuần</button>
+                            <button class="filter-btn" data-period="daily">Ngày</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card side-chart" id="categoryChartCard">
+                    <div class="card-header">
+                        <h2 class="card-title">Doanh Thu Theo Danh Mục</h2>
+                        <span class="card-subtitle">Phân bổ doanh thu sản phẩm</span>
+                    </div>
+                    <div class="chart-container donut-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                    <div class="category-legend" id="categoryLegend"></div>
+                </div>
+            </section>
+
+            <!-- Bottom Row -->
+            <section class="bottom-section">
+                <!-- New Orders Notifications -->
+                <div class="card orders-card" id="newOrdersCard">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <h2 class="card-title">
+                                <i class="fas fa-bell card-title-icon"></i>
+                                Đơn Hàng Mới
+                            </h2>
+                            <span class="card-subtitle">Thông báo đơn hàng gần đây</span>
+                        </div>
+                        <a href="#" class="view-all-link" id="viewAllOrders">Xem tất cả <i
+                                class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="orders-list" id="ordersList">
+                        <!-- Orders will be populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Top Products -->
+                <div class="card top-products-card" id="topProductsCard">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <h2 class="card-title">
+                                <i class="fas fa-fire card-title-icon hot"></i>
+                                Sản Phẩm Bán Chạy
+                            </h2>
+                            <span class="card-subtitle">Top sản phẩm trong tháng</span>
+                        </div>
+                        <a href="#" class="view-all-link" id="viewAllProducts">Xem tất cả <i
+                                class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="products-list" id="productsList">
+                        <!-- Products will be populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card activity-card" id="activityCard">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-clock card-title-icon"></i>
+                            Hoạt Động Gần Đây
+                        </h2>
+                    </div>
+                    <div class="activity-timeline" id="activityTimeline">
+                        <!-- Activities will be populated by JS -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Notification Panel -->
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-panel-header">
+            <h3>Thông Báo</h3>
+            <button class="mark-read-btn" id="markAllRead">Đánh dấu đã đọc</button>
+        </div>
+        <div class="notification-list" id="notificationList">
+            <!-- Notifications populated by JS -->
+        </div>
+    </div>
+    <div class="overlay" id="overlay"></div>
+
+    <script src="dashboard.js"></script>
+</body>
+
+</html>
