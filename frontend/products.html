@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Quản lý sản phẩm thiết bị di động - MobiStore Admin">
+    <title>Quản Lý Sản Phẩm - MobiStore Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="products.css">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-mobile-alt"></i></div>
+                <span class="logo-text">MobiStore</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="nav-item" id="nav-dashboard">
+                    <a href="dashboard.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
+                </li>
+                <li class="nav-item active" id="nav-products">
+                    <a href="products.html"><i class="fas fa-box"></i><span>Sản phẩm</span></a>
+                </li>
+                <li class="nav-item" id="nav-orders">
+                    <a href="#"><i class="fas fa-shopping-cart"></i><span>Đơn hàng</span>
+                        <span class="badge">12</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="nav-customers">
+                    <a href="#"><i class="fas fa-users"></i><span>Khách hàng</span></a>
+                </li>
+                <li class="nav-item" id="nav-analytics">
+                    <a href="#"><i class="fas fa-chart-line"></i><span>Phân tích</span></a>
+                </li>
+                <li class="nav-item" id="nav-inventory">
+                    <a href="#"><i class="fas fa-warehouse"></i><span>Kho hàng</span></a>
+                </li>
+                <li class="nav-item" id="nav-promotions">
+                    <a href="#"><i class="fas fa-tags"></i><span>Khuyến mãi</span></a>
+                </li>
+                <li class="nav-item" id="nav-settings">
+                    <a href="#"><i class="fas fa-cog"></i><span>Cài đặt</span></a>
+                </li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=7c3aed&color=fff&rounded=true&size=40"
+                        alt="Admin Avatar">
+                </div>
+                <div class="user-details">
+                    <span class="user-name">Nguyễn Admin</span>
+                    <span class="user-role">Quản trị viên</span>
+                </div>
+            </div>
+            <button class="logout-btn" id="logoutBtn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Đăng xuất</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <header class="topbar" id="topbar">
+            <div class="topbar-left">
+                <h1 class="page-title">Sản Phẩm</h1>
+                <span class="page-subtitle">Quản lý danh sách sản phẩm thiết bị di động</span>
+            </div>
+            <div class="topbar-right">
+                <div class="search-box" id="searchBox">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Tìm kiếm sản phẩm..." id="searchInput">
+                </div>
+                <div class="topbar-actions">
+                    <button class="action-btn" id="notificationBtn" aria-label="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-dot"></span>
+                    </button>
+                    <div class="date-display" id="dateDisplay">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="currentDate"></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Products Content -->
+        <div class="products-content">
+            <!-- Toolbar -->
+            <div class="products-toolbar" id="productsToolbar">
+                <div class="toolbar-left">
+                    <div class="filter-group">
+                        <label class="filter-label">Danh mục:</label>
+                        <select id="categoryFilter" class="filter-select">
+                            <option value="all">Tất cả</option>
+                            <option value="phone">Điện thoại</option>
+                            <option value="tablet">Máy tính bảng</option>
+                            <option value="laptop">Laptop</option>
+                            <option value="accessory">Phụ kiện</option>
+                            <option value="smartwatch">Smartwatch</option>
+                            <option value="audio">Tai nghe / Loa</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Trạng thái:</label>
+                        <select id="statusFilter" class="filter-select">
+                            <option value="all">Tất cả</option>
+                            <option value="active">Đang bán</option>
+                            <option value="inactive">Ngừng bán</option>
+                            <option value="outofstock">Hết hàng</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Sắp xếp:</label>
+                        <select id="sortFilter" class="filter-select">
+                            <option value="newest">Mới nhất</option>
+                            <option value="price-asc">Giá tăng dần</option>
+                            <option value="price-desc">Giá giảm dần</option>
+                            <option value="name">Tên A-Z</option>
+                            <option value="stock">Tồn kho</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="toolbar-right">
+                    <div class="view-toggle" id="viewToggle">
+                        <button class="view-btn active" data-view="grid" id="gridViewBtn" aria-label="Grid view">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button class="view-btn" data-view="table" id="tableViewBtn" aria-label="Table view">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                    <button class="add-product-btn" id="addProductBtn">
+                        <i class="fas fa-plus"></i>
+                        <span>Thêm Sản Phẩm</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Product Stats -->
+            <div class="product-stats" id="productStats">
+                <div class="stat-chip">
+                    <i class="fas fa-box"></i>
+                    <span>Tổng: <strong id="statTotal">0</strong></span>
+                </div>
+                <div class="stat-chip active">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Đang bán: <strong id="statActive">0</strong></span>
+                </div>
+                <div class="stat-chip warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Hết hàng: <strong id="statOutOfStock">0</strong></span>
+                </div>
+                <div class="stat-chip danger">
+                    <i class="fas fa-ban"></i>
+                    <span>Ngừng bán: <strong id="statInactive">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="products-grid" id="productsGrid">
+                <!-- Products populated by JS -->
+            </div>
+
+            <!-- Products Table (hidden by default) -->
+            <div class="products-table-wrapper hidden" id="productsTable">
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th>Ảnh</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Danh mục</th>
+                            <th>Giá</th>
+                            <th>Tồn kho</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        <!-- Table rows populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state hidden" id="emptyState">
+                <i class="fas fa-box-open"></i>
+                <h3>Không tìm thấy sản phẩm</h3>
+                <p>Thử thay đổi bộ lọc hoặc thêm sản phẩm mới</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add/Edit Product Modal -->
+    <div class="modal-overlay" id="productModal">
+        <div class="modal" id="modalContent">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Thêm Sản Phẩm Mới</span>
+                </h2>
+                <button class="modal-close" id="modalClose" aria-label="Đóng">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="productForm" class="modal-body">
+                <div class="form-grid">
+                    <!-- Image Upload Section -->
+                    <div class="form-section image-section">
+                        <h3 class="section-title">Ảnh Sản Phẩm</h3>
+                        <div class="image-upload-area" id="imageUploadArea">
+                            <div class="image-preview" id="imagePreview">
+                                <img id="previewImg" src="" alt="Preview">
+                                <div class="image-placeholder" id="imagePlaceholder">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span>Kéo thả hoặc nhấn để tải ảnh</span>
+                                    <small>PNG, JPG, WEBP (tối đa 5MB)</small>
+                                </div>
+                            </div>
+                            <input type="file" id="imageInput" accept="image/*" hidden>
+                            <div class="image-actions">
+                                <button type="button" class="img-action-btn upload" id="uploadImgBtn">
+                                    <i class="fas fa-upload"></i> Tải ảnh lên
+                                </button>
+                                <button type="button" class="img-action-btn remove" id="removeImgBtn">
+                                    <i class="fas fa-trash"></i> Xóa ảnh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Info Section -->
+                    <div class="form-section info-section">
+                        <h3 class="section-title">Thông Tin Sản Phẩm</h3>
+
+                        <div class="form-group">
+                            <label for="productName">Tên sản phẩm <span class="required">*</span></label>
+                            <input type="text" id="productName" placeholder="VD: iPhone 16 Pro Max 256GB" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="productCategory">Danh mục <span class="required">*</span></label>
+                                <select id="productCategory" required>
+                                    <option value="">Chọn danh mục</option>
+                                    <option value="phone">Điện thoại</option>
+                                    <option value="tablet">Máy tính bảng</option>
+                                    <option value="laptop">Laptop</option>
+                                    <option value="accessory">Phụ kiện</option>
+                                    <option value="smartwatch">Smartwatch</option>
+                                    <option value="audio">Tai nghe / Loa</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="productBrand">Thương hiệu</label>
+                                <input type="text" id="productBrand" placeholder="VD: Apple, Samsung...">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="productPrice">Giá bán (VNĐ) <span class="required">*</span></label>
+                                <input type="number" id="productPrice" placeholder="0" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="productOriginalPrice">Giá gốc (VNĐ)</label>
+                                <input type="number" id="productOriginalPrice" placeholder="0" min="0">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="productStock">Số lượng tồn <span class="required">*</span></label>
+                                <input type="number" id="productStock" placeholder="0" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="productSKU">Mã SKU</label>
+                                <input type="text" id="productSKU" placeholder="VD: IP16PM-256">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="productStatus">Trạng thái</label>
+                            <select id="productStatus">
+                                <option value="active">Đang bán</option>
+                                <option value="inactive">Ngừng bán</option>
+                                <option value="outofstock">Hết hàng</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="productDescription">Mô tả sản phẩm</label>
+                            <textarea id="productDescription" rows="4"
+                                placeholder="Nhập mô tả chi tiết sản phẩm..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" id="cancelBtn">Hủy bỏ</button>
+                    <button type="submit" class="btn btn-save" id="saveBtn">
+                        <i class="fas fa-save"></i>
+                        <span>Lưu Sản Phẩm</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal modal-sm">
+            <div class="modal-header danger">
+                <h2 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Xác Nhận Xóa</span>
+                </h2>
+                <button class="modal-close" id="deleteModalClose" aria-label="Đóng">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body delete-body">
+                <div class="delete-product-info" id="deleteProductInfo">
+                    <img id="deleteProductImg" src="" alt="">
+                    <div>
+                        <strong id="deleteProductName"></strong>
+                        <span id="deleteProductSKU"></span>
+                    </div>
+                </div>
+                <p class="delete-warning">Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này không thể hoàn tác.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-cancel" id="deleteCancelBtn">Hủy bỏ</button>
+                <button type="button" class="btn btn-danger" id="deleteConfirmBtn">
+                    <i class="fas fa-trash"></i>
+                    <span>Xóa Sản Phẩm</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="products.js"></script>
+</body>
+
+</html>
