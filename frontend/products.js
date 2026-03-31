@@ -9,15 +9,31 @@ let deleteProductId = null;
 let currentView = 'grid';
 let currentImageData = null;
 
-// Category labels
-const CATEGORY_LABELS = {
-    phone: 'Điện thoại',
-    tablet: 'Máy tính bảng',
-    laptop: 'Laptop',
-    accessory: 'Phụ kiện',
-    smartwatch: 'Smartwatch',
-    audio: 'Tai nghe / Loa'
-};
+// Category labels — loaded dynamically from localStorage categories
+function getCategoryLabels() {
+    const stored = localStorage.getItem('mobistore_categories');
+    if (stored) {
+        try {
+            const cats = JSON.parse(stored);
+            const labels = {};
+            cats.forEach(c => {
+                labels[c.slug] = c.name;
+            });
+            return labels;
+        } catch { /* fall through */ }
+    }
+    // Fallback if no categories exist yet
+    return {
+        'dien-thoai': 'Điện thoại',
+        'may-tinh-bang': 'Máy tính bảng',
+        'laptop': 'Laptop',
+        'phu-kien': 'Phụ kiện',
+        'smartwatch': 'Smartwatch',
+        'tai-nghe-loa': 'Tai nghe / Loa'
+    };
+}
+
+let CATEGORY_LABELS = {};
 
 // Status labels
 const STATUS_LABELS = {
@@ -31,12 +47,46 @@ const STATUS_LABELS = {
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
     if (!checkAuth()) return;
+    CATEGORY_LABELS = getCategoryLabels();
     initDateDisplay();
+    populateCategoryDropdowns();
     loadProducts();
     renderProducts();
     updateStats();
     initEventListeners();
 });
+
+// ============================================
+// POPULATE CATEGORY DROPDOWNS FROM STORAGE
+// ============================================
+function populateCategoryDropdowns() {
+    const labels = CATEGORY_LABELS;
+
+    // Populate filter dropdown
+    const filterSelect = document.getElementById('categoryFilter');
+    if (filterSelect) {
+        // Keep "Tất cả" option, remove the rest
+        filterSelect.innerHTML = '<option value="all">Tất cả</option>';
+        Object.entries(labels).forEach(([slug, name]) => {
+            const opt = document.createElement('option');
+            opt.value = slug;
+            opt.textContent = name;
+            filterSelect.appendChild(opt);
+        });
+    }
+
+    // Populate form dropdown
+    const formSelect = document.getElementById('productCategory');
+    if (formSelect) {
+        formSelect.innerHTML = '<option value="">Chọn danh mục</option>';
+        Object.entries(labels).forEach(([slug, name]) => {
+            const opt = document.createElement('option');
+            opt.value = slug;
+            opt.textContent = name;
+            formSelect.appendChild(opt);
+        });
+    }
+}
 
 // ============================================
 // AUTH (shared with dashboard)
