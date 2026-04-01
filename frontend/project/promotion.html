@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khuyến mãi đặc biệt - PhoneStore</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+    <div class="header-container">
+        <div class="logo">
+            <h1>📱 PhoneStore</h1>
+        </div>
+        
+        <div class="search-bar">
+            <input type="text" placeholder="Tìm kiếm sản phẩm..." id="searchInput">
+            <button id="searchBtn"><i class="fas fa-search"></i></button>
+        </div>
+        
+        <div class="nav-menu">
+            <a href="index.html">Trang chủ</a>
+            <a href="products.html">Sản phẩm</a>
+            <a href="promotion.html" class="active">Khuyến mãi</a>
+            <div class="cart-icon">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count">0</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- BANNER KHUYẾN MÃI -->
+<div class="promo-banner">
+    <div class="promo-banner-content">
+        <span class="promo-tag"> FLASH SALE </span>
+        <h1>SIÊU KHUYẾN MÃI</h1>
+        <p>Giảm giá lên đến 50% cho hàng ngàn sản phẩm công nghệ</p>
+        <div class="countdown-timer">
+            <div class="countdown-item">
+                <span id="days">00</span>
+                <span>Ngày</span>
+            </div>
+            <div class="countdown-item">
+                <span id="hours">00</span>
+                <span>Giờ</span>
+            </div>
+            <div class="countdown-item">
+                <span id="minutes">00</span>
+                <span>Phút</span>
+            </div>
+            <div class="countdown-item">
+                <span id="seconds">00</span>
+                <span>Giây</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FLASH SALE SECTION -->
+<div class="flash-sale-section">
+    <div class="section-header">
+        <h2> FLASH SALE </h2>
+        <span class="section-badge">Số lượng có hạn</span>
+    </div>
+    <div id="flash-sale-products" class="product-grid"></div>
+</div>
+
+<!-- KHUYẾN MÃI ĐẶC BIỆT -->
+<div class="promo-cards">
+    <div class="promo-card">
+        <div class="promo-card-icon">
+            <i class="fas fa-gift"></i>
+        </div>
+        <h3>Mua 1 tặng 1</h3>
+        <p>Áp dụng cho tai nghe và phụ kiện</p>
+        <span class="promo-code">CODE: MUA1TANG1</span>
+    </div>
+    <div class="promo-card">
+        <div class="promo-card-icon">
+            <i class="fas fa-truck"></i>
+        </div>
+        <h3>Miễn phí vận chuyển</h3>
+        <p>Đơn hàng từ 5 triệu đồng</p>
+        <span class="promo-code">CODE: FREESHIP</span>
+    </div>
+    <div class="promo-card">
+        <div class="promo-card-icon">
+            <i class="fas fa-percent"></i>
+        </div>
+        <h3>Giảm thêm 10%</h3>
+        <p>Khi thanh toán qua ví điện tử</p>
+        <span class="promo-code">CODE: VNPAY10</span>
+    </div>
+    <div class="promo-card">
+        <div class="promo-card-icon">
+            <i class="fas fa-credit-card"></i>
+        </div>
+        <h3>Trả góp 0%</h3>
+        <p>Áp dụng cho thẻ tín dụng</p>
+        <span class="promo-code">0% LÃI SUẤT</span>
+    </div>
+</div>
+
+<!-- SẢN PHẨM GIẢM GIÁ -->
+<div class="section-header">
+    <h2> SẢN PHẨM GIẢM GIÁ</h2>
+    <a href="products.html" class="view-all">Xem tất cả <i class="fas fa-arrow-right"></i></a>
+</div>
+<div id="sale-products" class="product-grid"></div>
+
+<!-- COMBO TIẾT KIỆM -->
+<div class="combo-section">
+    <div class="section-header">
+        <h2> COMBO TIẾT KIỆM</h2>
+        <span class="section-badge">Giảm đến 30%</span>
+    </div>
+    <div class="combo-grid">
+        <div class="combo-card">
+            <div class="combo-image">
+                <img src="assets/images/combo1.jpg" alt="Combo iPhone" onerror="this.src='https://placehold.co/400x300?text=Combo+iPhone'">
+                <div class="combo-discount">-20%</div>
+            </div>
+            <div class="combo-info">
+                <h3>Combo iPhone 15 Pro Max</h3>
+                <p>iPhone 15 Pro Max + Ốp lưng + Cáp sạc nhanh</p>
+                <div class="combo-price">
+                    <span class="current-price">28.990.000₫</span>
+                    <span class="old-price">36.990.000₫</span>
+                </div>
+                <button class="btn-combo" onclick="addComboToCart(1)">
+                    <i class="fas fa-shopping-cart"></i> Mua combo
+                </button>
+            </div>
+        </div>
+        <div class="combo-card">
+            <div class="combo-image">
+                <img src="assets/images/combo2.jpg" alt="Combo Samsung" onerror="this.src='https://placehold.co/400x300?text=Combo+Samsung'">
+                <div class="combo-discount">-25%</div>
+            </div>
+            <div class="combo-info">
+                <h3>Combo Samsung Galaxy S24 Ultra</h3>
+                <p>S24 Ultra + Galaxy Buds2 Pro + Sạc không dây</p>
+                <div class="combo-price">
+                    <span class="current-price">23.990.000₫</span>
+                    <span class="old-price">31.990.000₫</span>
+                </div>
+                <button class="btn-combo" onclick="addComboToCart(2)">
+                    <i class="fas fa-shopping-cart"></i> Mua combo
+                </button>
+            </div>
+        </div>
+        <div class="combo-card">
+            <div class="combo-image">
+                <img src="assets/images/combo3.jpg" alt="Combo Gaming" onerror="this.src='https://placehold.co/400x300?text=Combo+Gaming'">
+                <div class="combo-discount">-30%</div>
+            </div>
+            <div class="combo-info">
+                <h3>Combo Gaming Pro</h3>
+                <p>ASUS ROG + Tai nghe gaming + Chuột không dây</p>
+                <div class="combo-price">
+                    <span class="current-price">18.990.000₫</span>
+                    <span class="old-price">27.990.000₫</span>
+                </div>
+                <button class="btn-combo" onclick="addComboToCart(3)">
+                    <i class="fas fa-shopping-cart"></i> Mua combo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VOUCHER KHUYẾN MÃI -->
+<div class="voucher-section">
+    <div class="section-header">
+        <h2> VOUCHER HOT</h2>
+        <span class="section-badge">Số lượng có hạn</span>
+    </div>
+    <div class="voucher-grid">
+        <div class="voucher-card">
+            <div class="voucher-left">
+                <span class="voucher-value">50.000₫</span>
+                <span class="voucher-condition">Đơn tối thiểu 500.000₫</span>
+            </div>
+            <div class="voucher-right">
+                <button class="btn-voucher" onclick="copyVoucher('PHONE50')">Copy mã</button>
+                <span class="voucher-code">PHONE50</span>
+            </div>
+        </div>
+        <div class="voucher-card">
+            <div class="voucher-left">
+                <span class="voucher-value">100.000₫</span>
+                <span class="voucher-condition">Đơn tối thiểu 1.000.000₫</span>
+            </div>
+            <div class="voucher-right">
+                <button class="btn-voucher" onclick="copyVoucher('PHONE100')">Copy mã</button>
+                <span class="voucher-code">PHONE100</span>
+            </div>
+        </div>
+        <div class="voucher-card">
+            <div class="voucher-left">
+                <span class="voucher-value">200.000₫</span>
+                <span class="voucher-condition">Đơn tối thiểu 2.000.000₫</span>
+            </div>
+            <div class="voucher-right">
+                <button class="btn-voucher" onclick="copyVoucher('PHONE200')">Copy mã</button>
+                <span class="voucher-code">PHONE200</span>
+            </div>
+        </div>
+        <div class="voucher-card">
+            <div class="voucher-left">
+                <span class="voucher-value">10%</span>
+                <span class="voucher-condition">Giảm tối đa 500.000₫</span>
+            </div>
+            <div class="voucher-right">
+                <button class="btn-voucher" onclick="copyVoucher('SALE10')">Copy mã</button>
+                <span class="voucher-code">SALE10</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+    <div class="footer-container">
+        <div class="footer-section">
+            <h3> PhoneStore</h3>
+            <p>Hệ thống bán lẻ điện thoại chính hãng</p>
+            <p>📍 740 Sư Vạn Hạnh, Quận 10, TP. Hồ Chí Minh</p>
+            <p>📞 1900 1234</p>
+            <p>✉️ support@phonestore.vn</p>
+        </div>
+        
+        <div class="footer-section">
+            <h3>Về chúng tôi</h3>
+            <a href="#">Giới thiệu</a>
+            <a href="#">Tuyển dụng</a>
+            <a href="#">Chính sách bảo mật</a>
+            <a href="#">Điều khoản sử dụng</a>
+        </div>
+        
+        <div class="footer-section">
+            <h3>Hỗ trợ khách hàng</h3>
+            <a href="#">Hướng dẫn mua hàng</a>
+            <a href="#">Phương thức thanh toán</a>
+            <a href="#">Chính sách đổi trả</a>
+            <a href="#">Chính sách bảo hành</a>
+        </div>
+        
+        <div class="footer-section">
+            <h3>Kết nối với chúng tôi</h3>
+            <div class="social-links">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-youtube"></i></a>
+                <a href="#"><i class="fab fa-tiktok"></i></a>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2026 PhoneStore. All rights reserved.</p>
+    </div>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/promotion.js"></script>
+
+</body>
+</html>

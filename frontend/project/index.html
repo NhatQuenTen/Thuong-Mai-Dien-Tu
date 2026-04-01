@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>PhoneStore - Siêu thị điện thoại</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+    <div class="header-container">
+        <div class="logo">
+            <h1>📱 PhoneStore</h1>
+        </div>
+        
+        <div class="search-bar">
+            <input type="text" placeholder="Tìm kiếm sản phẩm..." id="searchInput">
+            <button id="searchBtn"><i class="fas fa-search"></i></button>
+        </div>
+        
+        <div class="nav-menu">
+            <a href="index.html" class="active">Trang chủ</a>
+            <a href="products.html">Sản phẩm</a>
+            <a href="promotion.html">Khuyến mãi</a>
+            <div class="cart-icon">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count">0</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- BANNER SLIDER -->
+<div class="slider">
+    <img src="assets/images/banner.jpg" alt="Banner">
+</div>
+
+<!-- CATEGORY TABS -->
+<div class="category-tabs">
+    <button class="category-btn active" data-category="all">
+        <i class="fas fa-th-large"></i> Tất cả
+    </button>
+    <button class="category-btn" data-category="phone">
+        <i class="fas fa-mobile-alt"></i> Điện thoại
+    </button>
+    <button class="category-btn" data-category="tablet">
+        <i class="fas fa-tablet-alt"></i> Máy tính bảng
+    </button>
+    <button class="category-btn" data-category="laptop">
+        <i class="fas fa-laptop"></i> Laptop
+    </button>
+    <button class="category-btn" data-category="headphone">
+        <i class="fas fa-headphones"></i> Tai nghe
+    </button>
+    <button class="category-btn" data-category="speaker">
+        <i class="fas fa-music"></i> Loa
+    </button>
+    <button class="category-btn" data-category="watch">
+        <i class="fas fa-clock"></i> Smartwatch
+    </button>
+    <button class="category-btn" data-category="accessory">
+        <i class="fas fa-plug"></i> Phụ kiện
+    </button>
+</div>
+
+<!-- SẢN PHẨM MỚI -->
+<div class="section-header">
+    <h2> SẢN PHẨM MỚI</h2>
+    <a href="#" class="view-all">Xem tất cả <i class="fas fa-arrow-right"></i></a>
+</div>
+<div id="new-products" class="product-grid"></div>
+
+<!-- KHUYẾN MÃI ĐẶC BIỆT -->
+<div class="section-header">
+    <h2> KHUYẾN MÃI ĐẶC BIỆT</h2>
+    <a href="#" class="view-all">Xem tất cả <i class="fas fa-arrow-right"></i></a>
+</div>
+<div id="sale-products" class="product-grid"></div>
+
+<!-- TẤT CẢ SẢN PHẨM -->
+<div class="section-header">
+    <h2> TẤT CẢ SẢN PHẨM</h2>
+    <a href="products.html" class="view-all">Xem tất cả <i class="fas fa-arrow-right"></i></a>
+</div>
+<div id="all-products" class="product-grid"></div>
+
+<!-- FOOTER -->
+<footer>
+    <div class="footer-container">
+        <div class="footer-section">
+            <h3>PhoneStore</h3>
+            <p>Hệ thống bán lẻ điện thoại chính hãng</p>
+            <p>📍 740 Sư Vạn Hạnh, Quận 10, TP. Hồ Chí Minh</p>
+            <p>📞 1900 1234</p>
+            <p>✉️ support@phonestore.vn</p>
+        </div>
+        
+        <div class="footer-section">
+            <h3>Về chúng tôi</h3>
+            <a href="#">Giới thiệu</a>
+            <a href="#">Tuyển dụng</a>
+            <a href="#">Chính sách bảo mật</a>
+            <a href="#">Điều khoản sử dụng</a>
+        </div>
+        
+        <div class="footer-section">
+            <h3>Hỗ trợ khách hàng</h3>
+            <a href="#">Hướng dẫn mua hàng</a>
+            <a href="#">Phương thức thanh toán</a>
+            <a href="#">Chính sách đổi trả</a>
+            <a href="#">Chính sách bảo hành</a>
+        </div>
+        
+        <div class="footer-section">
+            <h3>Kết nối với chúng tôi</h3>
+            <div class="social-links">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-youtube"></i></a>
+                <a href="#"><i class="fab fa-tiktok"></i></a>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2026 PhoneStore. All rights reserved.</p>
+    </div>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>
