@@ -124,7 +124,7 @@ function checkout() {
     localStorage.setItem('checkoutOrder', JSON.stringify(orderInfo));
     
     // Chuyển sang trang thanh toán
-    window.location.href = 'checkout.html';
+    window.location.href = 'payment.html';
 }
 
 // Tính tạm tính
