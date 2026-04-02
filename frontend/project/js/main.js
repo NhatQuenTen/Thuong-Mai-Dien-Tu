@@ -54,7 +54,7 @@ function createProductCard(product) {
     }
     
     return `
-        <div class="product-card" data-id="${product.id}">
+        <div class="product-card" data-id="${product.id}" onclick="goToProductDetail(${product.id})" style="cursor: pointer;">
             <div class="product-badge">${badgeHtml}</div>
             <div class="product-image">
                 <img src="${product.image}" alt="${product.name}" 
@@ -68,16 +68,21 @@ function createProductCard(product) {
                     ${product.discount > 0 ? `<span class="old-price">${formatPrice(product.price)}</span>` : ''}
                 </div>
                 <div class="product-actions">
-                    <button class="btn-cart" onclick="addToCart(${product.id})">
+                    <button class="btn-cart" onclick="event.stopPropagation(); addToCart(${product.id})">
                         <i class="fas fa-shopping-cart"></i> Mua ngay
                     </button>
-                    <button class="btn-wishlist" onclick="addToWishlist(${product.id})">
+                    <button class="btn-wishlist" onclick="event.stopPropagation(); addToWishlist(${product.id})">
                         <i class="far fa-heart"></i>
                     </button>
                 </div>
             </div>
         </div>
     `;
+}
+
+// ========== CHUYỂN ĐẾN TRANG CHI TIẾT SẢN PHẨM ==========
+function goToProductDetail(productId) {
+    window.location.href = `detail.html?id=${productId}`;
 }
 
 // ========== CATEGORY FILTERS ==========
