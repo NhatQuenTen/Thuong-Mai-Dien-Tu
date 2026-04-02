@@ -1,11 +1,29 @@
+// ========== KIỂM TRA ĐĂNG NHẬP ==========
+function isLoggedIn() {
+    const currentUser = localStorage.getItem('currentUser');
+    return currentUser !== null;
+}
+
+function getCurrentUser() {
+    return JSON.parse(localStorage.getItem('currentUser'));
+}
+
+function logout() {
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('cart');
+    location.reload();
+}
+
 // ========== LẤY DỮ LIỆU TỪ LOCALSTORAGE ==========
 function getCart() {
-    const cartData = localStorage.getItem('cart');
+    if (!isLoggedIn()) return [];
+    const cartData = localStorage.getItem('cart_' + getCurrentUser().id);
     return cartData ? JSON.parse(cartData) : [];
 }
 
 function saveCart(cart) {
-    localStorage.setItem('cart', JSON.stringify(cart));
+    if (!isLoggedIn()) return;
+    localStorage.setItem('cart_' + getCurrentUser().id, JSON.stringify(cart));
     updateCartCount();
     renderCartPage();
 }
@@ -25,6 +43,11 @@ function formatPrice(price) {
 }
 
 function updateCartCount() {
+    if (!isLoggedIn()) {
+        const cartCountElem = document.getElementById('cartCount');
+        if (cartCountElem) cartCountElem.innerText = '0';
+        return;
+    }
     const cart = getCart();
     const total = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
     const cartCountElem = document.getElementById('cartCount');
@@ -51,44 +74,6 @@ function removeFromCart(productId) {
 
 let discountPercent = 0;
 
-// ========== HIỂN THỊ THÔNG BÁO GIỮA MÀN HÌNH (MODAL) ==========
-function showModal(message, isSuccess = true) {
-    // Xóa modal cũ nếu có
-    const oldModal = document.querySelector('.custom-modal');
-    if (oldModal) oldModal.remove();
-    
-    // Tạo modal mới
-    const modal = document.createElement('div');
-    modal.className = 'custom-modal';
-    modal.innerHTML = `
-        <div class="custom-modal-content ${isSuccess ? 'success' : 'error'}">
-            <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-            <p>${message}</p>
-            <button class="modal-close-btn">Đóng</button>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Hiệu ứng hiện ra
-    setTimeout(() => modal.classList.add('show'), 10);
-    
-    // Đóng modal khi bấm nút
-    modal.querySelector('.modal-close-btn').onclick = () => {
-        modal.classList.remove('show');
-        setTimeout(() => modal.remove(), 300);
-    };
-    
-    // Tự động đóng sau 2.5 giây
-    setTimeout(() => {
-        if (modal.parentNode) {
-            modal.classList.remove('show');
-            setTimeout(() => modal.remove(), 300);
-        }
-    }, 2500);
-}
-
-// ========== ÁP DỤNG MÃ GIẢM GIÁ (CÓ MODAL) ==========
 function applyVoucher() {
     const code = document.getElementById('voucherCode')?.value;
     if (code === 'PHONE10') {
@@ -101,12 +86,11 @@ function applyVoucher() {
         discountPercent = 0;
         showModal('Đã xóa mã giảm giá', true);
     } else {
-        showModal('❌ Mã giảm giá không hợp lệ! Thử với PHONE10 hoặc SALE20', false);
+        showModal('❌ Mã giảm giá không hợp lệ!', false);
     }
     renderCartPage();
 }
 
-// ========== THANH TOÁN - CHUYỂN SANG TRANG CHECKOUT ==========
 function checkout() {
     const cart = getCart();
     if (cart.length === 0) {
@@ -114,20 +98,17 @@ function checkout() {
         return;
     }
     
-    // Lưu thông tin đơn hàng tạm thời để trang checkout lấy
     const orderInfo = {
         items: cart,
         subtotal: calculateSubtotal(),
         discount: discountPercent,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        userId: getCurrentUser().id
     };
     localStorage.setItem('checkoutOrder', JSON.stringify(orderInfo));
-    
-    // Chuyển sang trang thanh toán
-    window.location.href = 'payment.html';
+    window.location.href = 'checkout.html';
 }
 
-// Tính tạm tính
 function calculateSubtotal() {
     const cart = getCart();
     let subtotal = 0;
@@ -140,38 +121,85 @@ function calculateSubtotal() {
     return subtotal;
 }
 
-// ========== RENDER TRANG GIỎ HÀNG ==========
+function showModal(message, isSuccess = true) {
+    const oldModal = document.querySelector('.custom-modal');
+    if (oldModal) oldModal.remove();
+    
+    const modal = document.createElement('div');
+    modal.className = 'custom-modal';
+    modal.innerHTML = `
+        <div class="custom-modal-content ${isSuccess ? 'success' : 'error'}">
+            <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+            <p>${message}</p>
+            <button class="modal-close-btn">Đóng</button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('show'), 10);
+    
+    modal.querySelector('.modal-close-btn').onclick = () => {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 300);
+    };
+    
+    setTimeout(() => {
+        if (modal.parentNode) {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        }
+    }, 2500);
+}
+
 function renderCartPage() {
     const container = document.getElementById('cartContainer');
-    if (!container) {
-        console.error('Không tìm thấy thẻ #cartContainer');
+    if (!container) return;
+
+    // Kiểm tra đăng nhập
+    if (!isLoggedIn()) {
+        container.innerHTML = `
+            <div class="empty-cart">
+                <i class="fas fa-user-lock"></i>
+                <h3>Vui lòng đăng nhập</h3>
+                <p>Bạn cần đăng nhập để xem giỏ hàng</p>
+                <a href="signin.html" class="shop-now-btn">🔐 Đăng nhập ngay</a>
+                <p style="margin-top: 15px;">Chưa có tài khoản? <a href="signup.html" style="color:#b7791f;">Đăng ký</a></p>
+            </div>
+        `;
         return;
     }
 
     const cart = getCart();
+    const currentUser = getCurrentUser();
     
+    // Hiển thị thông tin user
+    const userInfoHtml = `
+        <div style="background: #fff5e6; padding: 15px; border-radius: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <i class="fas fa-user-circle" style="font-size: 24px; color: #b7791f;"></i>
+                <span style="font-weight: 600; margin-left: 10px;">${currentUser.name}</span>
+                <span style="color: #666; margin-left: 10px; font-size: 13px;">${currentUser.email}</span>
+            </div>
+            <button onclick="logout()" style="background: none; border: 1px solid #ff4757; padding: 5px 15px; border-radius: 20px; color: #ff4757; cursor: pointer;">
+                <i class="fas fa-sign-out-alt"></i> Đăng xuất
+            </button>
+        </div>
+    `;
+
     if (cart.length === 0) {
-        container.innerHTML = `
+        container.innerHTML = userInfoHtml + `
             <div class="empty-cart">
                 <i class="fas fa-shopping-cart"></i>
                 <h3>Giỏ hàng trống</h3>
                 <p>Hãy thêm sản phẩm từ trang chủ</p>
-                <a href="index.html" class="shop-now-btn">Mua ngay</a>
+                <a href="index.html" class="shop-now-btn">🛍️ Mua ngay</a>
             </div>
         `;
         return;
     }
 
     let subtotal = 0;
-    let html = `
-        <div class="cart-layout">
-            <div class="cart-items-section">
-                <table class="cart-table">
-                    <thead>
-                        <tr><th>Sản phẩm</th><th>Đơn giá</th><th>Số lượng</th><th>Thành tiền</th><th></th></tr>
-                    </thead>
-                    <tbody>
-    `;
+    let cartItemsHtml = '';
 
     cart.forEach(item => {
         const product = products.find(p => p.id === item.id);
@@ -181,7 +209,7 @@ function renderCartPage() {
         const total = product.price * qty;
         subtotal += total;
 
-        html += `
+        cartItemsHtml += `
             <tr>
                 <td>
                     <div class="cart-product">
@@ -207,7 +235,15 @@ function renderCartPage() {
     const shipping = subtotal > 500000 ? 0 : 30000;
     const finalTotal = subtotal - discount + shipping;
 
-    html += `
+    const html = userInfoHtml + `
+        <div class="cart-layout">
+            <div class="cart-items-section">
+                <table class="cart-table">
+                    <thead>
+                        <tr><th>Sản phẩm</th><th>Đơn giá</th><th>Số lượng</th><th>Thành tiền</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        ${cartItemsHtml}
                     </tbody>
                 </table>
             </div>
@@ -221,7 +257,7 @@ function renderCartPage() {
                     <button onclick="applyVoucher()">Áp dụng</button>
                 </div>
                 <div class="summary-row total"><span>Tổng cộng:</span><span>${formatPrice(finalTotal)}</span></div>
-                <button class="checkout-btn" onclick="checkout()">Thanh toán </button>
+                <button class="checkout-btn" onclick="checkout()">💳 Thanh toán ngay</button>
                 <a href="index.html" class="continue-shopping">← Tiếp tục mua sắm</a>
             </div>
         </div>
