@@ -154,6 +154,14 @@
         <button type="submit" class="btn-auth">Đăng nhập</button>
     </form>
     
+    <!-- Google Sign-In Button -->
+    <div style="display: flex; align-items: center; gap: 15px; margin: 25px 0; opacity: 0.6;">
+        <div style="flex: 1; height: 1px; background: #e9ecef;"></div>
+        <span style="font-size: 13px; color: #999;">HOẶC</span>
+        <div style="flex: 1; height: 1px; background: #e9ecef;"></div>
+    </div>
+    <div id="googleSignInButton"></div>
+    
     <div class="auth-footer">
         <p>Chưa có tài khoản? <a href="signup.html">Đăng ký ngay</a></p>
         <p><a href="#">Quên mật khẩu?</a></p>
@@ -251,6 +259,37 @@
         if (cartCountElem) cartCountElem.innerText = total;
     }
     updateCartCount();
+</script>
+
+<!-- Google Auth Configuration -->
+<script src="js/google-auth-config.js"></script>
+
+<!-- Google Auth Manager -->
+<script src="js/google-auth.js"></script>
+
+<!-- Initialize Google Sign-In Button -->
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Chờ Google Auth khởi tạo
+        const maxWait = 3000; // Chờ tối đa 3 giây
+        const startTime = Date.now();
+        
+        while (!googleAuth || !googleAuth.isInitialized) {
+            if (Date.now() - startTime > maxWait) {
+                console.warn('⚠️ Google Auth initialization timeout');
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // Render nút Google Sign-In
+        if (googleAuth && googleAuth.isInitialized) {
+            googleAuth.renderSignInButton('googleSignInButton', 'signin');
+            console.log('✅ Google Sign-In button rendered');
+        } else {
+            console.error('❌ Google Auth không sẵn sàng. Kiểm tra CLIENT_ID trong google-auth-config.js');
+        }
+    });
 </script>
 </body>
 </html>
