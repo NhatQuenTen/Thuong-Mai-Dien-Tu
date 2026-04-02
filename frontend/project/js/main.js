@@ -1,10 +1,10 @@
 // ========== DOM READY ==========
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ Page loaded, products count:', products?.length);
+    console.log(' Page loaded, products count:', products?.length);
     
     // Kiểm tra xem products có tồn tại không
     if (typeof products === 'undefined') {
-        console.error('❌ Không tìm thấy data.js!');
+        console.error(' Không tìm thấy data.js!');
         return;
     }
     
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function renderProducts(containerId, productList, limit = 8) {
     const container = document.getElementById(containerId);
     if (!container) {
-        console.warn(`⚠️ Không tìm thấy container: ${containerId}`);
+        console.warn(` Không tìm thấy container: ${containerId}`);
         return;
     }
     
@@ -184,4 +184,4 @@ function getProductsByCategory(category) {
     return products.filter(p => p.category === category);
 }
 
-console.log('✅ main.js loaded');
+console.log(' main.js loaded');
