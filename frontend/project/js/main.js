@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update cart count
     updateCartCount();
+
+    // Setup back to top button
+    setupBackToTop(); bb
 });
 
 // ========== RENDER FUNCTION ==========
@@ -100,6 +103,29 @@ function setupCategoryFilters() {
             
             renderProducts('all-products', filtered, 12);
             document.getElementById('all-products').scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+}
+
+// ========== BACK TO TOP BUTTON ==========
+function setupBackToTop() {
+    const backToTopBtn = document.getElementById('backToTop');
+    if (!backToTopBtn) return;
+    
+    // Hiển thị nút khi cuộn xuống 300px
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 300) {
+            backToTopBtn.classList.add('show');
+        } else {
+            backToTopBtn.classList.remove('show');
+        }
+    });
+
+    // Cuộn lên đầu trang khi click
+    backToTopBtn.addEventListener('click', function() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
         });
     });
 }
