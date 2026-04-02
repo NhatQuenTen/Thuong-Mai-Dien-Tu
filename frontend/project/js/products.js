@@ -24,7 +24,31 @@ document.addEventListener('DOMContentLoaded', function() {
     setupSearch();
     setupProductClick();  
     updateCartCount();
+    setupBackToTop();
 });
+
+// ========== BACK TO TOP BUTTON ==========
+function setupBackToTop() {
+    const backToTopBtn = document.getElementById('backToTop');
+    if (!backToTopBtn) return;
+    
+    // Hiển thị nút khi cuộn xuống 300px
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 300) {
+            backToTopBtn.classList.add('show');
+        } else {
+            backToTopBtn.classList.remove('show');
+        }
+    });
+    
+    // Cuộn lên đầu trang khi click
+    backToTopBtn.addEventListener('click', function() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+}
 
 // ========== RENDER PRODUCTS ==========
 function renderProducts() {
