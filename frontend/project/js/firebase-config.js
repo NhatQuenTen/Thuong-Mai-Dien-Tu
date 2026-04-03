@@ -10,3 +10,17 @@ const FIREBASE_CONFIG = {
     appId: "1:790145988623:web:112b090cd32a4c28dd4b7a",
     measurementId: "G-H00T4Z2J73"
 };
+
+// Khởi tạo Firebase App (nếu chưa có)
+if (!firebase.apps.length) {
+    firebase.initializeApp(FIREBASE_CONFIG);
+}
+
+// Export Firebase Auth để sử dụng ở nơi khác (global)
+window.firebaseAuth = firebase.auth();
+window.googleProvider = new firebase.auth.GoogleAuthProvider();
+
+// Cấu hình Google Provider (tùy chọn: thêm scope nếu cần)
+window.googleProvider.setCustomParameters({
+    prompt: 'select_account'
+});

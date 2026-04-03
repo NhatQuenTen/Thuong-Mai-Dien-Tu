@@ -178,10 +178,9 @@
         <span style="font-size: 13px; color: #999;">HOẶC</span>
         <div style="flex: 1; height: 1px; background: #e9ecef;"></div>
     </div>
-    <div id="googleSignUpButton"></div>
     
     <div class="auth-footer">
-        <p>Đã có tài khoản? <a href="signin.html">Đăng nhập ngay</a></p>
+        <p>Đã có tài khoản? <a id="loginLink" href="signin.html?from=signup">Đăng nhập ngay</a></p>
     </div>
 </div>
 
@@ -214,11 +213,20 @@
 </footer>
 
 <script>
-    // Kiểm tra đã đăng nhập chưa
-    if (localStorage.getItem('currentUser')) {
+    // =========================
+    // FIX: KHÔNG redirect ở trang đăng ký
+    // =========================
+    const currentUser = localStorage.getItem('currentUser');
+
+    //  BỎ redirect ở signup
+    // CHỈ redirect nếu đang ở trang đăng nhập (signin)
+    if (currentUser && window.location.pathname.includes('signin.html')) {
         window.location.href = 'index.html';
     }
-    
+
+    // =========================
+    // ĐĂNG KÝ (GIỮ NGUYÊN)
+    // =========================
     document.getElementById('signupForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -342,13 +350,8 @@
             await new Promise(resolve => setTimeout(resolve, 100));
         }
         
-        // Render nút Google Sign-Up
-        if (googleAuth && googleAuth.isInitialized) {
-            googleAuth.renderSignInButton('googleSignUpButton', 'signup');
-            console.log('✅ Google Sign-Up button rendered');
-        } else {
-            console.error('❌ Google Auth không sẵn sàng. Kiểm tra CLIENT_ID trong google-auth-config.js');
-        }
+        // Không tạo nút Google ở trang signup (chỉ dùng nút đăng nhập ở signin)
+        console.log('ℹ️ Không render Google button trên signup.html');
     });
 </script>
 </body>

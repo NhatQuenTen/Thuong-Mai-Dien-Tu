@@ -1,9 +1,10 @@
 /**
- * Google Authentication Module
- * Xử lý đăng nhập và đăng ký sử dụng Google Gmail
- * 
+ * Google Authentication Module với Firebase Auth
+ * Xử lý đăng nhập và đăng ký sử dụng Google Gmail qua Firebase
+ *
  * Dependencies:
- * - google-auth-config.js (phải tải trước)
+ * - firebase-config.js (phải tải trước)
+ * - Firebase SDK (từ CDN hoặc npm)
  */
 
 class GoogleAuthManager {
@@ -13,184 +14,138 @@ class GoogleAuthManager {
     }
 
     /**
-     * Khởi tạo Google Authentication
+     * Khởi tạo Firebase Auth
      * @returns {Promise<void>}
      */
     async initialize() {
         try {
-            // Tải Google Script
-            await loadGoogleScript();
-            
-            // Kiểm tra Client ID có được cấu hình chưa
-            if (!GOOGLE_AUTH_CONFIG.CLIENT_ID || GOOGLE_AUTH_CONFIG.CLIENT_ID === '0') {
-                console.warn('⚠️ Google Client ID chưa được cấu hình. Vui lòng cập nhật google-auth-config.js');
-                return false;
-            }
-
+            // Firebase đã được khởi tạo trong firebase-config.js
             this.isInitialized = true;
-            console.log('✅ Google Authentication khởi tạo thành công');
+            console.log(' Firebase Auth khởi tạo thành công');
+
+            // Lắng nghe trạng thái auth thay đổi
+            window.firebaseAuth.onAuthStateChanged((user) => {
+                if (user) {
+                    this.handleAuthStateChanged(user);
+                } else {
+                    this.currentUser = null;
+                }
+            });
+
             return true;
         } catch (error) {
-            console.error('❌ Lỗi khởi tạo Google Auth:', error);
+            console.error(' Lỗi khởi tạo Firebase Auth:', error);
             return false;
         }
     }
 
     /**
-     * Render Google Sign-In Button
+     * Render Google Sign-In Button (sử dụng Firebase Auth)
      * @param {string} elementId - ID của element chứa nút
-     * @param {string} mode - 'signin' hoặc 'signup'
+     * @param {string} mode - 'signin' hoặc 'signup' (chỉ để hiển thị, Firebase xử lý chung)
      * @returns {void}
      */
     renderSignInButton(elementId, mode = 'signin') {
-        if (!this.isInitialized || !GOOGLE_AUTH_CONFIG.CLIENT_ID || GOOGLE_AUTH_CONFIG.CLIENT_ID === '0') {
-            console.warn('⚠️ Google Auth chưa được khởi tạo hoặc Client ID chưa cấu hình');
+        console.log(' Đang kết nối Google Sign-In handler cho element:', elementId);
+        if (!this.isInitialized) {
+            console.warn(' Firebase Auth chưa được khởi tạo');
             return;
         }
 
-        if (!window.google || !window.google.accounts) {
-            console.error('❌ Google API không sẵn sàng');
+        const button = document.getElementById('googleSignInBtn');
+        if (!button) {
+            console.error(' Nút Google Sign-In với id googleSignInBtn không tồn tại');
             return;
         }
 
-        try {
-            google.accounts.id.initialize({
-                client_id: GOOGLE_AUTH_CONFIG.CLIENT_ID,
-                callback: (response) => this.handleCredentialResponse(response, mode)
-            });
+        button.addEventListener('click', () => this.signInWithGoogle());
+        console.log(' Google Sign-In button đã liên kết sự kiện click');
+    }
 
-            google.accounts.id.renderButton(
-                document.getElementById(elementId),
-                {
-                    theme: 'outline',
-                    size: 'large',
-                    width: '100%',
-                    text: mode === 'signin' ? 'signin_with' : 'signup_with'
-                }
-            );
+    /**
+     * Đăng nhập bằng Google qua Firebase
+     */
+    async signInWithGoogle() {
+        try {
+            const result = await window.firebaseAuth.signInWithPopup(window.googleProvider);
+            const user = result.user;
+            console.log(' Đăng nhập Google thành công:', user);
+
+            // Xử lý user data (lưu vào localStorage và Firebase nếu cần)
+            await this.handleSignIn(user);
         } catch (error) {
-            console.error('❌ Lỗi render Google Button:', error);
+            console.error(' Lỗi đăng nhập Google:', error);
+            this.showError('Lỗi đăng nhập Google. Vui lòng thử lại.');
         }
     }
 
     /**
-     * Xử lý phản hồi từ Google Sign-In
-     * @param {Object} response - JWT Token từ Google
-     * @param {string} mode - 'signin' hoặc 'signup'
+     * Xử lý đăng nhập thành công
+     * @param {Object} user - User từ Firebase Auth
      */
-    async handleCredentialResponse(response, mode = 'signin') {
+    async handleSignIn(user) {
         try {
-            // Giải mã JWT Token
-            const userData = this.parseJwt(response.credential);
-            console.log('👤 Dữ liệu người dùng từ Google:', userData);
-
-            if (mode === 'signin') {
-                await this.handleSignIn(userData);
-            } else if (mode === 'signup') {
-                await this.handleSignUp(userData);
-            }
-        } catch (error) {
-            console.error('❌ Lỗi xử lý phản hồi Google:', error);
-            this.showError('Lỗi xác thực Google. Vui lòng thử lại.');
-        }
-    }
-
-    /**
-     * Xử lý đăng nhập bằng Google
-     * @param {Object} userData - Dữ liệu người dùng từ Google
-     */
-    async handleSignIn(userData) {
-        try {
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-            
-            // Tìm user dựa theo email Google
-            const existingUser = users.find(u => u.email === userData.email);
-
-            if (existingUser) {
-                // Đăng nhập thành công
-                this.setCurrentUser(existingUser);
-                this.showSuccess('✅ Đăng nhập thành công! Đang chuyển hướng...');
-                
-                setTimeout(() => {
-                    const redirect = localStorage.getItem('redirectAfterLogin') || 'index.html';
-                    localStorage.removeItem('redirectAfterLogin');
-                    window.location.href = redirect;
-                }, 1500);
-            } else {
-                // User không tồn tại, yêu cầu đăng ký
-                this.showError('📧 Email này chưa được đăng ký. Vui lòng đăng ký tài khoản mới.');
-                
-                // Lưu dữ liệu tạm thời để chuyển sang trang đăng ký
-                sessionStorage.setItem('googleUserData', JSON.stringify(userData));
-            }
-        } catch (error) {
-            console.error('❌ Lỗi đăng nhập Google:', error);
-            this.showError('Lỗi đăng nhập. Vui lòng thử lại.');
-        }
-    }
-
-    /**
-     * Xử lý đăng ký bằng Google
-     * @param {Object} userData - Dữ liệu người dùng từ Google
-     */
-    async handleSignUp(userData) {
-        try {
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-
-            // Kiểm tra email đã tồn tại chưa
-            if (users.find(u => u.email === userData.email)) {
-                this.showError('📧 Email này đã được đăng ký! Vui lòng đăng nhập hoặc dùng email khác.');
-                return;
-            }
-
-            // Tạo user mới từ dữ liệu Google
-            const newUser = {
-                id: 'user_' + Date.now(),
-                name: userData.name,
-                email: userData.email,
-                phone: '', // Không có phone từ Google
-                password: 'google-auth-' + userData.sub, // ID duy nhất từ Google
-                avatar: userData.picture || '',
-                createdAt: new Date().toISOString(),
+            // Lưu user vào localStorage (giữ nguyên logic cũ)
+            const userData = {
+                id: user.uid,
+                name: user.displayName,
+                email: user.email,
+                phone: user.phoneNumber || '',
+                avatar: user.photoURL || '',
                 authProvider: 'google'
             };
 
-            // Thêm user vào danh sách
-            users.push(newUser);
-            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+            this.currentUser = userData;
 
-            // Đăng nhập tự động
-            this.setCurrentUser(newUser);
-            this.showSuccess('✅ Đăng ký thành công! Đang chuyển hướng...');
+            this.showSuccess(' Đăng nhập thành công! Đang chuyển hướng...');
 
             setTimeout(() => {
-                window.location.href = 'index.html';
+                const redirect = localStorage.getItem('redirectAfterLogin') || 'index.html';
+                localStorage.removeItem('redirectAfterLogin');
+                window.location.href = redirect;
             }, 1500);
         } catch (error) {
-            console.error('❌ Lỗi đăng ký Google:', error);
-            this.showError('Lỗi đăng ký. Vui lòng thử lại.');
+            console.error('❌ Lỗi xử lý user:', error);
+            this.showError('Lỗi lưu dữ liệu. Vui lòng thử lại.');
         }
     }
 
     /**
-     * Lưu user hiện tại vào localStorage
-     * @param {Object} user - Dữ liệu người dùng
+     * Xử lý thay đổi trạng thái auth (từ Firebase)
+     * @param {Object} user - User từ Firebase
      */
-    setCurrentUser(user) {
-        const currentUser = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            phone: user.phone || '',
-            avatar: user.avatar || '',
-            authProvider: user.authProvider || 'local'
-        };
-        
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        this.currentUser = currentUser;
-        
-        // Phát sự kiện user đã đăng nhập
-        window.dispatchEvent(new CustomEvent('userLoggedIn', { detail: currentUser }));
+    handleAuthStateChanged(user) {
+        if (user) {
+            this.currentUser = {
+                id: user.uid,
+                name: user.displayName,
+                email: user.email,
+                phone: user.phoneNumber || '',
+                avatar: user.photoURL || '',
+                authProvider: 'google'
+            };
+            localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+        } else {
+            this.currentUser = null;
+            localStorage.removeItem('currentUser');
+        }
+    }
+
+    /**
+     * Đăng xuất
+     */
+    async logout() {
+        try {
+            await window.firebaseAuth.signOut();
+            localStorage.removeItem('currentUser');
+            sessionStorage.removeItem('googleUserData');
+            this.currentUser = null;
+            window.dispatchEvent(new CustomEvent('userLoggedOut'));
+            console.log('✅ Đã đăng xuất');
+        } catch (error) {
+            console.error('❌ Lỗi đăng xuất:', error);
+        }
     }
 
     /**
@@ -198,99 +153,52 @@ class GoogleAuthManager {
      * @returns {Object|null}
      */
     getCurrentUser() {
-        if (!this.currentUser) {
-            const stored = localStorage.getItem('currentUser');
-            if (stored) {
-                this.currentUser = JSON.parse(stored);
-            }
-        }
-        return this.currentUser;
+        return this.currentUser || JSON.parse(localStorage.getItem('currentUser'));
     }
 
     /**
-     * Đăng xuất
+     * Kiểm tra đã đăng nhập
+     * @returns {boolean}
      */
-    logout() {
-        localStorage.removeItem('currentUser');
-        sessionStorage.removeItem('googleUserData');
-        this.currentUser = null;
-        
-        // Phát sự kiện user đã đăng xuất
-        window.dispatchEvent(new CustomEvent('userLoggedOut'));
-        
-        console.log('✅ Đã đăng xuất');
+    isLoggedIn() {
+        return !!window.firebaseAuth.currentUser || !!this.getCurrentUser();
     }
 
     /**
-     * Giải mã JWT Token từ Google
-     * @param {string} token - JWT Token
-     * @returns {Object} Dữ liệu người dùng
-     */
-    parseJwt(token) {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(
-            atob(base64)
-                .split('')
-                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                .join('')
-        );
-        return JSON.parse(jsonPayload);
-    }
-
-    /**
-     * Hiển thị thông báo lỗi
-     * @param {string} message - Nội dung thông báo
+     * Hiển thị lỗi
+     * @param {string} message
      */
     showError(message) {
         const errorElement = document.getElementById('errorMessage');
         if (errorElement) {
             errorElement.innerHTML = message;
             errorElement.style.display = 'block';
-            
-            const successElement = document.getElementById('successMessage');
-            if (successElement) {
-                successElement.style.display = 'none';
-            }
+            document.getElementById('successMessage').style.display = 'none';
         } else {
             alert(message);
         }
     }
 
     /**
-     * Hiển thị thông báo thành công
-     * @param {string} message - Nội dung thông báo
+     * Hiển thị thành công
+     * @param {string} message
      */
     showSuccess(message) {
         const successElement = document.getElementById('successMessage');
         if (successElement) {
             successElement.innerHTML = message;
             successElement.style.display = 'block';
-            
-            const errorElement = document.getElementById('errorMessage');
-            if (errorElement) {
-                errorElement.style.display = 'none';
-            }
+            document.getElementById('errorMessage').style.display = 'none';
         } else {
             alert(message);
         }
-    }
-
-    /**
-     * Kiểm tra user đã đăng nhập hay chưa
-     * @returns {boolean}
-     */
-    isLoggedIn() {
-        return !!this.getCurrentUser();
     }
 }
 
 // Tạo instance toàn cục
 const googleAuth = new GoogleAuthManager();
 
-/**
- * Khởi tạo Google Auth khi DOM sẵn sàng
- */
+// Khởi tạo khi DOM sẵn sàng
 document.addEventListener('DOMContentLoaded', async () => {
     await googleAuth.initialize();
 });

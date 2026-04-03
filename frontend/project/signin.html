@@ -6,6 +6,13 @@
     <title>Đăng nhập - PhoneStore</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <!-- Firebase Config -->
+    <script src="js/firebase-config.js"></script>
     <style>
         .auth-container {
             max-width: 450px;
@@ -160,8 +167,13 @@
         <span style="font-size: 13px; color: #999;">HOẶC</span>
         <div style="flex: 1; height: 1px; background: #e9ecef;"></div>
     </div>
-    <div id="googleSignInButton"></div>
-    
+    <div id="googleSignInButton">
+        <button id="googleSignInBtn" class="btn-auth" style="background: #4285f4; border-radius: 40px; color: white; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i class="fab fa-google"></i>
+            <span>Đăng nhập bằng Google</span>
+        </button>
+    </div>
+
     <div class="auth-footer">
         <p>Chưa có tài khoản? <a href="signup.html">Đăng ký ngay</a></p>
         <p><a href="#">Quên mật khẩu?</a></p>
@@ -197,8 +209,10 @@
 </footer>
 
 <script>
-    // Kiểm tra đã đăng nhập chưa
-    if (localStorage.getItem('currentUser')) {
+    // Kiểm tra đã đăng nhập chưa, nếu đến từ signup thì vẫn cho vào signin
+    const query = new URLSearchParams(window.location.search);
+    const isFromSignup = query.get('from') === 'signup';
+    if (localStorage.getItem('currentUser') && !isFromSignup) {
         window.location.href = 'index.html';
     }
     
@@ -261,9 +275,6 @@
     updateCartCount();
 </script>
 
-<!-- Google Auth Configuration -->
-<script src="js/google-auth-config.js"></script>
-
 <!-- Google Auth Manager -->
 <script src="js/google-auth.js"></script>
 
@@ -273,21 +284,21 @@
         // Chờ Google Auth khởi tạo
         const maxWait = 3000; // Chờ tối đa 3 giây
         const startTime = Date.now();
-        
+
         while (!googleAuth || !googleAuth.isInitialized) {
             if (Date.now() - startTime > maxWait) {
-                console.warn('⚠️ Google Auth initialization timeout');
+                console.warn(' Google Auth initialization timeout');
                 break;
             }
             await new Promise(resolve => setTimeout(resolve, 100));
         }
-        
+
         // Render nút Google Sign-In
         if (googleAuth && googleAuth.isInitialized) {
             googleAuth.renderSignInButton('googleSignInButton', 'signin');
-            console.log('✅ Google Sign-In button rendered');
+            console.log(' Google Sign-In button rendered');
         } else {
-            console.error('❌ Google Auth không sẵn sàng. Kiểm tra CLIENT_ID trong google-auth-config.js');
+            console.error(' Google Auth không sẵn sàng. Kiểm tra Firebase config.');
         }
     });
 </script>
