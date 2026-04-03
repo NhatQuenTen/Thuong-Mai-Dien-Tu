@@ -89,20 +89,37 @@
         .error-message {
             background: #ffe5e5;
             color: #ff4757;
-            padding: 12px;
+            padding: 12px 40px 12px 12px;
             border-radius: 10px;
             margin-bottom: 20px;
             font-size: 14px;
             display: none;
+            position: relative;
         }
         .success-message {
             background: #e5ffe5;
             color: #28a745;
-            padding: 12px;
+            padding: 12px 40px 12px 12px;
             border-radius: 10px;
             margin-bottom: 20px;
             font-size: 14px;
             display: none;
+            position: relative;
+        }
+        .message-close {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0.7;
+        }
+        .message-close:hover {
+            opacity: 1;
         }
         .password-hint {
             font-size: 12px;
@@ -151,8 +168,8 @@
     
     <form id="signinForm">
         <div class="form-group">
-            <label>📧 Email hoặc Số điện thoại</label>
-            <input type="text" id="username" placeholder="Nhập email hoặc số điện thoại" required>
+            <label>📧 Email</label>
+            <input type="email" id="email" placeholder="Nhập email" required>
         </div>
         <div class="form-group">
             <label>🔒 Mật khẩu</label>
@@ -216,50 +233,79 @@
         window.location.href = 'index.html';
     }
     
-    document.getElementById('signinForm').addEventListener('submit', function(e) {
+    document.getElementById('signinForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        
-        // Lấy danh sách users
-        const users = JSON.parse(localStorage.getItem('users')) || [];
-        
-        // Tìm user
-        const user = users.find(u => 
-            (u.email === username || u.phone === username) && u.password === password
-        );
-        
-        if (user) {
-            // Đăng nhập thành công
-            localStorage.setItem('currentUser', JSON.stringify({
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                phone: user.phone
-            }));
-            
-            document.getElementById('successMessage').style.display = 'block';
-            document.getElementById('successMessage').innerHTML = '✅ Đăng nhập thành công! Đang chuyển hướng...';
-            document.getElementById('errorMessage').style.display = 'none';
-            
-            // Chuyển về trang trước đó hoặc trang chủ
-            setTimeout(() => {
-                const redirect = localStorage.getItem('redirectAfterLogin') || 'index.html';
-                localStorage.removeItem('redirectAfterLogin');
-                window.location.href = redirect;
-            }, 1500);
-        } else {
-            // Đăng nhập thất bại
-            document.getElementById('errorMessage').style.display = 'block';
-            document.getElementById('errorMessage').innerHTML = '❌ Email/SĐT hoặc mật khẩu không đúng!';
-            document.getElementById('successMessage').style.display = 'none';
+        const email = document.getElementById('email')?.value || '';
+        const password = document.getElementById('password')?.value || '';
+
+        if (!email || !password) {
+            showError('Vui lòng nhập đủ email và mật khẩu.');
+            return;
+        }
+
+        try {
+            // Đăng nhập với Firebase Auth
+            await googleAuth.signInWithEmailPassword(email, password);
+        } catch (error) {
+            // Lỗi đã được xử lý trong signInWithEmailPassword
+            console.error('Login failed:', error);
         }
     });
     
+    function showError(message) {
+        const errorDiv = document.getElementById('errorMessage');
+        const successDiv = document.getElementById('successMessage');
+        if (!errorDiv) {
+            console.error('errorMessage element không tìm thấy', message);
+            return;
+        }
+        errorDiv.innerHTML = '❌ ' + message + '<button class="message-close" onclick="this.parentElement.style.display=\'none\'">×</button>';
+        errorDiv.style.display = 'block';
+        if (successDiv) successDiv.style.display = 'none';
+
+        // Tự động cuộn lên chỗ thông báo lỗi
+        setTimeout(() => {
+            errorDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }, 100);
+    }
+    
+    function showSuccess(message) {
+        const successDiv = document.getElementById('successMessage');
+        successDiv.innerHTML = '✅ ' + message + '<button class="message-close" onclick="this.parentElement.style.display=\'none\'">×</button>';
+        successDiv.style.display = 'block';
+        document.getElementById('errorMessage').style.display = 'none';
+
+        // Tự động cuộn lên chỗ thông báo thành công
+        setTimeout(() => {
+            successDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }, 100);
+    }
+    
+    function showSuccess(message) {
+        const successDiv = document.getElementById('successMessage');
+        successDiv.innerHTML = '✅ ' + message;
+        successDiv.style.display = 'block';
+        document.getElementById('errorMessage').style.display = 'none';
+
+        // Tự động cuộn lên chỗ thông báo thành công
+        setTimeout(() => {
+            successDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }, 100);
+    }
+    
     // Tìm kiếm
     document.getElementById('searchBtn')?.addEventListener('click', () => {
-        const keyword = document.getElementById('searchInput').value;
+        const keyword = document.getElementById('searchInput')?.value || '';
         if (keyword) {
             localStorage.setItem('searchKeyword', keyword);
             window.location.href = 'index.html';
@@ -278,28 +324,15 @@
 <!-- Google Auth Manager -->
 <script src="js/google-auth.js"></script>
 
-<!-- Initialize Google Sign-In Button -->
+<!-- Initialize Auth -->
 <script>
     document.addEventListener('DOMContentLoaded', async () => {
-        // Chờ Google Auth khởi tạo
-        const maxWait = 3000; // Chờ tối đa 3 giây
-        const startTime = Date.now();
-
-        while (!googleAuth || !googleAuth.isInitialized) {
-            if (Date.now() - startTime > maxWait) {
-                console.warn(' Google Auth initialization timeout');
-                break;
-            }
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
-
+        // Khởi tạo Google Auth
+        await googleAuth.initialize();
+        
         // Render nút Google Sign-In
-        if (googleAuth && googleAuth.isInitialized) {
-            googleAuth.renderSignInButton('googleSignInButton', 'signin');
-            console.log(' Google Sign-In button rendered');
-        } else {
-            console.error(' Google Auth không sẵn sàng. Kiểm tra Firebase config.');
-        }
+        googleAuth.renderSignInButton('googleSignInButton', 'signin');
+        console.log(' Auth system ready');
     });
 </script>
 </body>

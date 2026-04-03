@@ -75,7 +75,31 @@ class GoogleAuthManager {
             await this.handleSignIn(user);
         } catch (error) {
             console.error(' Lỗi đăng nhập Google:', error);
-            this.showError('Lỗi đăng nhập Google. Vui lòng thử lại.');
+            let errorMessage = 'Đăng nhập Google thất bại. Vui lòng thử lại!';
+            
+            // Xử lý các lỗi Google Auth
+            switch (error.code) {
+                case 'auth/popup-closed-by-user':
+                    errorMessage = 'Bạn đã đóng cửa sổ đăng nhập! Vui lòng thử lại.';
+                    break;
+                case 'auth/popup-blocked':
+                    errorMessage = 'Trình duyệt chặn popup! Vui lòng cho phép popup và thử lại.';
+                    break;
+                case 'auth/cancelled-popup-request':
+                    errorMessage = 'Đã hủy yêu cầu đăng nhập!';
+                    break;
+                case 'auth/account-exists-with-different-credential':
+                    errorMessage = 'Email đã được đăng ký bằng phương thức khác! Vui lòng đăng nhập bằng email/mật khẩu.';
+                    break;
+                default:
+                    if (error.message) {
+                        const vietnameseMessage = this.translateFirebaseMessage(error.message);
+                        errorMessage = vietnameseMessage || 'Đăng nhập Google thất bại! Vui lòng thử lại.';
+                    }
+                    break;
+            }
+            
+            this.showError(errorMessage);
         }
     }
 
@@ -85,20 +109,26 @@ class GoogleAuthManager {
      */
     async handleSignIn(user) {
         try {
-            // Lưu user vào localStorage (giữ nguyên logic cũ)
+            // Xác định provider
+            let authProvider = 'email'; // default
+            if (user.providerData && user.providerData.length > 0) {
+                authProvider = user.providerData[0].providerId === 'google.com' ? 'google' : 'email';
+            }
+
+            // Lưu user vào localStorage
             const userData = {
                 id: user.uid,
-                name: user.displayName,
+                name: user.displayName || user.email.split('@')[0], // fallback for email users
                 email: user.email,
                 phone: user.phoneNumber || '',
                 avatar: user.photoURL || '',
-                authProvider: 'google'
+                authProvider: authProvider
             };
 
             localStorage.setItem('currentUser', JSON.stringify(userData));
             this.currentUser = userData;
 
-            this.showSuccess(' Đăng nhập thành công! Đang chuyển hướng...');
+            this.showSuccess('Đăng nhập thành công! Đang chuyển hướng...');
 
             setTimeout(() => {
                 const redirect = localStorage.getItem('redirectAfterLogin') || 'index.html';
@@ -117,18 +147,180 @@ class GoogleAuthManager {
      */
     handleAuthStateChanged(user) {
         if (user) {
+            // Xác định provider
+            let authProvider = 'email'; // default
+            if (user.providerData && user.providerData.length > 0) {
+                authProvider = user.providerData[0].providerId === 'google.com' ? 'google' : 'email';
+            }
+
             this.currentUser = {
                 id: user.uid,
-                name: user.displayName,
+                name: user.displayName || user.email.split('@')[0], // fallback for email users
                 email: user.email,
                 phone: user.phoneNumber || '',
                 avatar: user.photoURL || '',
-                authProvider: 'google'
+                authProvider: authProvider
             };
             localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
         } else {
             this.currentUser = null;
             localStorage.removeItem('currentUser');
+        }
+    }
+
+    /**
+     * Đăng nhập bằng Email/Password qua Firebase
+     * @param {string} email
+     * @param {string} password
+     */
+    async signInWithEmailPassword(email, password) {
+        try {
+            const userCredential = await window.firebaseAuth.signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            // Xử lý user data
+            await this.handleSignIn(user);
+            
+            return user;
+        } catch (error) {
+            console.error('❌ Lỗi đăng nhập:', error);
+            
+            // Xử lý các lỗi Firebase Auth
+            let errorMessage = 'Đăng nhập thất bại. Vui lòng thử lại!';
+            switch (error.code) {
+                case 'auth/user-not-found':
+                    errorMessage = 'Không tìm thấy tài khoản với email này!';
+                    break;
+                case 'auth/wrong-password':
+                    errorMessage = 'Mật khẩu không đúng! Vui lòng kiểm tra lại.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'Địa chỉ email không hợp lệ!';
+                    break;
+                case 'auth/user-disabled':
+                    errorMessage = 'Tài khoản đã bị khóa! Vui lòng liên hệ hỗ trợ.';
+                    break;
+                case 'auth/too-many-requests':
+                    errorMessage = 'Quá nhiều lần thử đăng nhập! Vui lòng thử lại sau.';
+                    break;
+                case 'auth/network-request-failed':
+                    errorMessage = 'Lỗi kết nối mạng! Vui lòng kiểm tra internet.';
+                    break;
+                case 'auth/invalid-credential':
+                    errorMessage = 'Thông tin đăng nhập không hợp lệ!';
+                    break;
+                case 'auth/account-exists-with-different-credential':
+                    errorMessage = 'Tài khoản đã tồn tại với phương thức đăng nhập khác!';
+                    break;
+                default:
+                    if (error.message) {
+                        // Dịch các thông báo Firebase phổ biến sang tiếng Việt
+                        const vietnameseMessage = this.translateFirebaseMessage(error.message);
+                        errorMessage = vietnameseMessage || 'Đăng nhập thất bại. Vui lòng thử lại!';
+                    }
+                    break;
+            }
+            
+            this.showError(errorMessage);
+            throw error;
+        }
+    }
+
+    /**
+     * Đăng ký bằng Email/Password qua Firebase
+     * @param {string} email
+     * @param {string} password
+     * @param {string} displayName
+     * @param {string} phone
+     */
+    async registerWithEmailPassword(email, password, displayName, phone) {
+        try {
+            // Tạo user với Firebase Auth
+            const userCredential = await window.firebaseAuth.createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+
+            // Cập nhật profile với display name
+            await user.updateProfile({
+                displayName: displayName
+            });
+
+            // Lưu thông tin bổ sung (phone) vào localStorage hoặc Firestore nếu cần
+            const userData = {
+                id: user.uid,
+                name: displayName,
+                email: user.email,
+                phone: phone,
+                authProvider: 'email'
+            };
+
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+            this.currentUser = userData;
+
+            this.showSuccess('Đăng ký thành công! Đang chuyển hướng...');
+
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+
+            return user;
+        } catch (error) {
+            console.error('❌ Lỗi đăng ký:', error);
+            console.log('Error code:', error.code);
+            console.log('Error message:', error.message);
+
+            // Nếu Firebase Auth chưa khởi tạo, trả báo lỗi trực tiếp
+            if (!this.isInitialized) {
+                const status = 'Firebase chưa sẵn sàng. Vui lòng thử lại sau khi load xong.';
+                this.showError(status);
+                throw error;
+            }
+
+            // Xử lý các lỗi Firebase Auth
+            let errorMessage = 'Đăng ký thất bại. Vui lòng thử lại!';
+
+            // Kiểm tra error code trước
+            switch (error.code) {
+                case 'auth/email-already-in-use':
+                case 'auth/email-already-exists':
+                    errorMessage = 'Email này đã được đăng ký rồi! Vui lòng sử dụng email khác hoặc đăng nhập nếu đã có tài khoản.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'Địa chỉ email không hợp lệ! Vui lòng kiểm tra lại định dạng email.';
+                    break;
+                case 'auth/weak-password':
+                    errorMessage = 'Mật khẩu quá yếu! Vui lòng chọn mật khẩu có ít nhất 6 ký tự.';
+                    break;
+                case 'auth/operation-not-allowed':
+                    errorMessage = 'Tính năng đăng ký chưa được bật. Vui lòng liên hệ quản trị viên!';
+                    break;
+                case 'auth/network-request-failed':
+                    errorMessage = 'Lỗi kết nối mạng! Vui lòng kiểm tra internet và thử lại.';
+                    break;
+                case 'auth/too-many-requests':
+                    errorMessage = 'Quá nhiều yêu cầu! Vui lòng chờ một lúc rồi thử lại.';
+                    break;
+                case 'auth/invalid-password':
+                    errorMessage = 'Mật khẩu không hợp lệ!';
+                    break;
+                case 'auth/requires-recent-login':
+                    errorMessage = 'Vui lòng đăng nhập lại để thực hiện thao tác này!';
+                    break;
+                default:
+                    // Luôn thử dịch message ngay cả khi có error code
+                    if (error.message) {
+                        const vietnameseMessage = this.translateFirebaseMessage(error.message);
+                        if (vietnameseMessage && vietnameseMessage !== error.message.replace('Firebase: ', '').split(' (')[0]) {
+                            errorMessage = vietnameseMessage;
+                        } else {
+                            // Nếu không dịch được, tạo thông báo thân thiện
+                            errorMessage = 'Có lỗi xảy ra khi đăng ký. Vui lòng thử lại hoặc liên hệ hỗ trợ.';
+                        }
+                    }
+                    break;
+            }
+
+            this.showError(errorMessage);
+            throw error;
         }
     }
 
@@ -171,9 +363,18 @@ class GoogleAuthManager {
     showError(message) {
         const errorElement = document.getElementById('errorMessage');
         if (errorElement) {
-            errorElement.innerHTML = message;
+            errorElement.innerHTML = '❌ ' + message + '<button class="message-close" onclick="this.parentElement.style.display=\'none\'" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); background: none; border: none; font-size: 18px; cursor: pointer; color: inherit; opacity: 0.7;">×</button>';
             errorElement.style.display = 'block';
-            document.getElementById('successMessage').style.display = 'none';
+            const successElement = document.getElementById('successMessage');
+            if (successElement) successElement.style.display = 'none';
+
+            // Tự động cuộn lên chỗ thông báo lỗi
+            setTimeout(() => {
+                errorElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }, 100);
         } else {
             alert(message);
         }
@@ -186,12 +387,106 @@ class GoogleAuthManager {
     showSuccess(message) {
         const successElement = document.getElementById('successMessage');
         if (successElement) {
-            successElement.innerHTML = message;
+            successElement.innerHTML = '✅ ' + message + '<button class="message-close" onclick="this.parentElement.style.display=\'none\'" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); background: none; border: none; font-size: 18px; cursor: pointer; color: inherit; opacity: 0.7;">×</button>';
             successElement.style.display = 'block';
-            document.getElementById('errorMessage').style.display = 'none';
+            const errorElement = document.getElementById('errorMessage');
+            if (errorElement) errorElement.style.display = 'none';
+
+            // Tự động cuộn lên chỗ thông báo thành công
+            setTimeout(() => {
+                successElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }, 100);
         } else {
             alert(message);
         }
+    }
+
+    /**
+     * Dịch thông báo Firebase sang tiếng Việt
+     * @param {string} message - Thông báo gốc từ Firebase
+     * @returns {string} - Thông báo đã dịch
+     */
+    translateFirebaseMessage(message) {
+        if (!message) return null;
+
+        // Loại bỏ prefix "Firebase: " và phần trong ngoặc đơn
+        const cleanMessage = message.replace('Firebase: ', '').split(' (')[0].trim();
+
+        // Từ điển dịch các thông báo phổ biến (sắp xếp theo độ ưu tiên)
+        const translations = {
+            // Email đã tồn tại - ưu tiên cao nhất
+            'The email address is already in use by another account': 'Email này đã được đăng ký rồi! Vui lòng sử dụng email khác hoặc đăng nhập nếu đã có tài khoản.',
+            'The email address is already in use': 'Email này đã được sử dụng! Vui lòng chọn email khác.',
+            'Email already exists': 'Email đã tồn tại trong hệ thống.',
+
+            // Mật khẩu
+            'Password should be at least 6 characters': 'Mật khẩu phải có ít nhất 6 ký tự.',
+            'The password must be 6 characters long or more': 'Mật khẩu phải có ít nhất 6 ký tự.',
+            'Password should be at least 6 characters long': 'Mật khẩu phải có ít nhất 6 ký tự.',
+            'The password is invalid': 'Mật khẩu không hợp lệ.',
+            'The password is invalid or the user does not have a password': 'Mật khẩu không hợp lệ hoặc tài khoản chưa có mật khẩu.',
+
+            // Email
+            'The email address is badly formatted': 'Địa chỉ email không đúng định dạng.',
+            'The email address is not valid': 'Địa chỉ email không hợp lệ.',
+            'Invalid email address': 'Địa chỉ email không hợp lệ.',
+
+            // Tài khoản
+            'There is no user record corresponding to this identifier': 'Không tìm thấy tài khoản với thông tin này.',
+            'The user account has been disabled by an administrator': 'Tài khoản đã bị vô hiệu hóa bởi quản trị viên.',
+            'User account is disabled': 'Tài khoản đã bị khóa.',
+
+            // Bảo mật
+            'Too many unsuccessful login attempts': 'Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau.',
+            'Access to this account has been temporarily disabled due to many failed login attempts': 'Tài khoản tạm thời bị khóa do quá nhiều lần đăng nhập thất bại.',
+            'Too many requests': 'Quá nhiều yêu cầu. Vui lòng chờ một lúc rồi thử lại.',
+
+            // Mạng
+            'A network error has occurred': 'Đã xảy ra lỗi mạng. Vui lòng kiểm tra kết nối internet.',
+            'Network request failed': 'Yêu cầu mạng thất bại. Vui lòng kiểm tra kết nối internet.',
+            'Network error': 'Lỗi kết nối mạng.',
+
+            // Quyền
+            'This operation is not allowed': 'Thao tác này không được phép.',
+            'Operation not allowed': 'Thao tác không được phép.',
+            'Requires recent login': 'Yêu cầu đăng nhập lại để tiếp tục.',
+
+            // Popup
+            'Popup was closed by the user before completing the sign in': 'Cửa sổ đăng nhập đã bị đóng trước khi hoàn thành.',
+            'The popup has been blocked by the browser': 'Cửa sổ popup bị chặn bởi trình duyệt.',
+            'Sign in with popup is not supported on this platform': 'Đăng nhập bằng popup không được hỗ trợ trên nền tảng này.',
+
+            // Thông tin đăng nhập
+            'Invalid login credentials': 'Thông tin đăng nhập không hợp lệ.',
+            'Login credentials are invalid': 'Thông tin đăng nhập không hợp lệ.',
+            'The user\'s credential is no longer valid': 'Thông tin đăng nhập không còn hợp lệ.',
+            'Invalid credentials': 'Thông tin đăng nhập không hợp lệ.'
+        };
+
+        // Tìm bản dịch chính xác nhất (độ dài chuỗi dài hơn = ưu tiên cao hơn)
+        let bestMatch = null;
+        let bestMatchLength = 0;
+
+        for (const [english, vietnamese] of Object.entries(translations)) {
+            if (cleanMessage.toLowerCase().includes(english.toLowerCase())) {
+                if (english.length > bestMatchLength) {
+                    bestMatch = vietnamese;
+                    bestMatchLength = english.length;
+                }
+            }
+        }
+
+        // Nếu tìm thấy bản dịch, trả về
+        if (bestMatch) {
+            return bestMatch;
+        }
+
+        // Nếu không tìm thấy bản dịch, trả về thông báo gốc đã làm sạch
+        console.warn('Không tìm thấy bản dịch cho:', cleanMessage);
+        return cleanMessage;
     }
 }
 

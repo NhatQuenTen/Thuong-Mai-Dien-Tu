@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="vi">
-    <script type="module" src="js/config.js" defer ></script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Đăng ký - PhoneStore</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <style>
         .auth-container {
             max-width: 450px;
@@ -50,6 +53,19 @@
             border-color: #b7791f;
             box-shadow: 0 0 0 3px rgba(183, 121, 31, 0.1);
         }
+        .form-group.error input {
+            border-color: #e74c3c;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
+        }
+        .form-group.error label {
+            color: #e74c3c;
+        }
+        .field-error-text {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 4px;
+            display: block;
+        }
         .btn-auth {
             width: 100%;
             background: linear-gradient(45deg, #d4a373, #b7791f);
@@ -63,9 +79,28 @@
             transition: all 0.3s;
             margin-top: 10px;
         }
-        .btn-auth:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(183, 121, 31, 0.3);
+        .btn-auth:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-text {
+            font-size: 18px;
+            color: #b7791f;
+            font-weight: 600;
         }
         .auth-footer {
             text-align: center;
@@ -80,20 +115,37 @@
         .error-message {
             background: #ffe5e5;
             color: #ff4757;
-            padding: 12px;
+            padding: 12px 40px 12px 12px;
             border-radius: 10px;
             margin-bottom: 20px;
             font-size: 14px;
             display: none;
+            position: relative;
         }
         .success-message {
             background: #e5ffe5;
             color: #28a745;
-            padding: 12px;
+            padding: 12px 40px 12px 12px;
             border-radius: 10px;
             margin-bottom: 20px;
             font-size: 14px;
             display: none;
+            position: relative;
+        }
+        .message-close {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0.7;
+        }
+        .message-close:hover {
+            opacity: 1;
         }
         .term-checkbox {
             display: flex;
@@ -169,7 +221,7 @@
             <input type="checkbox" id="terms" required>
             <label>Tôi đồng ý với <a href="#">Điều khoản sử dụng</a> và <a href="#">Chính sách bảo mật</a></label>
         </div>
-        <button type="submit" class="btn-auth">Đăng ký ngay</button>
+        <button type="submit" class="btn-auth" id="signupBtn" disabled>Đang tải hệ thống...</button>
     </form>
     
     <!-- Google Sign-Up Button -->
@@ -182,6 +234,11 @@
     <div class="auth-footer">
         <p>Đã có tài khoản? <a id="loginLink" href="signin.html?from=signup">Đăng nhập ngay</a></p>
     </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-text">🔄 Đang khởi tạo hệ thống...</div>
 </div>
 
 <footer>
@@ -224,96 +281,176 @@
         window.location.href = 'index.html';
     }
 
+    // Show loading overlay initially
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) loadingOverlay.style.display = 'flex';
+
     // =========================
-    // ĐĂNG KÝ (GIỮ NGUYÊN)
+    // ĐĂNG KÝ VỚI FIREBASE AUTH
     // =========================
-    document.getElementById('signupForm').addEventListener('submit', function(e) {
+    function clearFieldError(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (!field) return;
+
+        const group = field.closest('.form-group');
+        if (!group) return;
+
+        group.classList.remove('error');
+        const err = group.querySelector('.field-error-text');
+        if (err) err.remove();
+    }
+
+    function setFieldError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        if (!field) return;
+        const group = field.closest('.form-group');
+        if (!group) return;
+        group.classList.add('error');
+
+        let err = group.querySelector('.field-error-text');
+        if (!err) {
+            err = document.createElement('span');
+            err.className = 'field-error-text';
+            group.appendChild(err);
+        }
+        err.textContent = message;
+    }
+
+    function clearAllFieldErrors() {
+        ['fullname', 'email', 'phone', 'password', 'confirmPassword'].forEach(id => clearFieldError(id));
+    }
+
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        
-        const fullname = document.getElementById('fullname').value;
-        const email = document.getElementById('email').value;
-        const phone = document.getElementById('phone').value;
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const terms = document.getElementById('terms').checked;
-        
-        // Validate
+
+        const fullnameInput = document.getElementById('fullname');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const termsInput = document.getElementById('terms');
+
+        if (!fullnameInput || !emailInput || !phoneInput || !passwordInput || !confirmPasswordInput || !termsInput) {
+            showError('Form đăng ký chưa tải đầy đủ. Vui lòng tải lại trang.');
+            return;
+        }
+
+        const fullname = fullnameInput.value.trim();
+        const email = emailInput.value.trim();
+        const phone = phoneInput.value.trim();
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        const terms = termsInput.checked;
+
+        clearAllFieldErrors();
+
+        if (!fullname) {
+            setFieldError('fullname', 'Vui lòng nhập họ tên.');
+            showError('Họ tên không được để trống.');
+            return;
+        }
+
+        const namePattern = /^[a-zA-ZÀ-ỹ\s]+$/;
+        if (!namePattern.test(fullname)) {
+            setFieldError('fullname', 'Họ tên chỉ gồm chữ và khoảng trắng.');
+            showError('Họ tên không hợp lệ.');
+            return;
+        }
+
+        if (!email) {
+            setFieldError('email', 'Vui lòng nhập email.');
+            showError('Email không được để trống.');
+            return;
+        }
+
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(email)) {
+            setFieldError('email', 'Email không đúng định dạng.');
+            showError('Email không hợp lệ.');
+            return;
+        }
+
+        if (!phone) {
+            setFieldError('phone', 'Vui lòng nhập số điện thoại.');
+            showError('Số điện thoại không được để trống.');
+            return;
+        }
+
+        const phonePattern = /^\d{9,12}$/;
+        if (!phonePattern.test(phone)) {
+            setFieldError('phone', 'Số điện thoại phải là 9–12 chữ số.');
+            showError('Số điện thoại không hợp lệ.');
+            return;
+        }
+
         if (password.length < 6) {
-            showError('Mật khẩu phải có ít nhất 6 ký tự!');
+            setFieldError('password', 'Mật khẩu tối thiểu 6 ký tự.');
+            showError('Mật khẩu phải có ít nhất 6 ký tự.');
             return;
         }
-        
+
         if (password !== confirmPassword) {
-            showError('Mật khẩu xác nhận không khớp!');
+            setFieldError('confirmPassword', 'Mật khẩu xác nhận không khớp.');
+            showError('Mật khẩu xác nhận không khớp.');
             return;
         }
-        
+
         if (!terms) {
-            showError('Vui lòng đồng ý với điều khoản sử dụng!');
+            showError('Vui lòng đồng ý điều khoản để tiếp tục.');
             return;
         }
-        
-        // Kiểm tra email đã tồn tại chưa
-        const users = JSON.parse(localStorage.getItem('users')) || [];
-        
-        if (users.find(u => u.email === email)) {
-            showError('Email đã được đăng ký!');
-            return;
+
+        try {
+            await googleAuth.registerWithEmailPassword(email, password, fullname, phone);
+        } catch (error) {
+            console.error('Registration failed:', error);
+            if (error && error.message) {
+                let msg = error.message.replace('Firebase:', '').trim();
+                showError(msg);
+            } else {
+                showError('Đăng ký thất bại. Vui lòng thử lại.');
+            }
         }
-        
-        if (users.find(u => u.phone === phone)) {
-            showError('Số điện thoại đã được đăng ký!');
-            return;
-        }
-        
-        // Tạo user mới
-        const newUser = {
-            id: Date.now(),
-            name: fullname,
-            email: email,
-            phone: phone,
-            password: password,
-            createdAt: new Date().toISOString()
-        };
-        
-        users.push(newUser);
-        localStorage.setItem('users', JSON.stringify(users));
-        
-        // Tự động đăng nhập sau khi đăng ký
-        localStorage.setItem('currentUser', JSON.stringify({
-            id: newUser.id,
-            name: newUser.name,
-            email: newUser.email,
-            phone: newUser.phone
-        }));
-        
-        showSuccess('Đăng ký thành công! Đang chuyển hướng...');
-        
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 1500);
     });
-    
+
     function showError(message) {
         const errorDiv = document.getElementById('errorMessage');
-        errorDiv.innerHTML = '❌ ' + message;
+        const successDiv = document.getElementById('successMessage');
+        if (!errorDiv) {
+            console.error('errorMessage element không tìm thấy', message);
+            return;
+        }
+        errorDiv.innerHTML = '❌ ' + message + '<button class="message-close" onclick="this.parentElement.style.display=\'none\'">×</button>';
         errorDiv.style.display = 'block';
-        document.getElementById('successMessage').style.display = 'none';
+        if (successDiv) successDiv.style.display = 'none';
+
+        // Tự động cuộn lên chỗ thông báo lỗi
         setTimeout(() => {
-            errorDiv.style.display = 'none';
-        }, 3000);
+            errorDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }, 100);
     }
     
     function showSuccess(message) {
         const successDiv = document.getElementById('successMessage');
-        successDiv.innerHTML = '✅ ' + message;
+        successDiv.innerHTML = '✅ ' + message + '<button class="message-close" onclick="this.parentElement.style.display=\'none\'">×</button>';
         successDiv.style.display = 'block';
         document.getElementById('errorMessage').style.display = 'none';
+
+        // Tự động cuộn lên chỗ thông báo thành công
+        setTimeout(() => {
+            successDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }, 100);
     }
     
     // Tìm kiếm
     document.getElementById('searchBtn')?.addEventListener('click', () => {
-        const keyword = document.getElementById('searchInput').value;
+        const keyword = document.getElementById('searchInput')?.value || '';
         if (keyword) {
             localStorage.setItem('searchKeyword', keyword);
             window.location.href = 'index.html';
@@ -332,26 +469,42 @@
 <!-- Google Auth Configuration -->
 <script src="js/google-auth-config.js"></script>
 
+<!-- Firebase Config -->
+<script src="js/firebase-config.js"></script>
+
 <!-- Google Auth Manager -->
 <script src="js/google-auth.js"></script>
 
-<!-- Initialize Google Sign-Up Button -->
+<!-- Initialize Google Auth for Registration -->
 <script>
     document.addEventListener('DOMContentLoaded', async () => {
-        // Chờ Google Auth khởi tạo
-        const maxWait = 3000; // Chờ tối đa 3 giây
-        const startTime = Date.now();
-        
-        while (!googleAuth || !googleAuth.isInitialized) {
-            if (Date.now() - startTime > maxWait) {
-                console.warn('⚠️ Google Auth initialization timeout');
-                break;
+        try {
+            // Khởi tạo Google Auth
+            await googleAuth.initialize();
+
+            // Hide loading overlay and enable form
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const signupBtn = document.getElementById('signupBtn');
+
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
+            if (signupBtn) {
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Đăng ký ngay';
             }
-            await new Promise(resolve => setTimeout(resolve, 100));
+
+            console.log('ℹ️ Firebase Auth ready for email/password registration');
+        } catch (error) {
+            console.error('❌ Failed to initialize auth:', error);
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const signupBtn = document.getElementById('signupBtn');
+
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
+            if (signupBtn) {
+                signupBtn.disabled = true;
+                signupBtn.textContent = 'Lỗi hệ thống - Tải lại trang';
+            }
+            showError('Không thể kết nối Firebase. Vui lòng tải lại trang.');
         }
-        
-        // Không tạo nút Google ở trang signup (chỉ dùng nút đăng nhập ở signin)
-        console.log('ℹ️ Không render Google button trên signup.html');
     });
 </script>
 </body>
