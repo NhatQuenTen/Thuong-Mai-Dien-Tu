@@ -17,7 +17,7 @@
     <style>
         .auth-container {
             max-width: 450px;
-            margin: 60px auto;
+            margin: 10px auto;
             background: white;
             border-radius: 24px;
             padding: 40px;
@@ -150,10 +150,7 @@
             <a href="index.html">Trang chủ</a>
             <a href="products.html">Sản phẩm</a>
             <a href="promotion.html">Khuyến mãi</a>
-            <div class="cart-icon" onclick="location.href='cart.html'">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="cart-count" id="cartCount">0</span>
-            </div>
+            
         </div>
     </div>
 </header>
@@ -161,7 +158,6 @@
 <div class="auth-container">
     <div class="auth-header">
         <h2>Đăng nhập</h2>
-        <p>Chào mừng bạn quay trở lại!</p>
     </div>
     
     <div id="errorMessage" class="error-message"></div>
@@ -171,8 +167,6 @@
         <div class="form-group">
             <label>Email hoặc Số điện thoại</label>
             <input type="text" id="username" placeholder="Nhập email hoặc số điện thoại" required>
-            <label>Email</label>
-            <input type="email" id="email" placeholder="Nhập email" required>
         </div>
         <div class="form-group">
             <label>Mật khẩu</label>

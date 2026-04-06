@@ -8,15 +8,13 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/sign.css">
 
-=======
-
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <style>
         .auth-container {
             max-width: 450px;
-            margin: 60px auto;
+            margin: 10px auto;
             background: white;
             border-radius: 24px;
             padding: 40px;
@@ -182,10 +180,6 @@
             <a href="index.html">Trang chủ</a>
             <a href="products.html">Sản phẩm</a>
             <a href="promotion.html">Khuyến mãi</a>
-            <div class="cart-icon" onclick="location.href='cart.html'">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="cart-count" id="cartCount">0</span>
-            </div>
         </div>
     </div>
 </header>
@@ -210,20 +204,15 @@
         </div>
         <div class="form-group">
             <label>Số điện thoại</label>
-            <input type="tel" id="phone" placeholder="0901234567" required>
+            <input type="tel" id="phone"  required>
         </div>
         <div class="form-group">
             <label>Mật khẩu</label>
-            <input type="password" id="password" placeholder="Ít nhất 6 ký tự" required>
+            <input type="password" id="password" required>
         </div>
         <div class="form-group">
             <label>Xác nhận mật khẩu</label>
             <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu" required>
-        </div>
-        <button type="submit" class="btn-auth">Đăng ký ngay</button>
-        <div class="term-checkbox">
-            <input type="checkbox" id="terms" required>
-            <label>Tôi đồng ý với <a href="#">Điều khoản sử dụng</a> và <a href="#">Chính sách bảo mật</a></label>
         </div>
         <button type="submit" class="btn-auth" id="signupBtn" disabled>Đang tải hệ thống...</button>
     </form>
