@@ -1214,6 +1214,7 @@ footer {
 
 .brand-icon {
     width: 100px;
+    height : 70px;
     background: #f8f9fa;
     display: flex;
     align-items: center;
