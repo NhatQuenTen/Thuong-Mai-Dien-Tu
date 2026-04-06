@@ -1,0 +1,821 @@
+/* =============================================
+   MOBISTORE – ORDERS PAGE  |  orders.js
+   Features: CRUD, filter, sort, pagination,
+             bulk actions, CSV export, detail view
+   ============================================= */
+
+'use strict';
+
+// ─────────────────────────────────────────────
+//  SAMPLE DATA
+// ─────────────────────────────────────────────
+const SAMPLE_ORDERS = [
+    {
+        id: 'DH-001', customer: 'Nguyễn Văn An', phone: '0901234567',
+        email: 'an.nguyen@email.com', address: '123 Lê Lợi, Q.1, TP.HCM',
+        items: [{ name: 'iPhone 16 Pro Max', qty: 1, price: 34990000 }, { name: 'Ốp lưng Apple', qty: 2, price: 590000 }],
+        discount: 500000, shipping: 0,
+        payment: 'Chuyển khoản', status: 'Hoàn thành', date: '2026-03-15', note: 'Giao giờ hành chính'
+    },
+    {
+        id: 'DH-002', customer: 'Trần Thị Bình', phone: '0912345678',
+        email: 'binh.tran@email.com', address: '456 Nguyễn Huệ, Q.1, TP.HCM',
+        items: [{ name: 'Samsung Galaxy S25 Ultra', qty: 1, price: 31990000 }],
+        discount: 0, shipping: 30000,
+        payment: 'Thẻ tín dụng', status: 'Đang giao', date: '2026-03-28', note: ''
+    },
+    {
+        id: 'DH-003', customer: 'Lê Minh Cường', phone: '0923456789',
+        email: 'cuong.le@email.com', address: '789 CMT8, Q.3, TP.HCM',
+        items: [{ name: 'AirPods Pro 2', qty: 1, price: 7490000 }, { name: 'Cáp sạc MagSafe', qty: 1, price: 990000 }],
+        discount: 200000, shipping: 30000,
+        payment: 'Ví điện tử', status: 'Chờ xác nhận', date: '2026-04-01', note: 'Khách yêu cầu đóng gói kỹ'
+    },
+    {
+        id: 'DH-004', customer: 'Phạm Thu Dung', phone: '0934567890',
+        email: 'dung.pham@email.com', address: '321 Điện Biên Phủ, Q.Bình Thạnh, TP.HCM',
+        items: [{ name: 'iPad Air M2', qty: 1, price: 18990000 }, { name: 'Apple Pencil 2', qty: 1, price: 3990000 }],
+        discount: 1000000, shipping: 0,
+        payment: 'Tiền mặt', status: 'Đang xử lý', date: '2026-04-02', note: ''
+    },
+    {
+        id: 'DH-005', customer: 'Hoàng Văn Em', phone: '0945678901',
+        email: 'em.hoang@email.com', address: '654 Võ Thị Sáu, Q.3, TP.HCM',
+        items: [{ name: 'MacBook Pro M4', qty: 1, price: 52990000 }],
+        discount: 2000000, shipping: 0,
+        payment: 'Chuyển khoản', status: 'Hoàn thành', date: '2026-03-10', note: 'Khách VIP'
+    },
+    {
+        id: 'DH-006', customer: 'Vũ Thị Phương', phone: '0956789012',
+        email: 'phuong.vu@email.com', address: '987 Lạc Long Quân, Q.11, TP.HCM',
+        items: [{ name: 'Apple Watch Ultra 2', qty: 1, price: 23990000 }],
+        discount: 500000, shipping: 30000,
+        payment: 'Ví điện tử', status: 'Chờ xác nhận', date: '2026-04-03', note: ''
+    },
+    {
+        id: 'DH-007', customer: 'Đỗ Quang Hải', phone: '0967890123',
+        email: 'hai.do@email.com', address: '147 Trần Hưng Đạo, Q.5, TP.HCM',
+        items: [{ name: 'Samsung Galaxy Tab S9', qty: 2, price: 19990000 }],
+        discount: 0, shipping: 50000,
+        payment: 'Tiền mặt', status: 'Đã hủy', date: '2026-03-22', note: 'Khách hủy do đổi ý'
+    },
+    {
+        id: 'DH-008', customer: 'Bùi Thị Lan', phone: '0978901234',
+        email: 'lan.bui@email.com', address: '258 Nguyễn Trãi, Q.5, TP.HCM',
+        items: [{ name: 'iPhone 15', qty: 1, price: 22990000 }, { name: 'Sạc nhanh 30W', qty: 1, price: 790000 }],
+        discount: 300000, shipping: 0,
+        payment: 'Thẻ tín dụng', status: 'Đang giao', date: '2026-04-01', note: ''
+    },
+    {
+        id: 'DH-009', customer: 'Ngô Thanh Minh', phone: '0989012345',
+        email: 'minh.ngo@email.com', address: '369 Phan Xích Long, Q. Phú Nhuận, TP.HCM',
+        items: [{ name: 'Google Pixel 9 Pro', qty: 1, price: 26990000 }],
+        discount: 0, shipping: 30000,
+        payment: 'Chuyển khoản', status: 'Đang xử lý', date: '2026-04-03', note: ''
+    },
+    {
+        id: 'DH-010', customer: 'Lý Thị Nga', phone: '0990123456',
+        email: 'nga.ly@email.com', address: '741 Hoàng Văn Thụ, Q. Tân Bình, TP.HCM',
+        items: [{ name: 'Sony WH-1000XM5', qty: 1, price: 8990000 }],
+        discount: 500000, shipping: 30000,
+        payment: 'Ví điện tử', status: 'Hoàn thành', date: '2026-03-18', note: ''
+    },
+    {
+        id: 'DH-011', customer: 'Trịnh Văn Phú', phone: '0901357924',
+        email: 'phu.trinh@email.com', address: '852 Cộng Hòa, Q. Tân Bình, TP.HCM',
+        items: [{ name: 'OPPO Find X8 Pro', qty: 1, price: 29990000 }],
+        discount: 1000000, shipping: 0,
+        payment: 'Thẻ tín dụng', status: 'Chờ xác nhận', date: '2026-04-04', note: 'Giao buổi tối'
+    },
+    {
+        id: 'DH-012', customer: 'Đinh Thị Quỳnh', phone: '0912468013',
+        email: 'quynh.dinh@email.com', address: '963 Tô Hiến Thành, Q.10, TP.HCM',
+        items: [{ name: 'Xiaomi 14 Ultra', qty: 1, price: 24990000 }, { name: 'Mi Band 9', qty: 1, price: 1290000 }],
+        discount: 0, shipping: 30000,
+        payment: 'Tiền mặt', status: 'Đang xử lý', date: '2026-04-04', note: ''
+    },
+];
+
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+let orders = JSON.parse(localStorage.getItem('ms_orders') || 'null') || SAMPLE_ORDERS.map(o => ({ ...o }));
+let filtered = [...orders];
+let currentPage = 1;
+const PAGE_SIZE = 8;
+let sortCol = 'date';
+let sortDir = 'desc';
+let selectedIds = new Set();
+let deleteTarget = null;   // id or array
+let isEditMode = false;
+let viewDetailId = null;
+
+// product catalog for autocomplete
+const PRODUCTS = [
+    { name: 'iPhone 16 Pro Max 256GB', price: 34990000 },
+    { name: 'iPhone 16 Pro 128GB', price: 29990000 },
+    { name: 'iPhone 15 128GB', price: 22990000 },
+    { name: 'Samsung Galaxy S25 Ultra', price: 31990000 },
+    { name: 'Samsung Galaxy S25+', price: 24990000 },
+    { name: 'Samsung Galaxy Tab S9 Ultra', price: 19990000 },
+    { name: 'iPad Air M2 64GB', price: 18990000 },
+    { name: 'iPad Pro M4 11-inch', price: 28990000 },
+    { name: 'MacBook Pro M4 14-inch', price: 52990000 },
+    { name: 'MacBook Air M3 13-inch', price: 32990000 },
+    { name: 'Apple Watch Ultra 2', price: 23990000 },
+    { name: 'Apple Watch Series 10', price: 12990000 },
+    { name: 'AirPods Pro 2', price: 7490000 },
+    { name: 'AirPods 4', price: 3990000 },
+    { name: 'Apple Pencil 2', price: 3990000 },
+    { name: 'Sony WH-1000XM5', price: 8990000 },
+    { name: 'OPPO Find X8 Pro', price: 29990000 },
+    { name: 'Xiaomi 14 Ultra', price: 24990000 },
+    { name: 'Google Pixel 9 Pro', price: 26990000 },
+    { name: 'Mi Band 9', price: 1290000 },
+    { name: 'Sạc nhanh 67W', price: 690000 },
+    { name: 'Sạc nhanh 30W', price: 790000 },
+    { name: 'Cáp sạc MagSafe', price: 990000 },
+    { name: 'Ốp lưng Apple silicone', price: 590000 },
+];
+
+// ─────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt = n => new Intl.NumberFormat('vi-VN').format(n) + ' ₫';
+const fmtShort = n => {
+    if (n >= 1e9) return (n / 1e9).toFixed(2).replace(/\.?0+$/, '') + ' tỷ';
+    if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.?0+$/, '') + ' tr';
+    return new Intl.NumberFormat('vi-VN').format(n);
+};
+
+function genId() {
+    const nums = orders.map(o => parseInt(o.id.replace('DH-', '')) || 0);
+    const next = (Math.max(0, ...nums) + 1).toString().padStart(3, '0');
+    return 'DH-' + next;
+}
+
+function calcTotal(items, discount, shipping) {
+    const sub = items.reduce((s, i) => s + (parseFloat(i.price) || 0) * (parseInt(i.qty) || 1), 0);
+    return Math.max(0, sub - (parseFloat(discount) || 0) + (parseFloat(shipping) || 0));
+}
+
+function calcSub(items) {
+    return items.reduce((s, i) => s + (parseFloat(i.price) || 0) * (parseInt(i.qty) || 1), 0);
+}
+
+function parsePrice(str) {
+    return parseFloat(str.toString().replace(/[^0-9.]/g, '')) || 0;
+}
+
+function saveToStorage() {
+    localStorage.setItem('ms_orders', JSON.stringify(orders));
+}
+
+function statusClass(s) {
+    const map = {
+        'Chờ xác nhận': 's-pending',
+        'Đang xử lý': 's-processing',
+        'Đang giao': 's-shipping',
+        'Hoàn thành': 's-done',
+        'Đã hủy': 's-cancelled',
+    };
+    return map[s] || 's-pending';
+}
+
+function paymentClass(p) {
+    const map = {
+        'Tiền mặt': 'pay-cash',
+        'Chuyển khoản': 'pay-transfer',
+        'Thẻ tín dụng': 'pay-card',
+        'Ví điện tử': 'pay-ewallet',
+    };
+    return map[p] || 'pay-cash';
+}
+
+function paymentIcon(p) {
+    const map = {
+        'Tiền mặt': 'fa-money-bill-wave',
+        'Chuyển khoản': 'fa-university',
+        'Thẻ tín dụng': 'fa-credit-card',
+        'Ví điện tử': 'fa-wallet',
+    };
+    return map[p] || 'fa-money-bill-wave';
+}
+
+function fmtDate(d) {
+    if (!d) return '—';
+    const [y, m, day] = d.split('-');
+    return `${day}/${m}/${y}`;
+}
+
+// ─────────────────────────────────────────────
+//  TOAST
+// ─────────────────────────────────────────────
+function toast(msg, type = 'success') {
+    const icons = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle', warning: 'fa-exclamation-circle' };
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<i class="fas ${icons[type]} toast-icon"></i><span>${msg}</span>`;
+    $('toastContainer').appendChild(el);
+    setTimeout(() => {
+        el.classList.add('hide');
+        setTimeout(() => el.remove(), 350);
+    }, 3000);
+}
+
+// ─────────────────────────────────────────────
+//  DATE
+// ─────────────────────────────────────────────
+function initDate() {
+    const d = new Date();
+    const opts = { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' };
+    $('currentDate').textContent = d.toLocaleDateString('vi-VN', opts);
+}
+
+// ─────────────────────────────────────────────
+//  SIDEBAR TOGGLE
+// ─────────────────────────────────────────────
+$('sidebarToggle').addEventListener('click', () => {
+    $('sidebar').classList.toggle('collapsed');
+    $('mainContent').classList.toggle('expanded');
+});
+
+// ─────────────────────────────────────────────
+//  FILTER & SORT
+// ─────────────────────────────────────────────
+function applyFilter() {
+    const q = $('searchInput').value.trim().toLowerCase();
+    const status = $('filterStatus').value;
+    const pay = $('filterPayment').value;
+    const from = $('filterDateFrom').value;
+    const to = $('filterDateTo').value;
+
+    filtered = orders.filter(o => {
+        const matchQ = !q || o.id.toLowerCase().includes(q)
+            || o.customer.toLowerCase().includes(q)
+            || o.phone.includes(q)
+            || o.items.some(i => i.name.toLowerCase().includes(q));
+        const matchS = !status || o.status === status;
+        const matchP = !pay || o.payment === pay;
+        const matchF = !from || o.date >= from;
+        const matchT = !to || o.date <= to;
+        return matchQ && matchS && matchP && matchF && matchT;
+    });
+
+    // sort
+    filtered.sort((a, b) => {
+        let va, vb;
+        if (sortCol === 'id') { va = a.id; vb = b.id; }
+        else if (sortCol === 'total') {
+            va = calcTotal(a.items, a.discount, a.shipping);
+            vb = calcTotal(b.items, b.discount, b.shipping);
+        }
+        else if (sortCol === 'status') { va = a.status; vb = b.status; }
+        else if (sortCol === 'date') { va = a.date; vb = b.date; }
+        else { va = a[sortCol]; vb = b[sortCol]; }
+        if (va < vb) return sortDir === 'asc' ? -1 : 1;
+        if (va > vb) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    currentPage = 1;
+    selectedIds.clear();
+    renderAll();
+}
+
+// sort click
+document.querySelectorAll('.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        else { sortCol = col; sortDir = 'asc'; }
+        document.querySelectorAll('.sortable').forEach(t => t.classList.remove('asc', 'desc'));
+        th.classList.add(sortDir);
+        applyFilter();
+    });
+});
+
+$('searchInput').addEventListener('input', applyFilter);
+$('filterStatus').addEventListener('change', applyFilter);
+$('filterPayment').addEventListener('change', applyFilter);
+$('filterDateFrom').addEventListener('change', applyFilter);
+$('filterDateTo').addEventListener('change', applyFilter);
+$('btnReset').addEventListener('click', () => {
+    $('searchInput').value = '';
+    $('filterStatus').value = '';
+    $('filterPayment').value = '';
+    $('filterDateFrom').value = '';
+    $('filterDateTo').value = '';
+    applyFilter();
+});
+
+// stat cards filter
+document.querySelectorAll('.stat-card').forEach(card => {
+    card.addEventListener('click', () => {
+        document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        $('filterStatus').value = card.dataset.filter;
+        applyFilter();
+    });
+});
+
+// ─────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────
+function renderAll() {
+    renderKPI();
+    renderTable();
+    renderPagination();
+    renderBulkBar();
+}
+
+function renderKPI() {
+    const count = s => orders.filter(o => o.status === s).length;
+    $('kpiAll').textContent = orders.length;
+    $('kpiPending').textContent = count('Chờ xác nhận');
+    $('kpiProcessing').textContent = count('Đang xử lý');
+    $('kpiShipping').textContent = count('Đang giao');
+    $('kpiDone').textContent = count('Hoàn thành');
+    $('kpiCancelled').textContent = count('Đã hủy');
+    $('pendingBadge').textContent = count('Chờ xác nhận');
+}
+
+function renderTable() {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const page = filtered.slice(start, start + PAGE_SIZE);
+    const tbody = $('ordersTableBody');
+    const empty = $('emptyState');
+
+    if (page.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.add('show');
+        return;
+    }
+    empty.classList.remove('show');
+
+    tbody.innerHTML = page.map((o, idx) => {
+        const total = calcTotal(o.items, o.discount, o.shipping);
+        const itemTags = o.items.slice(0, 2).map(i =>
+            `<span class="product-tag">${i.name} x${i.qty}</span>`
+        ).join('');
+        const moreTags = o.items.length > 2
+            ? `<span class="product-tag more">+${o.items.length - 2}</span>` : '';
+        const delay = idx * 0.04;
+        return `
+    <tr data-id="${o.id}" style="animation-delay:${delay}s" class="${selectedIds.has(o.id) ? 'selected' : ''}">
+      <td><input type="checkbox" class="checkbox row-check" data-id="${o.id}" ${selectedIds.has(o.id) ? 'checked' : ''}></td>
+      <td><span class="order-id">${o.id}</span></td>
+      <td>
+        <div class="customer-cell">
+          <span class="customer-name">${o.customer}</span>
+          <span class="customer-phone">${o.phone}</span>
+        </div>
+      </td>
+      <td>
+        <div class="products-cell">${itemTags}${moreTags}</div>
+      </td>
+      <td><span class="total-price">${fmt(total)}</span></td>
+      <td>
+        <span class="payment-badge ${paymentClass(o.payment)}">
+          <i class="fas ${paymentIcon(o.payment)}"></i>${o.payment}
+        </span>
+      </td>
+      <td><span class="status-badge ${statusClass(o.status)}">${o.status}</span></td>
+      <td><span class="date-cell">${fmtDate(o.date)}</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="icon-btn view-btn"   onclick="openDetail('${o.id}')"  title="Xem chi tiết"><i class="fas fa-eye"></i></button>
+          <button class="icon-btn edit-btn"   onclick="openEditModal('${o.id}')" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>
+          <button class="icon-btn delete-btn" onclick="confirmDelete('${o.id}')" title="Xóa"><i class="fas fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+    }).join('');
+
+    // row checkboxes
+    tbody.querySelectorAll('.row-check').forEach(cb => {
+        cb.addEventListener('change', e => {
+            const id = e.target.dataset.id;
+            if (e.target.checked) selectedIds.add(id);
+            else selectedIds.delete(id);
+            const tr = e.target.closest('tr');
+            tr.classList.toggle('selected', e.target.checked);
+            updateSelectAll();
+            renderBulkBar();
+        });
+    });
+}
+
+function updateSelectAll() {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageIds = filtered.slice(start, start + PAGE_SIZE).map(o => o.id);
+    $('selectAll').checked = pageIds.length > 0 && pageIds.every(id => selectedIds.has(id));
+    $('selectAll').indeterminate = pageIds.some(id => selectedIds.has(id)) && !$('selectAll').checked;
+}
+
+$('selectAll').addEventListener('change', e => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageIds = filtered.slice(start, start + PAGE_SIZE).map(o => o.id);
+    pageIds.forEach(id => e.target.checked ? selectedIds.add(id) : selectedIds.delete(id));
+    renderTable();
+    renderBulkBar();
+});
+
+function renderPagination() {
+    const total = filtered.length;
+    const pages = Math.ceil(total / PAGE_SIZE);
+    const info = $('paginationInfo');
+    const pg = $('pagination');
+    const start = (currentPage - 1) * PAGE_SIZE + 1;
+    const end = Math.min(currentPage * PAGE_SIZE, total);
+
+    info.textContent = total > 0 ? `Hiển thị ${start}–${end} trong ${total} đơn hàng` : 'Không có kết quả';
+
+    if (pages <= 1) { pg.innerHTML = ''; return; }
+
+    let html = `<button class="page-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+    <i class="fas fa-chevron-left"></i></button>`;
+
+    for (let i = 1; i <= pages; i++) {
+        if (pages > 7 && i > 2 && i < pages - 1 && Math.abs(i - currentPage) > 1) {
+            if (i === 3 || i === pages - 2) html += `<span class="page-btn" style="cursor:default">…</span>`;
+            continue;
+        }
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+    }
+
+    html += `<button class="page-btn" onclick="goPage(${currentPage + 1})" ${currentPage === pages ? 'disabled' : ''}>
+    <i class="fas fa-chevron-right"></i></button>`;
+    pg.innerHTML = html;
+}
+
+function goPage(p) {
+    const pages = Math.ceil(filtered.length / PAGE_SIZE);
+    if (p < 1 || p > pages) return;
+    currentPage = p;
+    renderTable();
+    renderPagination();
+}
+function logout() {
+    localStorage.removeItem('mobistore_auth');
+    sessionStorage.removeItem('mobistore_auth');
+    window.location.href = 'login.html';
+}
+function renderBulkBar() {
+    const bar = $('bulkBar');
+    if (selectedIds.size > 0) {
+        bar.classList.add('show');
+        $('bulkCount').textContent = `${selectedIds.size} đơn hàng được chọn`;
+    } else {
+        bar.classList.remove('show');
+    }
+}
+
+// ─────────────────────────────────────────────
+//  BULK ACTIONS
+// ─────────────────────────────────────────────
+$('bulkConfirm').addEventListener('click', () => bulkUpdateStatus('Đang xử lý'));
+$('bulkShip').addEventListener('click', () => bulkUpdateStatus('Đang giao'));
+$('bulkCancel').addEventListener('click', () => bulkUpdateStatus('Đã hủy'));
+$('bulkDelete').addEventListener('click', () => {
+    if (!confirm(`Bạn có chắc muốn xóa ${selectedIds.size} đơn hàng đã chọn?`)) return;
+    orders = orders.filter(o => !selectedIds.has(o.id));
+    selectedIds.clear();
+    saveToStorage();
+    applyFilter();
+    toast(`Đã xóa ${selectedIds.size} đơn hàng`, 'success');
+});
+
+function bulkUpdateStatus(newStatus) {
+    orders.forEach(o => { if (selectedIds.has(o.id)) o.status = newStatus; });
+    selectedIds.clear();
+    saveToStorage();
+    applyFilter();
+    toast(`Đã cập nhật trạng thái: ${newStatus}`, 'success');
+}
+
+// ─────────────────────────────────────────────
+//  ADD / EDIT MODAL
+// ─────────────────────────────────────────────
+function openAddModal() {
+    isEditMode = false;
+    $('modalTitle').textContent = 'Tạo đơn hàng mới';
+    $('editId').value = '';
+    resetForm();
+    addItemRow();
+    $('fDate').value = new Date().toISOString().split('T')[0];
+    showModal('modalOverlay');
+}
+
+function openEditModal(id) {
+    const o = orders.find(x => x.id === id);
+    if (!o) return;
+    isEditMode = true;
+    $('modalTitle').textContent = `Chỉnh sửa đơn hàng ${id}`;
+    $('editId').value = id;
+
+    $('fCustomer').value = o.customer;
+    $('fPhone').value = o.phone;
+    $('fEmail').value = o.email || '';
+    $('fAddress').value = o.address || '';
+    $('fPayment').value = o.payment;
+    $('fStatus').value = o.status;
+    $('fDate').value = o.date;
+    $('fNote').value = o.note || '';
+    $('fDiscount').value = o.discount || 0;
+    $('fShipping').value = o.shipping ?? 30000;
+
+    // items
+    $('orderItemsList').innerHTML = '';
+    o.items.forEach(i => addItemRow(i));
+    updateSummary();
+    showModal('modalOverlay');
+}
+
+function resetForm() {
+    ['fCustomer', 'fPhone', 'fEmail', 'fAddress', 'fNote'].forEach(id => $(id).value = '');
+    $('fPayment').value = 'Tiền mặt';
+    $('fStatus').value = 'Chờ xác nhận';
+    $('fDiscount').value = 0;
+    $('fShipping').value = 30000;
+    $('orderItemsList').innerHTML = '';
+    clearErrors();
+    updateSummary();
+}
+
+function clearErrors() {
+    ['errCustomer', 'errPhone'].forEach(id => $(id).textContent = '');
+    ['fCustomer', 'fPhone'].forEach(id => $(id).classList.remove('error'));
+}
+
+function validateForm() {
+    let ok = true;
+    clearErrors();
+    if (!$('fCustomer').value.trim()) {
+        $('errCustomer').textContent = 'Vui lòng nhập tên khách hàng';
+        $('fCustomer').classList.add('error'); ok = false;
+    }
+    if (!$('fPhone').value.trim()) {
+        $('errPhone').textContent = 'Vui lòng nhập số điện thoại';
+        $('fPhone').classList.add('error'); ok = false;
+    }
+    const items = collectItems();
+    if (items.length === 0 || items.every(i => !i.name.trim())) {
+        toast('Vui lòng thêm ít nhất một sản phẩm', 'error'); ok = false;
+    }
+    return ok;
+}
+
+$('btnAddOrder').addEventListener('click', openAddModal);
+
+$('btnSave').addEventListener('click', () => {
+    if (!validateForm()) return;
+    const items = collectItems().filter(i => i.name.trim());
+    const discount = parseFloat($('fDiscount').value) || 0;
+    const shipping = parseFloat($('fShipping').value) || 0;
+    const data = {
+        customer: $('fCustomer').value.trim(),
+        phone: $('fPhone').value.trim(),
+        email: $('fEmail').value.trim(),
+        address: $('fAddress').value.trim(),
+        items, discount, shipping,
+        payment: $('fPayment').value,
+        status: $('fStatus').value,
+        date: $('fDate').value,
+        note: $('fNote').value.trim(),
+    };
+
+    if (isEditMode) {
+        const idx = orders.findIndex(o => o.id === $('editId').value);
+        if (idx !== -1) { orders[idx] = { id: orders[idx].id, ...data }; }
+        toast('Cập nhật đơn hàng thành công!', 'success');
+    } else {
+        data.id = genId();
+        orders.unshift(data);
+        toast('Tạo đơn hàng thành công!', 'success');
+    }
+    saveToStorage();
+    hideModal('modalOverlay');
+    applyFilter();
+});
+
+// ─────────────────────────────────────────────
+//  ORDER ITEMS
+// ─────────────────────────────────────────────
+$('btnAddItem').addEventListener('click', () => { addItemRow(); updateSummary(); });
+
+function addItemRow(item = null) {
+    const row = document.createElement('div');
+    row.className = 'order-item-row';
+
+    // build product options
+    const opts = PRODUCTS.map(p =>
+        `<option value="${p.name}" data-price="${p.price}">${p.name}</option>`
+    ).join('');
+
+    row.innerHTML = `
+    <select class="form-input item-name">
+      <option value="">-- Chọn sản phẩm --</option>
+      ${opts}
+    </select>
+    <input type="number" class="form-input item-qty"   value="${item ? item.qty : 1}" min="1" placeholder="Số lượng">
+    <span class="item-price-display">${item ? fmt(item.price) : '0 ₫'}</span>
+    <button type="button" class="btn-remove-item"><i class="fas fa-times"></i></button>
+    <input type="hidden" class="item-price-val" value="${item ? item.price : 0}">
+  `;
+
+    const select = row.querySelector('.item-name');
+    const qtyInp = row.querySelector('.item-qty');
+    const priceD = row.querySelector('.item-price-display');
+    const priceH = row.querySelector('.item-price-val');
+
+    if (item) {
+        // set existing
+        const opt = [...select.options].find(o => o.value === item.name);
+        if (opt) select.value = item.name;
+        else {
+            const custom = document.createElement('option');
+            custom.value = item.name; custom.textContent = item.name;
+            custom.dataset.price = item.price;
+            select.appendChild(custom);
+            select.value = item.name;
+        }
+    }
+
+    select.addEventListener('change', () => {
+        const chosen = select.options[select.selectedIndex];
+        const price = parseFloat(chosen.dataset.price) || 0;
+        priceH.value = price;
+        priceD.textContent = fmt(price * (parseInt(qtyInp.value) || 1));
+        updateSummary();
+    });
+
+    qtyInp.addEventListener('input', () => {
+        priceD.textContent = fmt((parseFloat(priceH.value) || 0) * (parseInt(qtyInp.value) || 1));
+        updateSummary();
+    });
+
+    row.querySelector('.btn-remove-item').addEventListener('click', () => {
+        row.remove(); updateSummary();
+    });
+
+    $('orderItemsList').appendChild(row);
+}
+
+function collectItems() {
+    return [...$('orderItemsList').querySelectorAll('.order-item-row')].map(row => ({
+        name: row.querySelector('.item-name').value,
+        qty: parseInt(row.querySelector('.item-qty').value) || 1,
+        price: parseFloat(row.querySelector('.item-price-val').value) || 0,
+    }));
+}
+
+function updateSummary() {
+    const items = collectItems();
+    const sub = calcSub(items);
+    const discount = parseFloat($('fDiscount').value) || 0;
+    const shipping = parseFloat($('fShipping').value) || 0;
+    const total = Math.max(0, sub - discount + shipping);
+    $('subtotalDisplay').textContent = fmt(sub);
+    $('totalDisplay').textContent = fmt(total);
+}
+
+$('fDiscount').addEventListener('input', updateSummary);
+$('fShipping').addEventListener('input', updateSummary);
+
+// ─────────────────────────────────────────────
+//  DELETE
+// ─────────────────────────────────────────────
+function confirmDelete(id) {
+    deleteTarget = id;
+    const o = orders.find(x => x.id === id);
+    $('confirmText').innerHTML = `Bạn có chắc muốn xóa đơn hàng <strong>${id}</strong>
+    (${o ? o.customer : ''})? <br>Hành động này không thể hoàn tác.`;
+    showModal('confirmOverlay');
+}
+
+$('confirmOk').addEventListener('click', () => {
+    if (!deleteTarget) return;
+    orders = orders.filter(o => o.id !== deleteTarget);
+    saveToStorage();
+    hideModal('confirmOverlay');
+    applyFilter();
+    toast('Đã xóa đơn hàng thành công!', 'success');
+    deleteTarget = null;
+});
+$('confirmCancel').addEventListener('click', () => { hideModal('confirmOverlay'); deleteTarget = null; });
+
+// ─────────────────────────────────────────────
+//  DETAIL VIEW
+// ─────────────────────────────────────────────
+function openDetail(id) {
+    const o = orders.find(x => x.id === id);
+    if (!o) return;
+    viewDetailId = id;
+    const total = calcTotal(o.items, o.discount, o.shipping);
+    const sub = calcSub(o.items);
+
+    $('detailTitle').innerHTML = `<span style="color:var(--primary)">${o.id}</span> — Chi tiết đơn hàng`;
+    $('detailBody').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="fas fa-user"></i> Khách hàng</div>
+      <div class="detail-grid">
+        <div class="detail-field"><span class="detail-lbl">Tên khách hàng</span><span class="detail-val">${o.customer}</span></div>
+        <div class="detail-field"><span class="detail-lbl">Số điện thoại</span><span class="detail-val">${o.phone}</span></div>
+        <div class="detail-field"><span class="detail-lbl">Email</span><span class="detail-val">${o.email || '—'}</span></div>
+        <div class="detail-field"><span class="detail-lbl">Địa chỉ giao hàng</span><span class="detail-val">${o.address || '—'}</span></div>
+      </div>
+    </div>
+    <div class="detail-divider"></div>
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="fas fa-box"></i> Sản phẩm</div>
+      <table class="detail-items-table">
+        <thead><tr><th>Sản phẩm</th><th>Đơn giá</th><th>SL</th><th>Thành tiền</th></tr></thead>
+        <tbody>
+          ${o.items.map(i => `
+            <tr>
+              <td>${i.name}</td>
+              <td>${fmt(i.price)}</td>
+              <td>${i.qty}</td>
+              <td>${fmt(i.price * i.qty)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      <div style="margin-top:12px; display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text-secondary)">
+        <div style="display:flex;justify-content:space-between"><span>Tạm tính:</span><span>${fmt(sub)}</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Giảm giá:</span><span>-${fmt(o.discount || 0)}</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Phí vận chuyển:</span><span>+${fmt(o.shipping ?? 30000)}</span></div>
+      </div>
+      <div class="detail-total-row">
+        <span class="detail-total-label">Tổng cộng</span>
+        <span class="detail-total-val">${fmt(total)}</span>
+      </div>
+    </div>
+    <div class="detail-divider"></div>
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="fas fa-info-circle"></i> Thông tin đơn hàng</div>
+      <div class="detail-grid">
+        <div class="detail-field">
+          <span class="detail-lbl">Trạng thái</span>
+          <span class="detail-val"><span class="status-badge ${statusClass(o.status)}">${o.status}</span></span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-lbl">Thanh toán</span>
+          <span class="detail-val"><span class="payment-badge ${paymentClass(o.payment)}"><i class="fas ${paymentIcon(o.payment)}"></i> ${o.payment}</span></span>
+        </div>
+        <div class="detail-field"><span class="detail-lbl">Ngày đặt hàng</span><span class="detail-val">${fmtDate(o.date)}</span></div>
+        <div class="detail-field"><span class="detail-lbl">Ghi chú</span><span class="detail-val">${o.note || '—'}</span></div>
+      </div>
+    </div>
+  `;
+    showModal('detailOverlay');
+}
+
+$('detailClose').addEventListener('click', () => hideModal('detailOverlay'));
+$('detailCloseBtn').addEventListener('click', () => hideModal('detailOverlay'));
+$('detailEditBtn').addEventListener('click', () => {
+    hideModal('detailOverlay');
+    openEditModal(viewDetailId);
+});
+
+// ─────────────────────────────────────────────
+//  MODAL HELPERS
+// ─────────────────────────────────────────────
+function showModal(id) { $(id).classList.add('show'); document.body.style.overflow = 'hidden'; }
+function hideModal(id) { $(id).classList.remove('show'); document.body.style.overflow = ''; }
+
+$('modalClose').addEventListener('click', () => hideModal('modalOverlay'));
+$('btnCancel').addEventListener('click', () => hideModal('modalOverlay'));
+
+// close on overlay click
+['modalOverlay', 'detailOverlay', 'confirmOverlay'].forEach(id => {
+    $(id).addEventListener('click', e => { if (e.target === $(id)) hideModal(id); });
+});
+
+// ─────────────────────────────────────────────
+//  CSV EXPORT
+// ─────────────────────────────────────────────
+$('btnExport').addEventListener('click', () => {
+    const rows = [
+        ['Mã đơn', 'Khách hàng', 'SĐT', 'Email', 'Sản phẩm', 'Tổng tiền', 'Thanh toán', 'Trạng thái', 'Ngày đặt', 'Ghi chú']
+    ];
+    filtered.forEach(o => {
+        const total = calcTotal(o.items, o.discount, o.shipping);
+        const products = o.items.map(i => `${i.name} x${i.qty}`).join(' | ');
+        rows.push([o.id, o.customer, o.phone, o.email || '', products, total, o.payment, o.status, fmtDate(o.date), o.note || '']);
+    });
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `orders_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    toast('Xuất CSV thành công!', 'info');
+});
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+initDate();
+applyFilter();
