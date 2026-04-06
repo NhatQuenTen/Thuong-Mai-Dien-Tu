@@ -1074,3 +1074,189 @@ footer {
     font-size: 12px;
     font-weight: 600;
 }
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+/* ========== BACK TO TOP BUTTON ========== */
+.back-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(45deg, #d4a373, #b7791f);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 999;
+    box-shadow: 0 4px 15px rgba(183, 121, 31, 0.3);
+}
+
+.back-to-top:hover {
+    transform: translateY(-5px);
+    background: linear-gradient(45deg, #b7791f, #d4a373);
+    box-shadow: 0 6px 20px rgba(183, 121, 31, 0.4);
+}
+
+.back-to-top.show {
+    display: flex;
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+    .back-to-top {
+        bottom: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+}
+
+
+/* ========== BỘ LỌC THƯƠNG HIỆU DẠNG ẢNH ========== */
+.brand-filter {
+    max-width: 1400px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+.brand-filter-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c1810;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.brand-filter-title i {
+    color: #b7791f;
+}
+
+.brand-tabs {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    scrollbar-width: thin;
+}
+
+.brand-tabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.brand-tabs::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 10px;
+}
+
+.brand-tabs::-webkit-scrollbar-thumb {
+    background: #b7791f;
+    border-radius: 10px;
+}
+
+.brand-btn {
+    background: white;
+    border: 2px solid #e9ecef;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+}
+
+.brand-btn:hover {
+    border-color: #b7791f;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(183, 121, 31, 0.15);
+}
+
+.brand-btn.active {
+    border-color: #b7791f;
+    background: linear-gradient(135deg, #fff5e6, #ffe8d4);
+    box-shadow: 0 4px 12px rgba(183, 121, 31, 0.2);
+}
+
+.brand-icon {
+    width: 100px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.brand-icon img {
+    width: 100%;
+    object-fit: contain;
+}
+
+.brand-icon i {
+    font-size: 24px;
+    color: #b7791f;
+}
+
+.brand-btn span {
+    font-size: 12px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.brand-btn.active span {
+    color: #b7791f;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .brand-btn {
+        min-width: 65px;
+    }
+    
+    .brand-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .brand-icon i {
+        font-size: 18px;
+    }
+    
+    .brand-btn span {
+        font-size: 10px;
+    }
+}

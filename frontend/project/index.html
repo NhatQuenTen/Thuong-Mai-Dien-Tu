@@ -25,10 +25,13 @@
             <a href="index.html" class="active">Trang chủ</a>
             <a href="products.html">Sản phẩm</a>
             <a href="promotion.html">Khuyến mãi</a>
-            <div class="cart-icon">
+            <a href="cart.html">
+                <div class="cart-icon">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="cart-count">0</span>
-            </div>
+                </div>
+            </a>
+            <a href="profile.html" id="profileLink"><i class="fas fa-user"></i></a>
         </div>
     </div>
 </header>
@@ -39,33 +42,126 @@
 </div>
 
 <!-- CATEGORY TABS -->
-<div class="category-tabs">
-    <button class="category-btn active" data-category="all">
-        <i class="fas fa-th-large"></i> Tất cả
-    </button>
-    <button class="category-btn" data-category="phone">
-        <i class="fas fa-mobile-alt"></i> Điện thoại
-    </button>
-    <button class="category-btn" data-category="tablet">
-        <i class="fas fa-tablet-alt"></i> Máy tính bảng
-    </button>
-    <button class="category-btn" data-category="laptop">
-        <i class="fas fa-laptop"></i> Laptop
-    </button>
-    <button class="category-btn" data-category="headphone">
-        <i class="fas fa-headphones"></i> Tai nghe
-    </button>
-    <button class="category-btn" data-category="speaker">
-        <i class="fas fa-music"></i> Loa
-    </button>
-    <button class="category-btn" data-category="watch">
-        <i class="fas fa-clock"></i> Smartwatch
-    </button>
-    <button class="category-btn" data-category="accessory">
-        <i class="fas fa-plug"></i> Phụ kiện
-    </button>
+<div class="filter-bar">
+    <div class="filter-left">
+        <div class="category-tabs" id="category-tabs">
+            <button class="category-btn active" data-category="all">
+                <i class="fas fa-th-large"></i> Tất cả
+            </button>
+            <button class="category-btn" data-category="phone">
+                <i class="fas fa-mobile-alt"></i> Điện thoại
+            </button>
+            <button class="category-btn" data-category="charger">
+                <i class="fas fa-plug"></i> Cáp sạc
+            </button>
+            <button class="category-btn" data-category="headphone">
+                <i class="fas fa-headphones"></i> Tai nghe
+            </button>
+        </div>
+    </div>
 </div>
 
+<!-- ========== BỘ LỌC THEO THƯƠNG HIỆU (DẠNG ẢNH) ========== -->
+
+    <div class="brand-tabs" id="brand-tabs">
+        <button class="brand-btn active" data-brand="all">
+            <div class="brand-icon">
+                <i class="fas fa-th-large"></i>
+            </div>
+        </button>
+        <button class="brand-btn" data-brand="Apple">
+            <div class="brand-icon">
+                <img src="assets/images/APLG.jpg" alt="Apple"> 
+            </div>
+            <span>iPhone</span>
+        </button>
+        <button class="brand-btn" data-brand="Samsung">
+            <div class="brand-icon">
+                <img src="assets/images/SSLG.jpg" alt="Samsung">
+            </div>
+            <span>Samsung</span>
+        </button>
+        <button class="brand-btn" data-brand="Xiaomi">
+            <div class="brand-icon">
+                <img src="assets/images/XLG.jpg" alt="Xiaomi">
+            </div>
+            <span>Xiaomi</span>
+        </button>
+        <button class="brand-btn" data-brand="Oppo">
+            <div class="brand-icon">
+                <img src="assets/images/OPLG.jpg" alt="Oppo">
+            </div>
+            <span>Oppo</span>
+        </button>
+        <button class="brand-btn" data-brand="Vivo">
+            <div class="brand-icon">
+                <img src="assets/images/VVLG.jpg" alt="Vivo">
+            </div>
+            <span>Vivo</span>
+        </button>
+        <button class="brand-btn" data-brand="Redmagic">
+            <div class="brand-icon">
+                <img src="assets/images/RLG.jpg" alt="Redmagic">
+            </div>
+            <span>Redmagic</span>
+        </button>
+        <button class="brand-btn" data-brand="Nubia">
+            <div class="brand-icon">
+                <img src="assets/images/NLG.jpg" alt="Nubia">
+            </div>
+            <span>Nubia</span>
+        </button>
+        <button class="brand-btn" data-brand="Sony">
+            <div class="brand-icon">
+                <img src="assets/images/SNLG.jpg" alt="Sony">
+            </div>
+            <span>Sony</span>
+        </button>
+        <button class="brand-btn" data-brand="Bose">
+            <div class="brand-icon">
+                <img src="assets/images/BLG.jpg" alt="Bose">
+            </div>
+            <span>Bose</span>
+        </button>
+        <button class="brand-btn" data-brand="JBL">
+            <div class="brand-icon">
+                <img src="assets/images/JBLLG.jpg" alt="JBL">
+            </div>
+            <span>JBL</span>
+        </button>
+        <button class="brand-btn" data-brand="Nothing">
+            <div class="brand-icon">
+                <img src="assets/images/NTLG.jpg" alt="Nothing">
+            </div>
+            <span>Nothing</span>
+        </button>
+        <button class="brand-btn" data-brand="Anker">
+            <div class="brand-icon">
+                <img src="assets/images/AKLG.jpg" alt="Anker">
+            </div>
+            <span>Anker</span>
+        </button>
+        <button class="brand-btn" data-brand="Baseus">
+            <div class="brand-icon">
+                <img src="assets/images/BSLG.jpg" alt="Baseus">
+            </div>
+            <span>Baseus</span>
+        </button>
+        <button class="brand-btn" data-brand="Belkin">
+            <div class="brand-icon">
+                <img src="assets/images/BKLG.jpg" alt="Belkin">
+            </div>
+            <span>Belkin</span>
+        </button>
+    </div>
+
+<!-- NÚT CUỘN LÊN ĐẦU TRANG -->
+<button id="backToTop" class="back-to-top">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
 <!-- SẢN PHẨM MỚI -->
 <div class="section-header">
     <h2> SẢN PHẨM MỚI</h2>
