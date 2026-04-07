@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MobiStore - Cài Đặt</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="settings.css">
+</head>
+
+<body>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-mobile-alt"></i></div>
+                <span class="logo-text">MobiStore</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="nav-item" id="nav-dashboard">
+                    <a href="dashboard.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
+                </li>
+                <li class="nav-item" id="nav-products">
+                    <a href="products.html"><i class="fas fa-box"></i><span>Sản phẩm</span></a>
+                </li>
+                <li class="nav-item" id="nav-orders">
+                    <a href="orders.html"><i class="fas fa-shopping-cart"></i><span>Đơn hàng</span>
+                        <span class="badge">12</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="nav-customers">
+                    <a href="customers.html"><i class="fas fa-users"></i><span>Khách hàng</span></a>
+                </li>
+                <li class="nav-item" id="nav-analytics">
+                    <a href="analytics.html"><i class="fas fa-chart-line"></i><span>Phân tích</span></a>
+                </li>
+                <li class="nav-item" id="nav-categories">
+                    <a href="categories.html"><i class="fas fa-layer-group"></i><span>Danh mục</span></a>
+                </li>
+                <li class="nav-item" id="nav-promotions">
+                    <a href="promotions.html"><i class="fas fa-tags"></i><span>Khuyến mãi</span></a>
+                </li>
+                <li class="nav-item" id="nav-reviews">
+                    <a href="reviews.html"><i class="fas fa-star"></i><span>Đánh giá</span></a>
+                </li>
+                <li class="nav-item active" id="nav-settings">
+                    <a href="settings.html"><i class="fas fa-cog"></i><span>Cài đặt</span></a>
+                </li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=7c3aed&color=fff&rounded=true&size=40"
+                        alt="Admin Avatar">
+                </div>
+                <div class="user-details">
+                    <span class="user-name">Nguyễn Admin</span>
+                    <span class="user-role">Quản trị viên</span>
+                </div>
+            </div>
+            <button class="logout-btn" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Đăng xuất</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+        <header class="topbar">
+            <div class="topbar-left">
+                <h1 class="page-title">Cài Đặt</h1>
+                <span class="page-subtitle">Quản lý cấu hình hệ thống và tài khoản</span>
+            </div>
+            <div class="topbar-right">
+                <button class="btn-save-all" id="btnSaveAll"><i class="fas fa-save"></i> Lưu tất cả</button>
+                <div class="date-display"><i class="fas fa-calendar-alt"></i><span id="currentDate"></span></div>
+            </div>
+        </header>
+
+        <div class="settings-layout">
+
+            <!-- Left nav -->
+            <nav class="settings-nav">
+                <div class="settings-nav-title">Cài đặt</div>
+                <ul id="settingsNavList">
+                    <li class="snav-item active" data-section="profile"><i class="fas fa-user-circle"></i><span>Hồ sơ cá
+                            nhân</span></li>
+                    <li class="snav-item" data-section="store"><i class="fas fa-store"></i><span>Thông tin cửa
+                            hàng</span></li>
+                    <li class="snav-item" data-section="notifications"><i class="fas fa-bell"></i><span>Thông báo</span>
+                    </li>
+                    <li class="snav-item" data-section="security"><i class="fas fa-shield-alt"></i><span>Bảo mật</span>
+                    </li>
+                    <li class="snav-item" data-section="payment"><i class="fas fa-credit-card"></i><span>Thanh
+                            toán</span></li>
+                    <li class="snav-item" data-section="shipping"><i class="fas fa-truck"></i><span>Vận chuyển</span>
+                    </li>
+                    <li class="snav-item" data-section="appearance"><i class="fas fa-palette"></i><span>Giao diện</span>
+                    </li>
+                    <li class="snav-item" data-section="integrations"><i class="fas fa-plug"></i><span>Tích hợp</span>
+                    </li>
+                    <li class="snav-item" data-section="backup"><i class="fas fa-database"></i><span>Sao lưu & Dữ
+                            liệu</span></li>
+                </ul>
+            </nav>
+
+            <!-- Content panels -->
+            <div class="settings-panels">
+
+                <!-- PROFILE -->
+                <div class="settings-panel active" id="panel-profile">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-user-circle"></i> Hồ Sơ Cá Nhân</h2>
+                        <p>Cập nhật thông tin tài khoản quản trị</p>
+                    </div>
+                    <div class="panel-body">
+                        <div class="avatar-section">
+                            <div class="avatar-big" id="profileAvatarWrap">
+                                <img id="profileAvatarImg"
+                                    src="https://ui-avatars.com/api/?name=Admin&background=7c3aed&color=fff&size=100"
+                                    alt="Avatar">
+                                <div class="avatar-overlay"><i class="fas fa-camera"></i></div>
+                            </div>
+                            <div class="avatar-info">
+                                <div class="avatar-name" id="avatarDisplayName">Nguyễn Admin</div>
+                                <div class="avatar-role">Quản trị viên</div>
+                                <div class="avatar-btns">
+                                    <button class="btn-sm btn-primary" id="changeAvatarBtn"><i
+                                            class="fas fa-upload"></i> Đổi ảnh</button>
+                                    <button class="btn-sm btn-ghost" id="removeAvatarBtn"><i class="fas fa-trash"></i>
+                                        Xóa</button>
+                                </div>
+                                <input type="file" id="avatarFileInput" accept="image/*" style="display:none">
+                            </div>
+                        </div>
+                        <div class="form-grid-2">
+                            <div class="form-group"><label>Họ và tên <span class="req">*</span></label><input
+                                    type="text" class="form-input" id="pName" value="Nguyễn Admin"></div>
+                            <div class="form-group"><label>Tên hiển thị</label><input type="text" class="form-input"
+                                    id="pDisplayName" value="Admin"></div>
+                            <div class="form-group"><label>Email <span class="req">*</span></label><input type="email"
+                                    class="form-input" id="pEmail" value="admin@mobistore.vn"></div>
+                            <div class="form-group"><label>Số điện thoại</label><input type="text" class="form-input"
+                                    id="pPhone" value="0901234567"></div>
+                            <div class="form-group"><label>Chức vụ</label><input type="text" class="form-input"
+                                    id="pRole" value="Quản trị viên"></div>
+                            <div class="form-group"><label>Ngày sinh</label><input type="date" class="form-input"
+                                    id="pDob" value="1990-01-01"></div>
+                            <div class="form-group span-2"><label>Địa chỉ</label><input type="text" class="form-input"
+                                    id="pAddress" value="123 Lê Lợi, Quận 1, TP. Hồ Chí Minh"></div>
+                            <div class="form-group span-2"><label>Tiểu sử</label><textarea
+                                    class="form-input form-textarea"
+                                    id="pBio">Quản trị viên hệ thống MobiStore. Chịu trách nhiệm quản lý toàn bộ hoạt động kinh doanh.</textarea>
+                            </div>
+                        </div>
+                        <div class="panel-actions"><button class="btn-primary btn-save-section"
+                                data-section="profile"><i class="fas fa-save"></i> Lưu thay đổi</button></div>
+                    </div>
+                </div>
+
+                <!-- STORE -->
+                <div class="settings-panel" id="panel-store">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-store"></i> Thông Tin Cửa Hàng</h2>
+                        <p>Cấu hình thông tin và hoạt động của cửa hàng</p>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-grid-2">
+                            <div class="form-group span-2"><label>Tên cửa hàng <span class="req">*</span></label><input
+                                    type="text" class="form-input" id="sName"
+                                    value="MobiStore - Chuỗi Thiết Bị Di Động"></div>
+                            <div class="form-group"><label>Email liên hệ</label><input type="email" class="form-input"
+                                    id="sEmail" value="contact@mobistore.vn"></div>
+                            <div class="form-group"><label>Hotline</label><input type="text" class="form-input"
+                                    id="sPhone" value="1800-1234"></div>
+                            <div class="form-group span-2"><label>Địa chỉ cửa hàng</label><input type="text"
+                                    class="form-input" id="sAddress" value="456 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh">
+                            </div>
+                            <div class="form-group"><label>Website</label><input type="text" class="form-input"
+                                    id="sWebsite" value="https://mobistore.vn"></div>
+                            <div class="form-group"><label>Múi giờ</label>
+                                <select class="form-input" id="sTimezone">
+                                    <option value="Asia/Ho_Chi_Minh" selected>Asia/Ho_Chi_Minh (GMT+7)</option>
+                                    <option value="Asia/Bangkok">Asia/Bangkok (GMT+7)</option>
+                                    <option value="Asia/Singapore">Asia/Singapore (GMT+8)</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Đơn vị tiền tệ</label>
+                                <select class="form-input" id="sCurrency">
+                                    <option value="VND" selected>VND - Đồng Việt Nam</option>
+                                    <option value="USD">USD - US Dollar</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Ngôn ngữ mặc định</label>
+                                <select class="form-input" id="sLang">
+                                    <option value="vi" selected>Tiếng Việt</option>
+                                    <option value="en">English</option>
+                                </select>
+                            </div>
+                            <div class="form-group span-2"><label>Mô tả cửa hàng</label><textarea
+                                    class="form-input form-textarea"
+                                    id="sDesc">MobiStore là chuỗi cửa hàng thiết bị di động uy tín, chuyên cung cấp các sản phẩm Apple, Samsung, và các thương hiệu hàng đầu thế giới.</textarea>
+                            </div>
+                        </div>
+                        <div class="section-divider">Giờ hoạt động</div>
+                        <div class="working-hours" id="workingHours"></div>
+                        <div class="panel-actions"><button class="btn-primary btn-save-section" data-section="store"><i
+                                    class="fas fa-save"></i> Lưu thay đổi</button></div>
+                    </div>
+                </div>
+
+                <!-- NOTIFICATIONS -->
+                <div class="settings-panel" id="panel-notifications">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-bell"></i> Thông Báo</h2>
+                        <p>Quản lý các loại thông báo nhận được</p>
+                    </div>
+                    <div class="panel-body">
+                        <div class="notif-groups" id="notifGroups"></div>
+                        <div class="panel-actions"><button class="btn-primary btn-save-section"
+                                data-section="notifications"><i class="fas fa-save"></i> Lưu thay đổi</button></div>
+                    </div>
+                </div>
+
+                <!-- SECURITY -->
+                <div class="settings-panel" id="panel-security">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-shield-alt"></i> Bảo Mật</h2>
+                        <p>Bảo vệ tài khoản và quyền truy cập</p>
+                    </div>
+                    <div class="panel-body">
+                        <div class="section-divider">Đổi mật khẩu</div>
+                        <div class="form-grid-1">
+                            <div class="form-group"><label>Mật khẩu hiện tại</label>
+                                <div class="pwd-wrap"><input type="password" class="form-input" id="pwdCurrent"
+                                        placeholder="••••••••"><button class="pwd-toggle" type="button"><i
+                                            class="fas fa-eye"></i></button></div>
+                            </div>
+                            <div class="form-group"><label>Mật khẩu mới</label>
+                                <div class="pwd-wrap"><input type="password" class="form-input" id="pwdNew"
+                                        placeholder="••••••••"><button class="pwd-toggle" type="button"><i
+                                            class="fas fa-eye"></i></button></div>
+                                <div class="pwd-strength" id="pwdStrength"></div>
+                            </div>
+                            <div class="form-group"><label>Xác nhận mật khẩu mới</label>
+                                <div class="pwd-wrap"><input type="password" class="form-input" id="pwdConfirm"
+                                        placeholder="••••••••"><button class="pwd-toggle" type="button"><i
+                                            class="fas fa-eye"></i></button></div>
+                            </div>
+                        </div>
+                        <button class="btn-primary" id="btnChangePwd" style="margin-bottom:24px"><i
+                                class="fas fa-key"></i> Đổi mật khẩu</button>
+
+                        <div class="section-divider">Xác thực hai yếu tố (2FA)</div>
+                        <div class="twofa-card">
+                            <div class="twofa-icon"><i class="fas fa-mobile-alt"></i></div>
+                            <div class="twofa-info">
+                                <div class="twofa-title">Xác thực qua ứng dụng</div>
+                                <div class="twofa-desc">Sử dụng Google Authenticator hoặc Authy để tăng bảo mật</div>
+                            </div>
+                            <div class="toggle-wrap"><label class="toggle"><input type="checkbox" id="toggle2fa"
+                                        checked><span class="toggle-slider"></span></label><span class="toggle-label"
+                                    id="label2fa">Đang bật</span></div>
+                        </div>
+
+                        <div class="section-divider">Phiên đăng nhập</div>
+                        <div class="sessions-list" id="sessionsList"></div>
+                        <button class="btn-danger-outline" id="btnRevokeAll"><i class="fas fa-sign-out-alt"></i> Đăng
+                            xuất tất cả thiết bị khác</button>
+                    </div>
+                </div>
+
+                <!-- PAYMENT -->
+                <div class="settings-panel" id="panel-payment">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-credit-card"></i> Thanh Toán</h2>
+                        <p>Cấu hình phương thức thanh toán</p>
+                    </div>
+                    <div class="panel-body">
+                        <div class="payment-methods" id="paymentMethods"></div>
+                        <div class="section-divider">Cài đặt hoá đơn</div>
+                        <div class="form-grid-2">
+                            <div class="form-group"><label>Tên công ty trên hoá đơn</label><input type="text"
+                                    class="form-input" value="Công ty TNHH MobiStore Việt Nam"></div>
+                            <div class="form-group"><label>Mã số thuế</label><input type="text" class="form-input"
+                                    value="0123456789"></div>
+                            <div class="form-group span-2"><label>Địa chỉ xuất hoá đơn</label><input type="text"
+                                    class="form-input" value="456 Nguyễn Huệ, Q.1, TP.HCM"></div>
+                        </div>
+                        <div class="panel-actions"><button class="btn-primary btn-save-section"
+                                data-section="payment"><i class="fas fa-save"></i> Lưu thay đổi</button></div>
+                    </div>
+                </div>
+
+                <!-- SHIPPING -->
+                <div class="settings-panel" id="panel-shipping">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-truck"></i> Vận Chuyển</h2>
+                        <p>Quản lý đơn vị vận chuyển và phí ship</p>
+                    </div>
+                    <div class="panel-body">
+                        <div class="shipping-providers" id="shippingProviders"></div>
+                        <div class="section-divider">Chính sách vận chuyển</div>
+                        <div class="form-grid-2">
+                            <div class="form-group"><label>Miễn phí ship từ (₫)</label><input type="text"
+                                    class="form-input" id="freeShipFrom" value="500,000"></div>
+                            <div class="form-group"><label>Phí ship mặc định (₫)</label><input type="text"
+                                    class="form-input" id="defaultShipFee" value="30,000"></div>
+                            <div class="form-group"><label>Thời gian giao hàng dự kiến</label><input type="text"
+                                    class="form-input" value="2-3 ngày làm việc"></div>
+                            <div class="form-group"><label>Khu vực nội thành</label><input type="text"
+                                    class="form-input" value="1-2 ngày"></div>
+                        </div>
+                        <div class="panel-actions"><button class="btn-primary btn-save-section"
+                                data-section="shipping"><i class="fas fa-save"></i> Lưu thay đổi</button></div>
+                    </div>
+                </div>
+
+                <!-- APPEARANCE -->
+                <div class="settings-panel" id="panel-appearance">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-palette"></i> Giao Diện</h2>
+                        <p>Tuỳ chỉnh màu sắc và giao diện hệ thống</p>
+                    </div>
+                    <div class="panel-body">
+                        <div class="section-divider">Chủ đề màu sắc</div>
+                        <div class="theme-picker" id="themePicker"></div>
+                        <div class="section-divider">Tuỳ chỉnh khác</div>
+                        <div class="appearance-toggles" id="appearanceToggles"></div>
+                        <div class="section-divider">Logo & thương hiệu</div>
+                        <div class="form-grid-2">
+                            <div class="form-group"><label>URL Logo</label><input type="text" class="form-input"
+                                    value="https://mobistore.vn/logo.png" placeholder="https://..."></div>
+                            <div class="form-group"><label>Favicon URL</label><input type="text" class="form-input"
+                                    value="https://mobistore.vn/favicon.ico" placeholder="https://..."></div>
+                        </div>
+                        <div class="panel-actions"><button class="btn-primary btn-save-section"
+                                data-section="appearance"><i class="fas fa-save"></i> Lưu thay đổi</button></div>
+                    </div>
+                </div>
+
+                <!-- INTEGRATIONS -->
+                <div class="settings-panel" id="panel-integrations">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-plug"></i> Tích Hợp</h2>
+                        <p>Kết nối với các dịch vụ bên thứ ba</p>
+                    </div>
+                    <div class="panel-body">
+                        <div class="integrations-grid" id="integrationsGrid"></div>
+                    </div>
+                </div>
+
+                <!-- BACKUP -->
+                <div class="settings-panel" id="panel-backup">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-database"></i> Sao Lưu & Dữ Liệu</h2>
+                        <p>Quản lý dữ liệu hệ thống và khôi phục</p>
+                    </div>
+                    <div class="panel-body">
+                        <div class="backup-status-card" id="backupStatus"></div>
+                        <div class="section-divider">Lịch sử sao lưu</div>
+                        <div class="backup-list" id="backupList"></div>
+                        <div class="section-divider" style="color:var(--danger)">Vùng nguy hiểm</div>
+                        <div class="danger-zone" id="dangerZone"></div>
+                    </div>
+                </div>
+
+            </div><!-- /settings-panels -->
+        </div><!-- /settings-layout -->
+    </main>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="settings.js"></script>
+</body>
+
+</html>
