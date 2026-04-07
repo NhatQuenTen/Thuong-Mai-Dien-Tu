@@ -452,7 +452,12 @@ $('btnGenCode').addEventListener('click', () => {
     $('fCode').value = genCode();
     updatePreview();
 });
-
+//logout
+function logout() {
+    localStorage.removeItem('mobistore_auth');
+    sessionStorage.removeItem('mobistore_auth');
+    window.location.href = 'login.html';
+}
 // ─── DELETE ───
 function confirmDelete(id) {
     deleteTarget = id;

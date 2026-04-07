@@ -500,7 +500,12 @@ $('removeAvatarBtn').addEventListener('click', () => {
     $('avatarPlaceholder').style.display = '';
     $('fAvatar').value = '';
 });
-
+//logout
+function logout() {
+    localStorage.removeItem('mobistore_auth');
+    sessionStorage.removeItem('mobistore_auth');
+    window.location.href = 'login.html';
+}
 // ─── DELETE ───
 function confirmDelete(id) {
     deleteTarget = id;
