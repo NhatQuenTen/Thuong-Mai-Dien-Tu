@@ -160,6 +160,45 @@ const PAGE_SIZE = 5;
 let detailId = null;
 let cancelId = null;
 
+const DEFAULT_USER = {
+    name: 'Nguyễn Văn A',
+    email: 'nguyenvana@gmail.com',
+    phone: '0901 234 567',
+    birthday: '1995-06-15',
+    gender: 'male',
+    idCard: '079095001234',
+    avatar: '',
+    joined: '01/2025',
+    memberTag: 'Thành viên Vàng',
+    twoFA: true,
+};
+
+function loadUser() { return JSON.parse(localStorage.getItem('ps_user') || 'null') || DEFAULT_USER; }
+let user = loadUser();
+
+function renderUserUI() {
+    const avatarSrc = user.avatar ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=b7791f&color=fff&size=80&rounded=true`;
+
+    if ($('sidebarAvatar')) $('sidebarAvatar').src = avatarSrc;
+    if ($('sidebarName')) $('sidebarName').textContent = user.name;
+    if ($('sidebarEmail')) $('sidebarEmail').textContent = user.email;
+}
+
+function initLogout() {
+    const btn = $('logoutBtn');
+    if (!btn) return;
+    btn.addEventListener('click', e => {
+        e.preventDefault();
+        if (confirm('Bạn có chắc muốn đăng xuất?')) {
+            localStorage.removeItem('ps_user');
+            localStorage.removeItem('ps_orders');
+            toast('Đã đăng xuất. Đang chuyển hướng...', 'info');
+            setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+        }
+    });
+}
+
 // ─── HELPERS ────────────────────────────────
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => new Intl.NumberFormat('vi-VN').format(n) + ' ₫';
@@ -587,5 +626,7 @@ document.addEventListener('keydown', e => {
 });
 
 // ─── INIT ───────────────────────────────────
+renderUserUI();
+initLogout();
 syncCartCount();
 applyFilter();
