@@ -11,12 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initKPICounters();
     initRevenueChart();
     initCategoryChart();
-    populateOrders();
-    populateTopProducts();
-    populateActivityTimeline();
-    populateNotifications();
     initEventListeners();
-    startLiveNotifications();
 });
 
 // ============================================
@@ -72,9 +67,9 @@ function initDateDisplay() {
 function initKPICounters() {
     const counters = [
         { el: document.getElementById('totalRevenue'), target: 2.85, suffix: ' tỷ', decimals: 2, duration: 2000 },
-        { el: document.getElementById('totalOrders'), target: 1284, suffix: '', decimals: 0, duration: 2000 },
-        { el: document.getElementById('newCustomers'), target: 356, suffix: '', decimals: 0, duration: 2000 },
-        { el: document.getElementById('conversionRate'), target: 3.2, suffix: '%', decimals: 1, duration: 2000 },
+        { el: document.getElementById('totalOrders'), target: 0, suffix: '', decimals: 0, duration: 2000 },
+        { el: document.getElementById('newCustomers'), target: 0, suffix: '', decimals: 0, duration: 2000 },
+        { el: document.getElementById('conversionRate'), target: 0, suffix: '%', decimals: 1, duration: 2000 },
     ];
 
     counters.forEach(counter => {
@@ -116,8 +111,8 @@ function initRevenueChart() {
     const ctx = document.getElementById('revenueChart').getContext('2d');
 
     const months = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
-    const revenueData = [180, 220, 195, 310, 280, 350, 410, 380, 420, 390, 450, 480];
-    const orderData = [120, 150, 130, 210, 190, 240, 280, 260, 300, 270, 320, 340];
+    const revenueData = Array(12).fill(0);
+    const orderData = Array(12).fill(0);
 
     // Gradient for revenue
     const revenueGradient = ctx.createLinearGradient(0, 0, 0, 300);
@@ -234,13 +229,7 @@ function initRevenueChart() {
 function initCategoryChart() {
     const ctx = document.getElementById('categoryChart').getContext('2d');
 
-    const categories = [
-        { label: 'Điện thoại', value: 45, color: '#7c3aed' },
-        { label: 'Máy tính bảng', value: 20, color: '#06b6d4' },
-        { label: 'Phụ kiện', value: 18, color: '#10b981' },
-        { label: 'Smartwatch', value: 12, color: '#f59e0b' },
-        { label: 'Tai nghe', value: 5, color: '#ec4899' }
-    ];
+    const categories = [];
 
     new Chart(ctx, {
         type: 'doughnut',
@@ -642,52 +631,6 @@ function updateChartData(period) {
 // LIVE NOTIFICATION TOASTS
 // ============================================
 function startLiveNotifications() {
-    const fakeOrders = [
-        { customer: 'Hoàng Anh Tuấn', product: 'iPhone 16 Pro', amount: '29.990.000đ' },
-        { customer: 'Nguyễn Mai Phương', product: 'Galaxy Z Fold 6', amount: '41.990.000đ' },
-        { customer: 'Trần Đức Huy', product: 'Pixel 9 Pro', amount: '24.990.000đ' },
-        { customer: 'Lê Thị Thu Hà', product: 'MacBook Pro M4', amount: '49.990.000đ' },
-        { customer: 'Phạm Quang Vinh', product: 'Apple Watch Ultra 3', amount: '21.990.000đ' },
-        { customer: 'Võ Thị Bích Ngọc', product: 'iPad Mini 7', amount: '14.990.000đ' },
-        { customer: 'Đỗ Minh Khôi', product: 'Samsung Galaxy Tab S10', amount: '19.990.000đ' },
-    ];
-
-    // Create toast container
-    let toastContainer = document.querySelector('.toast-container');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container';
-        document.body.appendChild(toastContainer);
-    }
-
-    // Show random notifications
-    function showRandomToast() {
-        const order = fakeOrders[Math.floor(Math.random() * fakeOrders.length)];
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.innerHTML = `
-            <div class="toast-icon">
-                <i class="fas fa-shopping-cart"></i>
-            </div>
-            <div class="toast-body">
-                <div class="toast-title">🛒 Đơn hàng mới!</div>
-                <div class="toast-message">${order.customer} đặt mua ${order.product} - ${order.amount}</div>
-            </div>
-            <button class="toast-close" onclick="this.parentElement.remove()">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        toastContainer.appendChild(toast);
-
-        // Auto remove after animation
-        setTimeout(() => {
-            if (toast.parentElement) toast.remove();
-        }, 4500);
-    }
-
-    // Show first toast after 5 seconds, then random intervals
-    setTimeout(showRandomToast, 5000);
-    setInterval(() => {
-        showRandomToast();
-    }, Math.random() * 15000 + 12000); // 12-27 seconds
+    return;
 }
+

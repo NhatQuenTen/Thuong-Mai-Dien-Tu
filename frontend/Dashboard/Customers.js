@@ -28,26 +28,10 @@ const CARD_BORDER = {
 };
 
 // ─── Sample data ───
-const SAMPLE = [
-    { id: 'KH-001', name: 'Nguyễn Văn An', gender: 'Nam', phone: '0901234567', email: 'an.nguyen@email.com', address: '123 Lê Lợi, Q.1', city: 'TP. Hồ Chí Minh', dob: '1990-05-12', joinDate: '2024-01-15', type: 'VIP', orders: 28, spent: 185600000, points: 1856, note: 'Khách VIP ưu tiên', avatar: '' },
-    { id: 'KH-002', name: 'Trần Thị Bình', gender: 'Nữ', phone: '0912345678', email: 'binh.tran@email.com', address: '456 Nguyễn Huệ, Q.1', city: 'TP. Hồ Chí Minh', dob: '1995-08-22', joinDate: '2024-02-10', type: 'Thường xuyên', orders: 12, spent: 67400000, points: 674, note: '', avatar: '' },
-    { id: 'KH-003', name: 'Lê Minh Cường', gender: 'Nam', phone: '0923456789', email: 'cuong.le@email.com', address: '789 CMT8, Q.3', city: 'TP. Hồ Chí Minh', dob: '1988-11-30', joinDate: '2024-03-05', type: 'Thường xuyên', orders: 9, spent: 52300000, points: 523, note: '', avatar: '' },
-    { id: 'KH-004', name: 'Phạm Thu Dung', gender: 'Nữ', phone: '0934567890', email: 'dung.pham@email.com', address: '321 Điện Biên Phủ, Q.BT', city: 'TP. Hồ Chí Minh', dob: '1993-03-18', joinDate: '2024-03-20', type: 'VIP', orders: 21, spent: 134900000, points: 1349, note: 'Giao hàng tận nơi', avatar: '' },
-    { id: 'KH-005', name: 'Hoàng Văn Em', gender: 'Nam', phone: '0945678901', email: 'em.hoang@email.com', address: '654 Võ Thị Sáu, Q.3', city: 'TP. Hồ Chí Minh', dob: '1985-07-04', joinDate: '2023-11-12', type: 'VIP', orders: 35, spent: 298500000, points: 2985, note: '', avatar: '' },
-    { id: 'KH-006', name: 'Vũ Thị Phương', gender: 'Nữ', phone: '0956789012', email: 'phuong.vu@email.com', address: '987 Lạc Long Quân, Q.11', city: 'TP. Hồ Chí Minh', dob: '1997-01-25', joinDate: '2025-01-08', type: 'Mới', orders: 2, spent: 8900000, points: 89, note: '', avatar: '' },
-    { id: 'KH-007', name: 'Đỗ Quang Hải', gender: 'Nam', phone: '0967890123', email: 'hai.do@email.com', address: '147 Trần Hưng Đạo, Q.5', city: 'TP. Hồ Chí Minh', dob: '1991-09-09', joinDate: '2024-06-14', type: 'Không hoạt động', orders: 3, spent: 14200000, points: 142, note: 'Đã liên hệ nhưng không phản hồi', avatar: '' },
-    { id: 'KH-008', name: 'Bùi Thị Lan', gender: 'Nữ', phone: '0978901234', email: 'lan.bui@email.com', address: '258 Nguyễn Trãi, Q.5', city: 'TP. Hồ Chí Minh', dob: '1994-12-03', joinDate: '2024-04-30', type: 'Thường xuyên', orders: 7, spent: 38600000, points: 386, note: '', avatar: '' },
-    { id: 'KH-009', name: 'Ngô Thanh Minh', gender: 'Nam', phone: '0989012345', email: 'minh.ngo@email.com', address: '369 Phan Xích Long, Q.PN', city: 'TP. Hồ Chí Minh', dob: '1989-06-17', joinDate: '2025-02-01', type: 'Mới', orders: 1, spent: 26990000, points: 270, note: '', avatar: '' },
-    { id: 'KH-010', name: 'Lý Thị Nga', gender: 'Nữ', phone: '0990123456', email: 'nga.ly@email.com', address: '741 Hoàng Văn Thụ, Q.TB', city: 'TP. Hồ Chí Minh', dob: '1996-04-11', joinDate: '2024-07-22', type: 'Thường xuyên', orders: 6, spent: 29700000, points: 297, note: '', avatar: '' },
-    { id: 'KH-011', name: 'Trịnh Văn Phú', gender: 'Nam', phone: '0901357924', email: 'phu.trinh@email.com', address: '852 Cộng Hòa, Q.TB', city: 'TP. Hồ Chí Minh', dob: '1987-02-28', joinDate: '2024-09-10', type: 'VIP', orders: 19, spent: 121400000, points: 1214, note: '', avatar: '' },
-    { id: 'KH-012', name: 'Đinh Thị Quỳnh', gender: 'Nữ', phone: '0912468013', email: 'quynh.dinh@email.com', address: '963 Tô Hiến Thành, Q.10', city: 'TP. Hồ Chí Minh', dob: '1999-10-07', joinDate: '2025-03-15', type: 'Mới', orders: 1, spent: 26280000, points: 263, note: '', avatar: '' },
-    { id: 'KH-013', name: 'Phan Thị Thanh', gender: 'Nữ', phone: '0923571468', email: 'thanh.phan@email.com', address: '12 Nguyễn Đình Chiểu, HK', city: 'Hà Nội', dob: '1992-08-14', joinDate: '2024-05-20', type: 'Thường xuyên', orders: 8, spent: 44200000, points: 442, note: '', avatar: '' },
-    { id: 'KH-014', name: 'Nguyễn Văn Tuấn', gender: 'Nam', phone: '0934682579', email: 'tuan.nguyen@email.com', address: '34 Trần Phú, Hải Châu', city: 'Đà Nẵng', dob: '1990-03-22', joinDate: '2024-08-05', type: 'Thường xuyên', orders: 5, spent: 19500000, points: 195, note: '', avatar: '' },
-    { id: 'KH-015', name: 'Cao Thị Uyên', gender: 'Nữ', phone: '0945793680', email: 'uyen.cao@email.com', address: '56 Hoàng Diệu, Ninh Kiều', city: 'Cần Thơ', dob: '1998-11-30', joinDate: '2025-01-20', type: 'Mới', orders: 2, spent: 9800000, points: 98, note: '', avatar: '' },
-];
+const SAMPLE = [];
 
 // ─── STATE ───
-let customers = JSON.parse(localStorage.getItem('ms_customers') || 'null') || SAMPLE.map(c => ({ ...c }));
+let customers = JSON.parse(localStorage.getItem('ms_customers') || 'null') || [];
 let filtered = [...customers];
 let currentPage = 1;
 const PAGE_SIZE = 8;

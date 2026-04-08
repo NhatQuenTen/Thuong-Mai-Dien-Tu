@@ -26,23 +26,10 @@ const REPLY_TEMPLATES = [
 ];
 
 // ─── Sample data ───
-const SAMPLE_REVIEWS = [
-    { id: 'RV-001', customer: 'Nguyễn Văn An', product: 'iPhone 16 Pro Max 256GB', star: 5, content: 'Sản phẩm đúng như mô tả, đóng gói rất cẩn thận. Giao hàng nhanh hơn dự kiến. Pin trâu, màn hình đẹp. Sẽ giới thiệu cho bạn bè.', reply: 'Cảm ơn bạn An đã tin tưởng MobiStore! Rất vui khi sản phẩm đáp ứng được kỳ vọng của bạn. 🙏', status: 'replied', date: '2026-04-02', likes: 24, helpful: 18, verified: true, images: [] },
-    { id: 'RV-002', customer: 'Trần Thị Bình', product: 'Samsung Galaxy S25 Ultra', star: 4, content: 'Điện thoại rất tốt, camera ấn tượng. Trừ 1 sao vì ship hơi lâu nhưng nhìn chung vẫn hài lòng.', reply: '', status: 'approved', date: '2026-04-01', likes: 12, helpful: 9, verified: true, images: [] },
-    { id: 'RV-003', customer: 'Lê Minh Cường', product: 'AirPods Pro 2', star: 5, content: 'Âm thanh cực chất! Chống ồn tốt hơn gen trước rõ rệt. Đóng hộp đẹp, hàng chính hãng Apple. Rất đáng mua.', reply: '', status: 'pending', date: '2026-04-03', likes: 8, helpful: 6, verified: false, images: [] },
-    { id: 'RV-004', customer: 'Phạm Thu Dung', product: 'iPad Air M2 64GB', star: 3, content: 'Máy ổn nhưng pin yếu hơn mong đợi. Màn hình đẹp, thiết kế mỏng nhẹ. Chưa hài lòng lắm với thời lượng pin.', reply: 'Xin lỗi bạn vì trải nghiệm chưa tốt. Bạn có thể liên hệ hotline 1800-xxxx để được hỗ trợ kỹ thuật về pin nhé!', status: 'replied', date: '2026-03-30', likes: 5, helpful: 3, verified: true, images: [] },
-    { id: 'RV-005', customer: 'Hoàng Văn Em', product: 'MacBook Pro M4 14-inch', star: 5, content: 'Mua máy này là quyết định đúng đắn nhất năm! Performance cực mạnh, màn hình miniLED stunning. Chạy mượt không có điểm chê. Dùng dev rất tốt.', reply: 'Cảm ơn anh Em đã tin tưởng! Rất vui được phục vụ anh. MacBook M4 quả thực là một siêu phẩm! 🔥', status: 'replied', date: '2026-03-28', likes: 31, helpful: 27, verified: true, images: [] },
-    { id: 'RV-006', customer: 'Vũ Thị Phương', product: 'Apple Watch Ultra 2', star: 2, content: 'Dây đeo hơi chật, không thoải mái khi đeo lâu. Sản phẩm ok nhưng không như kỳ vọng. Giao hàng chậm 2 ngày so với cam kết.', reply: '', status: 'pending', date: '2026-04-03', likes: 2, helpful: 1, verified: false, images: [] },
-    { id: 'RV-007', customer: 'Đỗ Quang Hải', product: 'Sony WH-1000XM5', star: 5, content: 'Tai nghe đỉnh nhất mình từng dùng! ANC cực tốt, đeo cả ngày không mỏi. Âm bass sâu nhưng không bị muddy. Pin 30h là chuẩn.', reply: 'Cảm ơn bạn Hải! Sony XM5 quả thực là vua ANC 🎧. Chúc bạn trải nghiệm âm nhạc tuyệt vời!', status: 'replied', date: '2026-03-25', likes: 19, helpful: 15, verified: true, images: [] },
-    { id: 'RV-008', customer: 'Bùi Thị Lan', product: 'iPhone 15 128GB', star: 4, content: 'Máy đẹp, chip nhanh. Dynamic Island thú vị. Camera chụp đêm tốt hơn hẳn iPhone 14. Chỉ tiếc không có USB-C nhưng giờ đã có rồi.', reply: '', status: 'approved', date: '2026-03-22', likes: 7, helpful: 5, verified: true, images: [] },
-    { id: 'RV-009', customer: 'Ngô Thanh Minh', product: 'Google Pixel 9 Pro', star: 1, content: 'Hàng nhận bị lỗi màn hình, có đốm sáng. Đã liên hệ shop nhưng chưa được giải quyết. Rất thất vọng.', reply: '', status: 'pending', date: '2026-04-04', likes: 0, helpful: 0, verified: true, images: [] },
-    { id: 'RV-010', customer: 'Lý Thị Nga', product: 'Mi Band 9', star: 5, content: 'Vòng tay giá rẻ nhưng tính năng nhiều không kém đắt. Đo nhịp tim chính xác, pin 14 ngày, hiển thị đẹp. Xứng đáng 5 sao!', reply: '', status: 'approved', date: '2026-03-20', likes: 14, helpful: 11, verified: false, images: [] },
-    { id: 'RV-011', customer: 'Trịnh Văn Phú', product: 'OPPO Find X8 Pro', star: 4, content: 'Camera Hasselblad chụp rất đẹp, màu sắc tự nhiên. Sạc 80W siêu nhanh. Thiết kế premium. Chỉ tiếc giá hơi cao.', reply: 'Cảm ơn anh Phú! OPPO Find X8 Pro đúng là đỉnh về nhiếp ảnh. Theo dõi MobiStore để cập nhật ưu đãi nhé!', status: 'replied', date: '2026-03-18', likes: 9, helpful: 7, verified: true, images: [] },
-    { id: 'RV-012', customer: 'Đinh Thị Quỳnh', product: 'Sạc nhanh 67W Xiaomi', star: 3, content: 'Sạc nhanh ok nhưng hơi nóng. Dây ngắn. Phải mua thêm dây dài mới tiện.', reply: '', status: 'rejected', date: '2026-03-15', likes: 1, helpful: 0, verified: false, images: [] },
-];
+const SAMPLE_REVIEWS = [];
 
 // ─── STATE ───
-let reviews = JSON.parse(localStorage.getItem('ms_reviews') || 'null') || SAMPLE_REVIEWS.map(r => ({ ...r }));
+let reviews = JSON.parse(localStorage.getItem('ms_reviews') || 'null') || [];
 let filtered = [...reviews];
 let currentPage = 1;
 const PAGE_SIZE = 6;

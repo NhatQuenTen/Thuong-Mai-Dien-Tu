@@ -120,11 +120,14 @@ function initDateDisplay() {
 function loadProducts() {
     const stored = localStorage.getItem('mobistore_products');
     if (stored) {
-        products = JSON.parse(stored);
+        try {
+            const parsed = JSON.parse(stored);
+            products = Array.isArray(parsed) ? parsed : [];
+        } catch {
+            products = [];
+        }
     } else {
-        // Seed with demo data
-        products = getSeedProducts();
-        saveProducts();
+        products = [];
     }
 }
 
@@ -137,148 +140,7 @@ function generateId() {
 }
 
 function getSeedProducts() {
-    return [
-        {
-            id: generateId(),
-            name: 'iPhone 16 Pro Max 256GB',
-            category: 'phone',
-            brand: 'Apple',
-            price: 34990000,
-            originalPrice: 36990000,
-            stock: 45,
-            sku: 'IP16PM-256',
-            status: 'active',
-            description: 'iPhone 16 Pro Max với chip A18 Pro, camera 48MP, màn hình 6.9 inch Super Retina XDR.',
-            image: 'https://picsum.photos/seed/iphone16/400/400',
-            createdAt: new Date().toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'Samsung Galaxy S25 Ultra 512GB',
-            category: 'phone',
-            brand: 'Samsung',
-            price: 33990000,
-            originalPrice: 35990000,
-            stock: 38,
-            sku: 'SGS25U-512',
-            status: 'active',
-            description: 'Galaxy S25 Ultra với Snapdragon 8 Elite, camera 200MP, bút S-Pen tích hợp.',
-            image: 'https://picsum.photos/seed/galaxy25/400/400',
-            createdAt: new Date(Date.now() - 86400000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'iPad Pro M4 11" 256GB',
-            category: 'tablet',
-            brand: 'Apple',
-            price: 28990000,
-            originalPrice: 30990000,
-            stock: 22,
-            sku: 'IPADM4-256',
-            status: 'active',
-            description: 'iPad Pro M4 với màn hình OLED tandem, chip M4, hỗ trợ Apple Pencil Pro.',
-            image: 'https://picsum.photos/seed/ipadpro/400/400',
-            createdAt: new Date(Date.now() - 172800000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'MacBook Air M4 15" 16GB',
-            category: 'laptop',
-            brand: 'Apple',
-            price: 32490000,
-            originalPrice: 34990000,
-            stock: 15,
-            sku: 'MBA-M4-15',
-            status: 'active',
-            description: 'MacBook Air M4 15 inch, thiết kế siêu mỏng, pin 18 giờ, màn Liquid Retina.',
-            image: 'https://picsum.photos/seed/macbook/400/400',
-            createdAt: new Date(Date.now() - 259200000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'AirPods Pro 3',
-            category: 'audio',
-            brand: 'Apple',
-            price: 6990000,
-            originalPrice: 7490000,
-            stock: 5,
-            sku: 'APP3-2026',
-            status: 'active',
-            description: 'AirPods Pro 3 với chip H3, chống ồn chủ động thế hệ mới, âm thanh không gian.',
-            image: 'https://picsum.photos/seed/airpods/400/400',
-            createdAt: new Date(Date.now() - 345600000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'Apple Watch Ultra 3',
-            category: 'smartwatch',
-            brand: 'Apple',
-            price: 21990000,
-            originalPrice: 23990000,
-            stock: 12,
-            sku: 'AWU3-TI',
-            status: 'active',
-            description: 'Apple Watch Ultra 3 vỏ Titan, GPS + Cellular, chống nước 100m.',
-            image: 'https://picsum.photos/seed/appwatch/400/400',
-            createdAt: new Date(Date.now() - 432000000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'Xiaomi 15 Ultra',
-            category: 'phone',
-            brand: 'Xiaomi',
-            price: 23990000,
-            originalPrice: 25990000,
-            stock: 30,
-            sku: 'XI15U-256',
-            status: 'active',
-            description: 'Xiaomi 15 Ultra với camera Leica, Snapdragon 8 Elite, sạc nhanh 90W.',
-            image: 'https://picsum.photos/seed/xiaomi15/400/400',
-            createdAt: new Date(Date.now() - 518400000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'Samsung Galaxy Tab S10 Ultra',
-            category: 'tablet',
-            brand: 'Samsung',
-            price: 27990000,
-            originalPrice: 29990000,
-            stock: 0,
-            sku: 'SGTS10U',
-            status: 'outofstock',
-            description: 'Galaxy Tab S10 Ultra 14.6 inch, chip Dimensity 9300+, bút S-Pen.',
-            image: 'https://picsum.photos/seed/tabs10/400/400',
-            createdAt: new Date(Date.now() - 604800000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'Ốp lưng MagSafe iPhone 16 Pro Max',
-            category: 'accessory',
-            brand: 'Apple',
-            price: 1490000,
-            originalPrice: 0,
-            stock: 150,
-            sku: 'OL-IP16PM',
-            status: 'active',
-            description: 'Ốp lưng silicone chính hãng Apple với vòng nam châm MagSafe.',
-            image: 'https://picsum.photos/seed/case16/400/400',
-            createdAt: new Date(Date.now() - 691200000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'Google Pixel 9 Pro 256GB',
-            category: 'phone',
-            brand: 'Google',
-            price: 24990000,
-            originalPrice: 26990000,
-            stock: 0,
-            sku: 'GP9P-256',
-            status: 'inactive',
-            description: 'Pixel 9 Pro với chip Tensor G4, camera AI tiên tiến, Android thuần.',
-            image: 'https://picsum.photos/seed/pixel9/400/400',
-            createdAt: new Date(Date.now() - 777600000).toISOString()
-        }
-    ];
+    return [];
 }
 
 // ============================================
@@ -791,3 +653,4 @@ function switchView(view) {
 
     renderProducts();
 }
+

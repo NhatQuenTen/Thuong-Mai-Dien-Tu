@@ -23,15 +23,15 @@ const MONTHS = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T1
 const DAYS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 
 const DATA = {
-    revenue: [185, 210, 195, 240, 225, 285, 310, 295, 340, 320, 360, 285],
-    orders: [82, 96, 88, 112, 104, 128, 145, 138, 162, 151, 170, 135],
-    revenueBy: { labels: ['Điện thoại', 'Máy tính bảng', 'Laptop', 'Phụ kiện', 'Smartwatch'], vals: [42, 18, 22, 11, 7] },
-    byDay: [145, 198, 167, 212, 189, 134, 89],
-    funnel: [{ name: 'Lượt truy cập', val: 48620 }, { name: 'Xem sản phẩm', val: 28940 }, { name: 'Thêm vào giỏ', val: 9870 }, { name: 'Bắt đầu thanh toán', val: 4230 }, { name: 'Hoàn tất đơn hàng', val: 1284 }],
-    geo: [{ name: 'TP. Hồ Chí Minh', pct: 54, val: '1.54 tỷ' }, { name: 'Hà Nội', pct: 22, val: '627 tr' }, { name: 'Đà Nẵng', pct: 10, val: '285 tr' }, { name: 'Hải Phòng', pct: 8, val: '228 tr' }, { name: 'Cần Thơ', pct: 6, val: '171 tr' }],
-    topProds: [{ name: 'iPhone 16 Pro Max', units: 187, rev: '6.5 tỷ', pct: 100 }, { name: 'Samsung S25 Ultra', units: 142, rev: '4.5 tỷ', pct: 70 }, { name: 'MacBook Pro M4', units: 98, rev: '5.2 tỷ', pct: 80 }, { name: 'iPad Air M2', units: 134, rev: '2.5 tỷ', pct: 39 }, { name: 'AirPods Pro 2', units: 210, rev: '1.6 tỷ', pct: 24 }],
-    payment: { labels: ['Chuyển khoản', 'Thẻ tín dụng', 'Tiền mặt', 'Ví điện tử'], vals: [38, 29, 19, 14] },
-    ctype: [{ name: 'VIP', pct: 18, color: '#f59e0b' }, { name: 'Thường xuyên', pct: 42, color: '#7c3aed' }, { name: 'Mới', pct: 28, color: '#10b981' }, { name: 'Không HĐ', pct: 12, color: '#ef4444' }],
+    revenue: Array(12).fill(0),
+    orders: Array(12).fill(0),
+    revenueBy: { labels: [], vals: [] },
+    byDay: Array(7).fill(0),
+    funnel: [],
+    geo: [],
+    topProds: [],
+    payment: { labels: [], vals: [] },
+    ctype: [],
 };
 
 // ─── Chart instances ───
@@ -304,21 +304,18 @@ function renderCtype() {
 
 // ─── Sparklines ───
 function renderSparklines() {
-    drawSparkline('sparkRev', [185, 210, 195, 240, 225, 285, 310, 295, 340, 320, 360, 285], '#7c3aed');
-    drawSparkline('sparkOrd', [82, 96, 88, 112, 104, 128, 145, 138, 162, 151, 170, 135], '#06b6d4');
-    drawSparkline('sparkCus', [28, 35, 30, 44, 38, 52, 61, 58, 70, 64, 76, 56], '#10b981');
-    drawSparkline('sparkAov', [2.1, 2.2, 2.0, 2.15, 2.05, 2.3, 2.25, 2.2, 2.1, 2.2, 2.15, 2.2], '#f97316');
+    drawSparkline('sparkRev', Array(12).fill(0), '#7c3aed');
+    drawSparkline('sparkOrd', Array(12).fill(0), '#06b6d4');
+    drawSparkline('sparkCus', Array(12).fill(0), '#10b981');
+    drawSparkline('sparkAov', Array(12).fill(0), '#f97316');
 }
 
 // ─── Date range change ───
-$('dateRange').addEventListener('change', () => {
-    // Regenerate data slightly to simulate range change
-    const r = parseInt($('dateRange').value);
-    const newRev = genMonthly(220, 80, 12);
-    mainChartInst.data.datasets[0].data = newRev;
-    mainChartInst.data.datasets[1].data = genMonthly(110, 40, 12);
+dateRange.addEventListener('change', () => {
+    mainChartInst.data.datasets[0].data = Array(12).fill(0);
+    mainChartInst.data.datasets[1].data = Array(12).fill(0);
     mainChartInst.update();
-    toast(`Đã tải dữ liệu ${r} ngày qua`, 'info');
+    toast('Chua co du lieu thuc de hien thi', 'info');
 });
 
 // ─── Export ───

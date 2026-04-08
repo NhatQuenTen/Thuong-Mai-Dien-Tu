@@ -9,97 +9,12 @@
 // ─────────────────────────────────────────────
 //  SAMPLE DATA
 // ─────────────────────────────────────────────
-const SAMPLE_ORDERS = [
-    {
-        id: 'DH-001', customer: 'Nguyễn Văn An', phone: '0901234567',
-        email: 'an.nguyen@email.com', address: '123 Lê Lợi, Q.1, TP.HCM',
-        items: [{ name: 'iPhone 16 Pro Max', qty: 1, price: 34990000 }, { name: 'Ốp lưng Apple', qty: 2, price: 590000 }],
-        discount: 500000, shipping: 0,
-        payment: 'Chuyển khoản', status: 'Hoàn thành', date: '2026-03-15', note: 'Giao giờ hành chính'
-    },
-    {
-        id: 'DH-002', customer: 'Trần Thị Bình', phone: '0912345678',
-        email: 'binh.tran@email.com', address: '456 Nguyễn Huệ, Q.1, TP.HCM',
-        items: [{ name: 'Samsung Galaxy S25 Ultra', qty: 1, price: 31990000 }],
-        discount: 0, shipping: 30000,
-        payment: 'Thẻ tín dụng', status: 'Đang giao', date: '2026-03-28', note: ''
-    },
-    {
-        id: 'DH-003', customer: 'Lê Minh Cường', phone: '0923456789',
-        email: 'cuong.le@email.com', address: '789 CMT8, Q.3, TP.HCM',
-        items: [{ name: 'AirPods Pro 2', qty: 1, price: 7490000 }, { name: 'Cáp sạc MagSafe', qty: 1, price: 990000 }],
-        discount: 200000, shipping: 30000,
-        payment: 'Ví điện tử', status: 'Chờ xác nhận', date: '2026-04-01', note: 'Khách yêu cầu đóng gói kỹ'
-    },
-    {
-        id: 'DH-004', customer: 'Phạm Thu Dung', phone: '0934567890',
-        email: 'dung.pham@email.com', address: '321 Điện Biên Phủ, Q.Bình Thạnh, TP.HCM',
-        items: [{ name: 'iPad Air M2', qty: 1, price: 18990000 }, { name: 'Apple Pencil 2', qty: 1, price: 3990000 }],
-        discount: 1000000, shipping: 0,
-        payment: 'Tiền mặt', status: 'Đang xử lý', date: '2026-04-02', note: ''
-    },
-    {
-        id: 'DH-005', customer: 'Hoàng Văn Em', phone: '0945678901',
-        email: 'em.hoang@email.com', address: '654 Võ Thị Sáu, Q.3, TP.HCM',
-        items: [{ name: 'MacBook Pro M4', qty: 1, price: 52990000 }],
-        discount: 2000000, shipping: 0,
-        payment: 'Chuyển khoản', status: 'Hoàn thành', date: '2026-03-10', note: 'Khách VIP'
-    },
-    {
-        id: 'DH-006', customer: 'Vũ Thị Phương', phone: '0956789012',
-        email: 'phuong.vu@email.com', address: '987 Lạc Long Quân, Q.11, TP.HCM',
-        items: [{ name: 'Apple Watch Ultra 2', qty: 1, price: 23990000 }],
-        discount: 500000, shipping: 30000,
-        payment: 'Ví điện tử', status: 'Chờ xác nhận', date: '2026-04-03', note: ''
-    },
-    {
-        id: 'DH-007', customer: 'Đỗ Quang Hải', phone: '0967890123',
-        email: 'hai.do@email.com', address: '147 Trần Hưng Đạo, Q.5, TP.HCM',
-        items: [{ name: 'Samsung Galaxy Tab S9', qty: 2, price: 19990000 }],
-        discount: 0, shipping: 50000,
-        payment: 'Tiền mặt', status: 'Đã hủy', date: '2026-03-22', note: 'Khách hủy do đổi ý'
-    },
-    {
-        id: 'DH-008', customer: 'Bùi Thị Lan', phone: '0978901234',
-        email: 'lan.bui@email.com', address: '258 Nguyễn Trãi, Q.5, TP.HCM',
-        items: [{ name: 'iPhone 15', qty: 1, price: 22990000 }, { name: 'Sạc nhanh 30W', qty: 1, price: 790000 }],
-        discount: 300000, shipping: 0,
-        payment: 'Thẻ tín dụng', status: 'Đang giao', date: '2026-04-01', note: ''
-    },
-    {
-        id: 'DH-009', customer: 'Ngô Thanh Minh', phone: '0989012345',
-        email: 'minh.ngo@email.com', address: '369 Phan Xích Long, Q. Phú Nhuận, TP.HCM',
-        items: [{ name: 'Google Pixel 9 Pro', qty: 1, price: 26990000 }],
-        discount: 0, shipping: 30000,
-        payment: 'Chuyển khoản', status: 'Đang xử lý', date: '2026-04-03', note: ''
-    },
-    {
-        id: 'DH-010', customer: 'Lý Thị Nga', phone: '0990123456',
-        email: 'nga.ly@email.com', address: '741 Hoàng Văn Thụ, Q. Tân Bình, TP.HCM',
-        items: [{ name: 'Sony WH-1000XM5', qty: 1, price: 8990000 }],
-        discount: 500000, shipping: 30000,
-        payment: 'Ví điện tử', status: 'Hoàn thành', date: '2026-03-18', note: ''
-    },
-    {
-        id: 'DH-011', customer: 'Trịnh Văn Phú', phone: '0901357924',
-        email: 'phu.trinh@email.com', address: '852 Cộng Hòa, Q. Tân Bình, TP.HCM',
-        items: [{ name: 'OPPO Find X8 Pro', qty: 1, price: 29990000 }],
-        discount: 1000000, shipping: 0,
-        payment: 'Thẻ tín dụng', status: 'Chờ xác nhận', date: '2026-04-04', note: 'Giao buổi tối'
-    },
-    {
-        id: 'DH-012', customer: 'Đinh Thị Quỳnh', phone: '0912468013',
-        email: 'quynh.dinh@email.com', address: '963 Tô Hiến Thành, Q.10, TP.HCM',
-        items: [{ name: 'Xiaomi 14 Ultra', qty: 1, price: 24990000 }, { name: 'Mi Band 9', qty: 1, price: 1290000 }],
-        discount: 0, shipping: 30000,
-        payment: 'Tiền mặt', status: 'Đang xử lý', date: '2026-04-04', note: ''
-    },
-];
+const SAMPLE_ORDERS = [];
 
 // ─────────────────────────────────────────────
 //  STATE
 // ─────────────────────────────────────────────
-let orders = JSON.parse(localStorage.getItem('ms_orders') || 'null') || SAMPLE_ORDERS.map(o => ({ ...o }));
+let orders = JSON.parse(localStorage.getItem('ms_orders') || 'null') || [];
 let filtered = [...orders];
 let currentPage = 1;
 const PAGE_SIZE = 8;

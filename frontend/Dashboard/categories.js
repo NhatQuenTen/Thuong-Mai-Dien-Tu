@@ -94,10 +94,14 @@ function initDateDisplay() {
 function loadCategories() {
     const stored = localStorage.getItem('mobistore_categories');
     if (stored) {
-        categories = JSON.parse(stored);
+        try {
+            const parsed = JSON.parse(stored);
+            categories = Array.isArray(parsed) ? parsed : [];
+        } catch {
+            categories = [];
+        }
     } else {
-        categories = getSeedCategories();
-        saveCategories();
+        categories = [];
     }
 }
 
@@ -110,104 +114,7 @@ function generateId() {
 }
 
 function getSeedCategories() {
-    return [
-        {
-            id: generateId(),
-            name: 'Điện thoại',
-            slug: 'dien-thoai',
-            description: 'Điện thoại thông minh các thương hiệu Apple, Samsung, Xiaomi, Google và nhiều hãng khác.',
-            icon: 'fas fa-mobile-alt',
-            color: '#7c3aed',
-            status: 'active',
-            order: 1,
-            productCount: 4,
-            createdAt: new Date().toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'Máy tính bảng',
-            slug: 'may-tinh-bang',
-            description: 'iPad, Samsung Galaxy Tab và các dòng máy tính bảng cao cấp.',
-            icon: 'fas fa-tablet-alt',
-            color: '#06b6d4',
-            status: 'active',
-            order: 2,
-            productCount: 2,
-            createdAt: new Date(Date.now() - 86400000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'Laptop',
-            slug: 'laptop',
-            description: 'MacBook, laptop gaming và laptop văn phòng từ các thương hiệu hàng đầu.',
-            icon: 'fas fa-laptop',
-            color: '#10b981',
-            status: 'active',
-            order: 3,
-            productCount: 1,
-            createdAt: new Date(Date.now() - 172800000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'Phụ kiện',
-            slug: 'phu-kien',
-            description: 'Ốp lưng, cáp sạc, cường lực và các phụ kiện chính hãng.',
-            icon: 'fas fa-plug',
-            color: '#f59e0b',
-            status: 'active',
-            order: 4,
-            productCount: 1,
-            createdAt: new Date(Date.now() - 259200000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'Smartwatch',
-            slug: 'smartwatch',
-            description: 'Đồng hồ thông minh Apple Watch, Samsung Galaxy Watch, Garmin.',
-            icon: 'fas fa-watch',
-            color: '#ec4899',
-            status: 'active',
-            order: 5,
-            productCount: 1,
-            createdAt: new Date(Date.now() - 345600000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'Tai nghe / Loa',
-            slug: 'tai-nghe-loa',
-            description: 'AirPods, tai nghe Bluetooth, loa di động và thiết bị âm thanh.',
-            icon: 'fas fa-headphones',
-            color: '#3b82f6',
-            status: 'active',
-            order: 6,
-            productCount: 1,
-            createdAt: new Date(Date.now() - 432000000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'Gaming',
-            slug: 'gaming',
-            description: 'Tay cầm chơi game, bàn phím cơ, chuột gaming và phụ kiện gaming.',
-            icon: 'fas fa-gamepad',
-            color: '#ef4444',
-            status: 'inactive',
-            order: 7,
-            productCount: 0,
-            createdAt: new Date(Date.now() - 518400000).toISOString()
-        },
-        {
-            id: generateId(),
-            name: 'Camera & Máy quay',
-            slug: 'camera-may-quay',
-            description: 'Camera hành trình, webcam, máy quay phim và phụ kiện quay chụp.',
-            icon: 'fas fa-camera',
-            color: '#8b5cf6',
-            status: 'inactive',
-            order: 8,
-            productCount: 0,
-            createdAt: new Date(Date.now() - 604800000).toISOString()
-        }
-    ];
+    return [];
 }
 
 // ============================================
@@ -726,3 +633,4 @@ function switchView(view) {
 
     renderCategories();
 }
+

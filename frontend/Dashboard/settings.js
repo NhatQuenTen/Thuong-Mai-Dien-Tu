@@ -134,33 +134,7 @@ function renderWorkingHours() {
 
 // ─── Notifications ───
 function renderNotifications() {
-    const GROUPS = [
-        {
-            title: 'Đơn hàng', items: [
-                { icon: 'fa-shopping-cart', iconBg: 'rgba(124,58,237,.15)', iconColor: '#a78bfa', title: 'Đơn hàng mới', desc: 'Thông báo khi có đơn hàng mới được tạo', email: true, push: true, sms: false },
-                { icon: 'fa-truck', iconBg: 'rgba(6,182,212,.15)', iconColor: '#06b6d4', title: 'Cập nhật vận chuyển', desc: 'Thay đổi trạng thái giao hàng', email: true, push: true, sms: true },
-                { icon: 'fa-times-circle', iconBg: 'rgba(239,68,68,.15)', iconColor: '#ef4444', title: 'Đơn hàng bị hủy', desc: 'Khi đơn hàng bị hủy bởi khách hoặc hệ thống', email: true, push: false, sms: false },
-            ]
-        },
-        {
-            title: 'Sản phẩm & Kho', items: [
-                { icon: 'fa-exclamation-triangle', iconBg: 'rgba(245,158,11,.15)', iconColor: '#f59e0b', title: 'Sắp hết hàng', desc: 'Khi số lượng tồn kho dưới ngưỡng cảnh báo', email: true, push: true, sms: false },
-                { icon: 'fa-box-open', iconBg: 'rgba(239,68,68,.15)', iconColor: '#ef4444', title: 'Hết hàng', desc: 'Khi sản phẩm hết hàng hoàn toàn', email: true, push: true, sms: true },
-            ]
-        },
-        {
-            title: 'Khách hàng', items: [
-                { icon: 'fa-user-plus', iconBg: 'rgba(16,185,129,.15)', iconColor: '#10b981', title: 'Khách hàng mới', desc: 'Khi có tài khoản khách hàng mới đăng ký', email: false, push: true, sms: false },
-                { icon: 'fa-star', iconBg: 'rgba(245,158,11,.15)', iconColor: '#f59e0b', title: 'Đánh giá mới', desc: 'Khi khách hàng gửi đánh giá sản phẩm', email: true, push: true, sms: false },
-            ]
-        },
-        {
-            title: 'Hệ thống', items: [
-                { icon: 'fa-shield-alt', iconBg: 'rgba(59,130,246,.15)', iconColor: '#3b82f6', title: 'Đăng nhập bất thường', desc: 'Phát hiện đăng nhập từ thiết bị lạ', email: true, push: true, sms: true },
-                { icon: 'fa-database', iconBg: 'rgba(124,58,237,.15)', iconColor: '#a78bfa', title: 'Sao lưu hoàn tất', desc: 'Khi quá trình sao lưu tự động hoàn thành', email: true, push: false, sms: false },
-            ]
-        },
-    ];
+    const GROUPS = [];
 
     const el = $('notifGroups');
     GROUPS.forEach(group => {
@@ -186,11 +160,7 @@ function renderNotifications() {
 
 // ─── Sessions ───
 function renderSessions() {
-    const SESSIONS = [
-        { device: 'Chrome trên Windows 11', meta: 'TP.Hồ Chí Minh · Lần cuối: Vừa xong', icon: 'fa-desktop', current: true },
-        { device: 'Safari trên iPhone 15', meta: 'TP.Hồ Chí Minh · Lần cuối: 2 giờ trước', icon: 'fa-mobile-alt', current: false },
-        { device: 'Firefox trên MacBook Pro', meta: 'Hà Nội · Lần cuối: Hôm qua, 14:30', icon: 'fa-laptop', current: false },
-    ];
+    const SESSIONS = [];
     const el = $('sessionsList');
     SESSIONS.forEach(s => {
         el.innerHTML += `
@@ -207,13 +177,7 @@ function renderSessions() {
 
 // ─── Payment methods ───
 function renderPaymentMethods() {
-    const METHODS = [
-        { icon: 'fa-university', iconBg: 'rgba(59,130,246,.15)', iconColor: '#3b82f6', name: 'Chuyển khoản ngân hàng', desc: 'VietcomBank, Techcombank, MB Bank...', enabled: true },
-        { icon: 'fa-credit-card', iconBg: 'rgba(124,58,237,.15)', iconColor: '#a78bfa', name: 'Thẻ tín dụng / Ghi nợ', desc: 'Visa, Mastercard, JCB', enabled: true },
-        { icon: 'fa-money-bill-wave', iconBg: 'rgba(16,185,129,.15)', iconColor: '#10b981', name: 'Tiền mặt khi nhận hàng', desc: 'COD - Thu tiền tại địa chỉ giao hàng', enabled: true },
-        { icon: 'fa-wallet', iconBg: 'rgba(249,115,22,.15)', iconColor: '#f97316', name: 'Ví điện tử', desc: 'MoMo, ZaloPay, VNPay, Shopeepay', enabled: true },
-        { icon: 'fa-qrcode', iconBg: 'rgba(6,182,212,.15)', iconColor: '#06b6d4', name: 'QR Code', desc: 'Quét mã QR thanh toán nhanh', enabled: false },
-    ];
+    const METHODS = [];
     const el = $('paymentMethods');
     METHODS.forEach(m => {
         el.innerHTML += `
@@ -233,12 +197,7 @@ function renderPaymentMethods() {
 
 // ─── Shipping providers ───
 function renderShipping() {
-    const PROVIDERS = [
-        { name: 'Giao Hàng Nhanh (GHN)', fee: '15,000–30,000₫', color: '#ef4444', enabled: true },
-        { name: 'Giao Hàng Tiết Kiệm', fee: '12,000–25,000₫', color: '#f97316', enabled: true },
-        { name: 'J&T Express', fee: '18,000–35,000₫', color: '#f59e0b', enabled: true },
-        { name: 'Viettel Post', fee: '10,000–22,000₫', color: '#3b82f6', enabled: false },
-    ];
+    const PROVIDERS = [];
     const el = $('shippingProviders');
     PROVIDERS.forEach(p => {
         el.innerHTML += `
@@ -257,14 +216,7 @@ function renderShipping() {
 
 // ─── Theme picker ───
 function renderThemePicker() {
-    const THEMES = [
-        { name: 'Violet Cyan', grad: 'linear-gradient(135deg,#7c3aed,#06b6d4)', active: true },
-        { name: 'Emerald', grad: 'linear-gradient(135deg,#10b981,#06b6d4)', active: false },
-        { name: 'Warm', grad: 'linear-gradient(135deg,#f97316,#ec4899)', active: false },
-        { name: 'Cool', grad: 'linear-gradient(135deg,#3b82f6,#06b6d4)', active: false },
-        { name: 'Gold', grad: 'linear-gradient(135deg,#f59e0b,#d97706)', active: false },
-        { name: 'Rose', grad: 'linear-gradient(135deg,#ec4899,#8b5cf6)', active: false },
-    ];
+    const THEMES = [];
     const el = $('themePicker');
     THEMES.forEach(t => {
         const div = document.createElement('div');
@@ -282,13 +234,7 @@ function renderThemePicker() {
 
 // ─── Appearance toggles ───
 function renderAppearanceToggles() {
-    const ITEMS = [
-        { title: 'Chế độ tối (Dark Mode)', desc: 'Giao diện nền tối mặc định của hệ thống', checked: true },
-        { title: 'Sidebar thu gọn khi khởi động', desc: 'Tự động thu gọn sidebar khi mở trang', checked: false },
-        { title: 'Hoạt ảnh & hiệu ứng', desc: 'Bật/tắt toàn bộ animation trên giao diện', checked: true },
-        { title: 'Thông báo toast', desc: 'Hiển thị thông báo góc phải màn hình', checked: true },
-        { title: 'Bảng điều khiển dày đặc', desc: 'Hiển thị nhiều thông tin hơn trên mỗi hàng', checked: false },
-    ];
+    const ITEMS = [];
     const el = $('appearanceToggles');
     ITEMS.forEach(item => {
         el.innerHTML += `
@@ -301,14 +247,7 @@ function renderAppearanceToggles() {
 
 // ─── Integrations ───
 function renderIntegrations() {
-    const INTEGRATIONS = [
-        { name: 'Google Analytics', category: 'Phân tích', icon: 'fa-chart-bar', iconBg: 'rgba(249,115,22,.15)', iconColor: '#f97316', desc: 'Theo dõi lượt truy cập và hành vi người dùng trên website.', connected: true },
-        { name: 'Facebook Pixel', category: 'Marketing', icon: 'fa-facebook', iconBg: 'rgba(59,130,246,.15)', iconColor: '#3b82f6', desc: 'Theo dõi conversion và chạy quảng cáo Facebook hiệu quả.', connected: true },
-        { name: 'Zalo OA', category: 'Liên lạc', icon: 'fa-comment-dots', iconBg: 'rgba(6,182,212,.15)', iconColor: '#06b6d4', desc: 'Gửi thông báo đơn hàng và chăm sóc khách hàng qua Zalo.', connected: true },
-        { name: 'Mailchimp', category: 'Email Marketing', icon: 'fa-envelope', iconBg: 'rgba(245,158,11,.15)', iconColor: '#f59e0b', desc: 'Tự động gửi email marketing và newsletter cho khách hàng.', connected: false },
-        { name: 'VNPAY', category: 'Thanh toán', icon: 'fa-qrcode', iconBg: 'rgba(239,68,68,.15)', iconColor: '#ef4444', desc: 'Tích hợp cổng thanh toán VNPAY cho đơn hàng online.', connected: true },
-        { name: 'Google Sheets', category: 'Xuất dữ liệu', icon: 'fa-table', iconBg: 'rgba(16,185,129,.15)', iconColor: '#10b981', desc: 'Đồng bộ dữ liệu đơn hàng và khách hàng lên Google Sheets.', connected: false },
-    ];
+    const INTEGRATIONS = [];
     const el = $('integrationsGrid');
     INTEGRATIONS.forEach(int => {
         el.innerHTML += `
@@ -358,12 +297,7 @@ function renderBackup() {
     </div>
     <button class="backup-btn" onclick="toast('Đang sao lưu dữ liệu...','info')"><i class="fas fa-sync-alt"></i> Sao lưu ngay</button>`;
 
-    const backups = [
-        { name: 'backup_2026-04-07_03-00.zip', size: '142 MB', date: '07/04/2026 03:00' },
-        { name: 'backup_2026-04-06_03-00.zip', size: '139 MB', date: '06/04/2026 03:00' },
-        { name: 'backup_2026-04-05_03-00.zip', size: '138 MB', date: '05/04/2026 03:00' },
-        { name: 'backup_2026-04-01_03-00.zip', size: '130 MB', date: '01/04/2026 03:00' },
-    ];
+    const backups = [];
     const el = $('backupList');
     backups.forEach(b => {
         el.innerHTML += `

@@ -21,21 +21,10 @@ const APPLY_LABELS = {
 };
 
 // ─── SAMPLE DATA ───
-const SAMPLE = [
-    { id: 'KM-001', title: 'Flash Sale Tháng 4', code: 'FLASH4', type: 'percent', value: 20, maxDiscount: 500000, minOrder: 500000, limit: 500, used: 312, applyFor: 'all', category: 'all', startDate: '2026-04-01', endDate: '2026-04-30', status: 'active', desc: 'Giảm 20% tất cả đơn hàng từ 500K trong tháng 4.' },
-    { id: 'KM-002', title: 'Miễn Phí Ship Hè', code: 'FREESHIP', type: 'freeship', value: 0, maxDiscount: 50000, minOrder: 300000, limit: 1000, used: 488, applyFor: 'all', category: 'all', startDate: '2026-05-01', endDate: '2026-08-31', status: 'scheduled', desc: 'Miễn phí vận chuyển toàn quốc cho đơn từ 300K.' },
-    { id: 'KM-003', title: 'Ưu Đãi Điện Thoại', code: 'PHONE15', type: 'percent', value: 15, maxDiscount: 2000000, minOrder: 10000000, limit: 200, used: 87, applyFor: 'all', category: 'Điện thoại', startDate: '2026-03-15', endDate: '2026-04-15', status: 'active', desc: 'Giảm 15% khi mua điện thoại cao cấp từ 10 triệu.' },
-    { id: 'KM-004', title: 'Chào Mừng Thành Viên', code: 'WELCOME', type: 'fixed', value: 200000, maxDiscount: 200000, minOrder: 500000, limit: null, used: 234, applyFor: 'new', category: 'all', startDate: '2026-01-01', endDate: '2026-12-31', status: 'active', desc: 'Giảm 200K cho khách hàng đăng ký lần đầu.' },
-    { id: 'KM-005', title: 'VIP Exclusive', code: 'VIP30', type: 'percent', value: 30, maxDiscount: 3000000, minOrder: 5000000, limit: 100, used: 42, applyFor: 'vip', category: 'all', startDate: '2026-04-01', endDate: '2026-06-30', status: 'active', desc: 'Ưu đãi độc quyền 30% dành cho khách hàng VIP.' },
-    { id: 'KM-006', title: 'Sinh Nhật Đặc Biệt', code: 'BIRTHDAY', type: 'percent', value: 25, maxDiscount: 1000000, minOrder: 0, limit: null, used: 156, applyFor: 'birthday', category: 'all', startDate: '2026-01-01', endDate: '2026-12-31', status: 'active', desc: 'Tặng ngay ưu đãi 25% vào ngày sinh nhật của bạn.' },
-    { id: 'KM-007', title: 'Laptop Giảm Mạnh', code: 'LAPTOP10', type: 'percent', value: 10, maxDiscount: 5000000, minOrder: 20000000, limit: 50, used: 50, applyFor: 'all', category: 'Laptop', startDate: '2026-03-01', endDate: '2026-03-31', status: 'expired', desc: 'Giảm 10% toàn bộ laptop trong tháng 3.' },
-    { id: 'KM-008', title: 'Combo Phụ Kiện', code: 'ACC200K', type: 'fixed', value: 200000, maxDiscount: 200000, minOrder: 1000000, limit: 300, used: 178, applyFor: 'all', category: 'Phụ kiện', startDate: '2026-04-10', endDate: '2026-05-10', status: 'scheduled', desc: 'Giảm ngay 200K khi mua combo phụ kiện từ 1 triệu.' },
-    { id: 'KM-009', title: 'Tạm Dừng Test', code: 'PAUSE99', type: 'percent', value: 5, maxDiscount: 100000, minOrder: 0, limit: 99, used: 10, applyFor: 'all', category: 'all', startDate: '2026-04-01', endDate: '2026-04-20', status: 'paused', desc: 'Mã test đang tạm dừng.' },
-    { id: 'KM-010', title: 'Smartwatch Deal', code: 'WATCH20', type: 'percent', value: 20, maxDiscount: 1500000, minOrder: 3000000, limit: 150, used: 63, applyFor: 'all', category: 'Smartwatch', startDate: '2026-04-05', endDate: '2026-04-25', status: 'active', desc: 'Giảm 20% tất cả smartwatch trong chương trình.' },
-];
+const SAMPLE = [];
 
 // ─── STATE ───
-let promos = JSON.parse(localStorage.getItem('ms_promos') || 'null') || SAMPLE.map(p => ({ ...p }));
+let promos = JSON.parse(localStorage.getItem('ms_promos') || 'null') || [];
 let filtered = [...promos];
 let currentPage = 1;
 const PAGE_SIZE = 9;
