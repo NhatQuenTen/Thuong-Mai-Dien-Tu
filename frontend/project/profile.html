@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhoneStore - Thông Tin Cá Nhân</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/order-history.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <h1>📱 PhoneStore</h1>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="Tìm kiếm sản phẩm..." id="searchInput">
+                <button id="searchBtn"><i class="fas fa-search"></i></button>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html">Trang chủ</a>
+                <a href="products.html">Sản phẩm</a>
+                <a href="promotion.html">Khuyến mãi</a>
+                <a href="cart.html">
+                    <div class="cart-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount">0</span>
+                    </div>
+                </a>
+                <a href="profile.html" id="profileLink" class="active"><i class="fas fa-user"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <!-- BREADCRUMB -->
+    <div class="breadcrumb-bar">
+        <div class="breadcrumb-inner">
+            <a href="index.html"><i class="fas fa-home"></i> Trang chủ</a>
+            <i class="fas fa-chevron-right sep"></i>
+            <span>Thông tin cá nhân</span>
+        </div>
+    </div>
+
+    <!-- PAGE WRAPPER (reuse oh-wrapper from order-history.css) -->
+    <div class="oh-wrapper">
+
+        <!-- LEFT: Profile sidebar -->
+        <aside class="profile-sidebar">
+            <div class="sidebar-user">
+                <div class="sidebar-avatar">
+                    <img id="sidebarAvatar"
+                        src="https://ui-avatars.com/api/?name=Nguyen+Van+A&background=b7791f&color=fff&size=80&rounded=true"
+                        alt="Avatar">
+                    <div class="sidebar-avatar-badge"><i class="fas fa-check"></i></div>
+                </div>
+                <div class="sidebar-user-name" id="sidebarName">Nguyễn Văn A</div>
+                <div class="sidebar-user-email" id="sidebarEmail">nguyenvana@gmail.com</div>
+                <div class="sidebar-member-tag"><i class="fas fa-crown"></i> Thành viên Vàng</div>
+            </div>
+            <nav class="sidebar-nav-profile">
+                <a href="profile.html" class="snav-link active"><i class="fas fa-user-circle"></i> Thông tin cá
+                    nhân</a>
+                <a href="order-history.html" class="snav-link"><i class="fas fa-receipt"></i> Lịch sử mua hàng</a>
+                <a href="#" class="snav-link"><i class="fas fa-heart"></i> Sản phẩm yêu thích</a>
+                <a href="#" class="snav-link"><i class="fas fa-map-marker-alt"></i> Địa chỉ giao hàng</a>
+                <a href="#" class="snav-link"><i class="fas fa-star"></i> Đánh giá của tôi</a>
+                <a href="#" class="snav-link"><i class="fas fa-ticket-alt"></i> Voucher của tôi</a>
+                <a href="#" class="snav-link logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+            </nav>
+        </aside>
+
+        <!-- RIGHT: Main content -->
+        <main class="pf-main">
+
+            <!-- Profile Header Card -->
+            <div class="pf-hero-card">
+                <div class="pf-hero-bg"></div>
+                <div class="pf-hero-content">
+                    <div class="pf-hero-avatar-wrap">
+                        <div class="pf-hero-avatar">
+                            <img id="heroAvatar"
+                                src="https://ui-avatars.com/api/?name=Nguyen+Van+A&background=b7791f&color=fff&size=120&rounded=true"
+                                alt="Avatar">
+                            <label class="pf-avatar-upload" for="avatarInput">
+                                <i class="fas fa-camera"></i>
+                            </label>
+                            <input type="file" id="avatarInput" accept="image/*" hidden>
+                        </div>
+                        <div class="pf-hero-info">
+                            <h2 id="heroName">Nguyễn Văn A</h2>
+                            <p id="heroEmail">nguyenvana@gmail.com</p>
+                            <div class="pf-hero-tags">
+                                <span class="pf-tag gold"><i class="fas fa-crown"></i> Thành viên Vàng</span>
+                                <span class="pf-tag joined"><i class="fas fa-calendar-check"></i> Tham gia: 01/2025</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pf-hero-stats">
+                        <div class="pf-stat">
+                            <span class="pf-stat-num" id="statOrders">7</span>
+                            <span class="pf-stat-label">Đơn hàng</span>
+                        </div>
+                        <div class="pf-stat">
+                            <span class="pf-stat-num" id="statSpent">162.3M</span>
+                            <span class="pf-stat-label">Đã chi tiêu</span>
+                        </div>
+                        <div class="pf-stat">
+                            <span class="pf-stat-num" id="statPoints">1,623</span>
+                            <span class="pf-stat-label">Điểm tích lũy</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personal Info Form -->
+            <div class="pf-section-card">
+                <div class="pf-section-header">
+                    <div class="pf-section-title">
+                        <i class="fas fa-user-edit"></i> Thông Tin Cá Nhân
+                    </div>
+                    <button class="pf-btn-edit" id="btnEditInfo">
+                        <i class="fas fa-pen"></i> Chỉnh sửa
+                    </button>
+                </div>
+                <form class="pf-form" id="profileForm">
+                    <div class="pf-form-grid">
+                        <div class="pf-field">
+                            <label><i class="fas fa-user"></i> Họ và tên</label>
+                            <input type="text" id="pfName" value="Nguyễn Văn A" disabled>
+                        </div>
+                        <div class="pf-field">
+                            <label><i class="fas fa-envelope"></i> Email</label>
+                            <input type="email" id="pfEmail" value="nguyenvana@gmail.com" disabled>
+                        </div>
+                        <div class="pf-field">
+                            <label><i class="fas fa-phone"></i> Số điện thoại</label>
+                            <input type="tel" id="pfPhone" value="0901 234 567" disabled>
+                        </div>
+                        <div class="pf-field">
+                            <label><i class="fas fa-birthday-cake"></i> Ngày sinh</label>
+                            <input type="date" id="pfBirthday" value="1995-06-15" disabled>
+                        </div>
+                        <div class="pf-field">
+                            <label><i class="fas fa-venus-mars"></i> Giới tính</label>
+                            <select id="pfGender" disabled>
+                                <option value="male" selected>Nam</option>
+                                <option value="female">Nữ</option>
+                                <option value="other">Khác</option>
+                            </select>
+                        </div>
+                        <div class="pf-field">
+                            <label><i class="fas fa-id-card"></i> CCCD/CMND</label>
+                            <input type="text" id="pfIdCard" value="079095001234" disabled>
+                        </div>
+                    </div>
+                    <div class="pf-form-actions" id="formActions" style="display:none">
+                        <button type="button" class="pf-btn-cancel" id="btnCancelEdit">Hủy</button>
+                        <button type="submit" class="pf-btn-save"><i class="fas fa-check"></i> Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Address Section -->
+            <div class="pf-section-card">
+                <div class="pf-section-header">
+                    <div class="pf-section-title">
+                        <i class="fas fa-map-marker-alt"></i> Địa Chỉ Giao Hàng
+                    </div>
+                    <button class="pf-btn-edit" id="btnAddAddress">
+                        <i class="fas fa-plus"></i> Thêm mới
+                    </button>
+                </div>
+                <div class="pf-address-list" id="addressList">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+
+            <!-- Security Section -->
+            <div class="pf-section-card">
+                <div class="pf-section-header">
+                    <div class="pf-section-title">
+                        <i class="fas fa-shield-alt"></i> Bảo Mật Tài Khoản
+                    </div>
+                </div>
+                <div class="pf-security-list">
+                    <div class="pf-security-item">
+                        <div class="pf-security-info">
+                            <div class="pf-security-icon"><i class="fas fa-lock"></i></div>
+                            <div>
+                                <h4>Mật khẩu</h4>
+                                <p>Cập nhật lần cuối: 15/03/2026</p>
+                            </div>
+                        </div>
+                        <button class="pf-btn-outline" id="btnChangePass">Đổi mật khẩu</button>
+                    </div>
+                    <div class="pf-security-item">
+                        <div class="pf-security-info">
+                            <div class="pf-security-icon success"><i class="fas fa-mobile-alt"></i></div>
+                            <div>
+                                <h4>Xác thực 2 lớp (2FA)</h4>
+                                <p class="pf-status-on"><i class="fas fa-check-circle"></i> Đang bật</p>
+                            </div>
+                        </div>
+                        <button class="pf-btn-outline">Quản lý</button>
+                    </div>
+                    <div class="pf-security-item">
+                        <div class="pf-security-info">
+                            <div class="pf-security-icon info"><i class="fab fa-google"></i></div>
+                            <div>
+                                <h4>Liên kết Google</h4>
+                                <p>nguyenvana@gmail.com</p>
+                            </div>
+                        </div>
+                        <button class="pf-btn-outline connected"><i class="fas fa-link"></i> Đã liên kết</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="pf-quick-actions">
+                <a href="order-history.html" class="pf-quick-card">
+                    <div class="pf-quick-icon"><i class="fas fa-receipt"></i></div>
+                    <div class="pf-quick-label">Lịch sử mua hàng</div>
+                    <span class="pf-quick-badge" id="quickOrders">7</span>
+                </a>
+                <a href="#" class="pf-quick-card">
+                    <div class="pf-quick-icon heart"><i class="fas fa-heart"></i></div>
+                    <div class="pf-quick-label">Yêu thích</div>
+                    <span class="pf-quick-badge">3</span>
+                </a>
+                <a href="#" class="pf-quick-card">
+                    <div class="pf-quick-icon voucher"><i class="fas fa-ticket-alt"></i></div>
+                    <div class="pf-quick-label">Voucher</div>
+                    <span class="pf-quick-badge">5</span>
+                </a>
+                <a href="#" class="pf-quick-card">
+                    <div class="pf-quick-icon star"><i class="fas fa-star"></i></div>
+                    <div class="pf-quick-label">Đánh giá</div>
+                    <span class="pf-quick-badge">2</span>
+                </a>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- TOAST -->
+    <div class="oh-toast-container" id="toastContainer"></div>
+
+    <!-- BACK TO TOP -->
+    <button id="backToTop" class="back-to-top"><i class="fas fa-arrow-up"></i></button>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>PhoneStore</h3>
+                <p>Hệ thống bán lẻ điện thoại chính hãng</p>
+                <p>📍 740 Sư Vạn Hạnh, Quận 10, TP. Hồ Chí Minh</p>
+                <p>📞 1900 1234</p>
+                <p>✉️ support@phonestore.vn</p>
+            </div>
+            <div class="footer-section">
+                <h3>Về chúng tôi</h3>
+                <a href="#">Giới thiệu</a>
+                <a href="#">Tuyển dụng</a>
+                <a href="#">Chính sách bảo mật</a>
+                <a href="#">Điều khoản sử dụng</a>
+            </div>
+            <div class="footer-section">
+                <h3>Hỗ trợ khách hàng</h3>
+                <a href="#">Hướng dẫn mua hàng</a>
+                <a href="#">Phương thức thanh toán</a>
+                <a href="#">Chính sách đổi trả</a>
+                <a href="#">Chính sách bảo hành</a>
+            </div>
+            <div class="footer-section">
+                <h3>Kết nối với chúng tôi</h3>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 PhoneStore. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/profile.js"></script>
+</body>
+
+</html>
