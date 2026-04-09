@@ -24,6 +24,16 @@ document.addEventListener("DOMContentLoaded", () => {
     updateCartCount();
     setupBackToTop();
     subscribeProducts();
+    
+    const profileLinks = document.querySelectorAll('a[href="profile.html"], #profileLink');
+    profileLinks.forEach(link => {
+        link.addEventListener("click", function(e) {
+            if (!isLoggedIn()) {
+                e.preventDefault();
+                window.location.href = "signin.html";
+            }
+        });
+    });
 });
 
 function subscribeProducts() {

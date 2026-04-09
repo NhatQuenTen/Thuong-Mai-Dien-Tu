@@ -5,6 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PhoneStore - Thông Tin Cá Nhân</title>
+    <!-- Kiểm tra đăng nhập ngay lập tức -->
+    <script>
+        if (!localStorage.getItem('currentUser')) {
+            window.location.href = 'signin.html';
+        }
+    </script>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/order-history.css">
     <link rel="stylesheet" href="css/profile.css">
