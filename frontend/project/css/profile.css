@@ -36,7 +36,7 @@
     right: -10%;
     width: 300px;
     height: 300px;
-    background: radial-gradient(circle, rgba(255,217,102,.12) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 217, 102, .12) 0%, transparent 70%);
     border-radius: 50%;
 }
 
@@ -47,7 +47,7 @@
     left: 10%;
     width: 200px;
     height: 200px;
-    background: radial-gradient(circle, rgba(212,163,115,.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(212, 163, 115, .1) 0%, transparent 70%);
     border-radius: 50%;
 }
 
@@ -80,7 +80,7 @@
     border-radius: 50%;
     border: 4px solid var(--bg-white);
     object-fit: cover;
-    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .12);
     transition: all .3s ease;
 }
 
@@ -104,18 +104,18 @@
     cursor: pointer;
     border: 3px solid var(--bg-white);
     transition: all .3s ease;
-    box-shadow: 0 2px 8px rgba(183,121,31,.3);
+    box-shadow: 0 2px 8px rgba(183, 121, 31, .3);
 }
 
 .pf-avatar-upload:hover {
     transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(183,121,31,.4);
+    box-shadow: 0 4px 12px rgba(183, 121, 31, .4);
 }
 
 .pf-hero-info h2 {
     font-size: 22px;
     font-weight: 800;
-    color: var(--brown-dark);
+    color: rgb(255, 217, 102);
     margin-bottom: 3px;
 }
 
@@ -173,7 +173,7 @@
 
 .pf-stat:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(183,121,31,.12);
+    box-shadow: 0 4px 12px rgba(183, 121, 31, .12);
 }
 
 .pf-stat-num {
@@ -240,12 +240,12 @@
     cursor: pointer;
     font-family: inherit;
     transition: all .3s ease;
-    box-shadow: 0 2px 8px rgba(183,121,31,.25);
+    box-shadow: 0 2px 8px rgba(183, 121, 31, .25);
 }
 
 .pf-btn-edit:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(183,121,31,.35);
+    box-shadow: 0 4px 14px rgba(183, 121, 31, .35);
 }
 
 /* ═══════════════════════════════════════════
@@ -314,7 +314,7 @@
 .pf-field input:enabled:focus,
 .pf-field select:enabled:focus {
     border-color: var(--gold-primary);
-    box-shadow: 0 0 0 3px rgba(183,121,31,.1);
+    box-shadow: 0 0 0 3px rgba(183, 121, 31, .1);
 }
 
 .pf-form-actions {
@@ -357,13 +357,13 @@
     display: flex;
     align-items: center;
     gap: 7px;
-    box-shadow: 0 3px 12px rgba(183,121,31,.3);
+    box-shadow: 0 3px 12px rgba(183, 121, 31, .3);
     transition: all .3s ease;
 }
 
 .pf-btn-save:hover {
     transform: translateY(-1px);
-    box-shadow: 0 5px 18px rgba(183,121,31,.4);
+    box-shadow: 0 5px 18px rgba(183, 121, 31, .4);
 }
 
 /* ═══════════════════════════════════════════
@@ -615,9 +615,17 @@
     transform: scale(1.08);
 }
 
-.pf-quick-icon.heart { color: #e74c3c; }
-.pf-quick-icon.voucher { color: var(--purple); }
-.pf-quick-icon.star { color: #f39c12; }
+.pf-quick-icon.heart {
+    color: #e74c3c;
+}
+
+.pf-quick-icon.voucher {
+    color: var(--purple);
+}
+
+.pf-quick-icon.star {
+    color: #f39c12;
+}
 
 .pf-quick-label {
     font-size: 13px;
