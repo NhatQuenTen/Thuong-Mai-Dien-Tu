@@ -323,7 +323,7 @@
         const confirmPasswordInput = document.getElementById('confirmPassword');
         const termsInput = document.getElementById('terms');
 
-        if (!fullnameInput || !emailInput || !phoneInput || !passwordInput || !confirmPasswordInput || !termsInput) {
+        if (!fullnameInput || !emailInput || !phoneInput || !passwordInput || !confirmPasswordInput) {
             showError('Form đăng ký chưa tải đầy đủ. Vui lòng tải lại trang.');
             return;
         }
@@ -333,7 +333,7 @@
         const phone = phoneInput.value.trim();
         const password = passwordInput.value;
         const confirmPassword = confirmPasswordInput.value;
-        const terms = termsInput.checked;
+        const terms = termsInput ? termsInput.checked : true;
 
         clearAllFieldErrors();
 
@@ -388,7 +388,7 @@
             return;
         }
 
-        if (!terms) {
+        if (termsInput && !terms) {
             showError('Vui lòng đồng ý điều khoản để tiếp tục.');
             return;
         }
