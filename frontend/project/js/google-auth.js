@@ -7,10 +7,39 @@
  * - Firebase SDK (từ CDN hoặc npm)
  */
 
+// Import Firestore
+// Sử dụng compat mode
+// const db = firebase.firestore();
+
 class GoogleAuthManager {
     constructor() {
         this.isInitialized = false;
         this.currentUser = null;
+        this.db = null;
+    }
+
+    /**
+     * Show error message
+     * @param {string} message
+     */
+    showError(message) {
+        console.error('Auth Error:', message);
+        // Try to show in UI if available
+        if (typeof window.showError === 'function') {
+            window.showError(message);
+        }
+    }
+
+    /**
+     * Show success message
+     * @param {string} message
+     */
+    showSuccess(message) {
+        console.log('Auth Success:', message);
+        // Try to show in UI if available
+        if (typeof window.showSuccess === 'function') {
+            window.showSuccess(message);
+        }
     }
 
     /**
@@ -19,7 +48,22 @@ class GoogleAuthManager {
      */
     async initialize() {
         try {
+            // Đợi Firebase config load hoàn toàn
+            let attempts = 0;
+            while ((!window.firebaseAuth || !window.googleProvider) && attempts < 100) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+                attempts++;
+            }
+
+            if (!window.firebaseAuth) {
+                throw new Error('Firebase Auth not available after waiting');
+            }
+            if (!window.googleProvider) {
+                throw new Error('Google Provider not available after waiting');
+            }
+
             // Firebase đã được khởi tạo trong firebase-config.js
+            this.db = window.firebaseDb;
             this.isInitialized = true;
             console.log(' Firebase Auth khởi tạo thành công');
 
@@ -69,6 +113,11 @@ class GoogleAuthManager {
         try {
             const result = await window.firebaseAuth.signInWithPopup(window.googleProvider);
             const user = result.user;
+            
+            if (!user) {
+                throw new Error('No user data received from Google sign-in');
+            }
+            
             console.log(' Đăng nhập Google thành công:', user);
 
             // Xử lý user data (lưu vào localStorage và Firebase nếu cần)
@@ -127,6 +176,28 @@ class GoogleAuthManager {
 
             localStorage.setItem('currentUser', JSON.stringify(userData));
             this.currentUser = userData;
+
+            // Kiểm tra và lưu vào Firestore nếu chưa có (chỉ nếu db available)
+            if (this.db) {
+                try {
+                    const userDocRef = this.db.collection("users").doc(user.uid);
+                    const userDoc = await userDocRef.get();
+                    if (!userDoc.exists) {
+                        await userDocRef.set({
+                            uid: user.uid,
+                            displayName: user.displayName || user.email.split('@')[0],
+                            email: user.email,
+                            phone: user.phoneNumber || '',
+                            role: 'user',
+                            authProvider: authProvider,
+                            createdAt: new Date(),
+                            updatedAt: new Date()
+                        });
+                    }
+                } catch (dbError) {
+                    console.warn('Could not save to Firestore:', dbError.message);
+                }
+            }
 
             this.showSuccess('Đăng nhập thành công! Đang chuyển hướng...');
 
@@ -255,6 +326,24 @@ class GoogleAuthManager {
 
             localStorage.setItem('currentUser', JSON.stringify(userData));
             this.currentUser = userData;
+
+            // Lưu vào Firestore (chỉ nếu db available)
+            if (this.db) {
+                try {
+                    await this.db.collection("users").doc(user.uid).set({
+                        uid: user.uid,
+                        displayName: displayName,
+                        email: user.email,
+                        phone: phone,
+                        role: 'user',
+                        authProvider: 'email',
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    });
+                } catch (dbError) {
+                    console.warn('Could not save to Firestore:', dbError.message);
+                }
+            }
 
             this.showSuccess('Đăng ký thành công! Đang chuyển hướng...');
 
@@ -492,6 +581,7 @@ class GoogleAuthManager {
 
 // Tạo instance toàn cục
 const googleAuth = new GoogleAuthManager();
+window.googleAuth = googleAuth;
 
 // Khởi tạo khi DOM sẵn sàng
 document.addEventListener('DOMContentLoaded', async () => {

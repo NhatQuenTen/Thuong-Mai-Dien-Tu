@@ -8,12 +8,6 @@ function getCurrentUser() {
     return JSON.parse(localStorage.getItem('currentUser'));
 }
 
-function logout() {
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('cart');
-    location.reload();
-}
-
 // ========== LẤY DỮ LIỆU TỪ LOCALSTORAGE ==========
 function getCart() {
     if (!isLoggedIn()) return [];
@@ -180,9 +174,6 @@ function renderCartPage() {
                 <span style="font-weight: 600; margin-left: 10px;">${currentUser.name}</span>
                 <span style="color: #666; margin-left: 10px; font-size: 13px;">${currentUser.email}</span>
             </div>
-            <button onclick="logout()" style="background: none; border: 1px solid #ff4757; padding: 5px 15px; border-radius: 20px; color: #ff4757; cursor: pointer;">
-                <i class="fas fa-sign-out-alt"></i> Đăng xuất
-            </button>
         </div>
     `;
 

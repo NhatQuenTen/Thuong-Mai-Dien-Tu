@@ -16,11 +16,36 @@ if (!firebase.apps.length) {
     firebase.initializeApp(FIREBASE_CONFIG);
 }
 
-// Export Firebase Auth để sử dụng ở nơi khác (global)
-window.firebaseAuth = firebase.auth();
-window.googleProvider = new firebase.auth.GoogleAuthProvider();
+// Khởi tạo Firebase App (nếu chưa có)
+if (!firebase.apps.length) {
+    firebase.initializeApp(FIREBASE_CONFIG);
+}
 
-// Cấu hình Google Provider (tùy chọn: thêm scope nếu cần)
-window.googleProvider.setCustomParameters({
-    prompt: 'select_account'
-});
+// Đợi Firebase SDK load và khởi tạo global objects
+let initAttempts = 0;
+const initFirebaseGlobals = () => {
+    try {
+        // Export Firebase Auth để sử dụng ở nơi khác (global)
+        window.firebaseAuth = firebase.auth();
+        window.firebaseDb = firebase.firestore();
+        window.googleProvider = new firebase.auth.GoogleAuthProvider();
+
+        // Cấu hình Google Provider (tùy chọn: thêm scope nếu cần)
+        window.googleProvider.setCustomParameters({
+            prompt: 'select_account'
+        });
+
+        console.log('Firebase globals initialized successfully');
+    } catch (error) {
+        initAttempts++;
+        if (initAttempts < 10) {
+            console.log(`Firebase init attempt ${initAttempts} failed, retrying...`);
+            setTimeout(initFirebaseGlobals, 100);
+        } else {
+            console.error('Failed to initialize Firebase globals after 10 attempts:', error);
+        }
+    }
+};
+
+// Chạy init sau một chút delay để đảm bảo Firebase SDK đã load
+setTimeout(initFirebaseGlobals, 100);
