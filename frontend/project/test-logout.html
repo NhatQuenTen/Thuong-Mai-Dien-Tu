@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Logout</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .test-btn:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Test Logout Functionality</h1>
+    <p>Current User: <span id="currentUserDisplay">Loading...</span></p>
+    <button id="logoutBtn" class="test-btn">Đăng xuất</button>
+
+    <!-- LOGOUT CONFIRM MODAL -->
+    <div class="confirm-backdrop" id="logoutConfirmBackdrop" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+            <h3>Xác nhận đăng xuất</h3>
+            <p>Bạn có chắc muốn đăng xuất không?</p>
+            <div style="margin-top: 20px;">
+                <button id="logoutCancelBtn" style="padding: 10px 20px; margin-right: 10px;">Không</button>
+                <button id="logoutConfirmBtn" style="padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 5px;">Có, đăng xuất</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock currentUser for testing
+        localStorage.setItem('currentUser', JSON.stringify({
+            id: 'test123',
+            name: 'Test User',
+            email: 'test@example.com'
+        }));
+
+        function $(id) { return document.getElementById(id); }
+
+        function getCurrentUser() {
+            return JSON.parse(localStorage.getItem('currentUser'));
+        }
+
+        function initLogout() {
+            const btn = $('logoutBtn');
+            const confirmBtn = $('logoutConfirmBtn');
+            const cancelBtn = $('logoutCancelBtn');
+            const backdrop = $('logoutConfirmBackdrop');
+
+            console.log('initLogout - Elements found:', { btn, confirmBtn, cancelBtn, backdrop });
+
+            if (!btn || !confirmBtn || !cancelBtn || !backdrop) {
+                console.error('initLogout - Missing elements:', { btn, confirmBtn, cancelBtn, backdrop });
+                return;
+            }
+
+            btn.addEventListener('click', e => {
+                e.preventDefault();
+                console.log('Logout button clicked');
+                openLogoutConfirm();
+            });
+
+            cancelBtn.addEventListener('click', e => {
+                e.preventDefault();
+                console.log('Cancel button clicked');
+                closeLogoutConfirm();
+            });
+
+            backdrop.addEventListener('click', e => {
+                if (e.target === backdrop) {
+                    console.log('Backdrop clicked');
+                    closeLogoutConfirm();
+                }
+            });
+
+            confirmBtn.addEventListener('click', e => {
+                e.preventDefault();
+                console.log('Confirm logout clicked');
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('ps_user');
+                closeLogoutConfirm();
+                alert('Đã đăng xuất! Đang chuyển hướng...');
+                setTimeout(() => { window.location.href = 'signin.html'; }, 1200);
+            });
+        }
+
+        function openLogoutConfirm() {
+            const backdrop = $('logoutConfirmBackdrop');
+            if (backdrop) backdrop.style.display = 'flex';
+        }
+
+        function closeLogoutConfirm() {
+            const backdrop = $('logoutConfirmBackdrop');
+            if (backdrop) backdrop.style.display = 'none';
+        }
+
+        // Display current user
+        const currentUser = getCurrentUser();
+        $('currentUserDisplay').textContent = currentUser ? currentUser.name : 'None';
+
+        // Initialize
+        window.addEventListener('load', () => {
+            console.log('Window loaded, initializing logout...');
+            initLogout();
+        });
+    </script>
+</body>
+</html>

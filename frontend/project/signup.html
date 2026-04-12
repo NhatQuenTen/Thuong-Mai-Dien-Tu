@@ -11,6 +11,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
         .auth-container {
             max-width: 450px;
@@ -333,7 +334,7 @@
         const phone = phoneInput.value.trim();
         const password = passwordInput.value;
         const confirmPassword = confirmPasswordInput.value;
-        const terms = termsInput.checked;
+        const terms = termsInput ? termsInput.checked : true;
 
         clearAllFieldErrors();
 
@@ -388,7 +389,7 @@
             return;
         }
 
-        if (!terms) {
+        if (termsInput && !terms) {
             showError('Vui lòng đồng ý điều khoản để tiếp tục.');
             return;
         }
@@ -472,8 +473,8 @@
 <script>
     document.addEventListener('DOMContentLoaded', async () => {
         try {
-            // Khởi tạo Google Auth
-            await googleAuth.initialize();
+            // Google Auth đã được khởi tạo trong google-auth.js
+            // Chỉ cần hide loading và enable form
 
             // Hide loading overlay and enable form
             const loadingOverlay = document.getElementById('loadingOverlay');

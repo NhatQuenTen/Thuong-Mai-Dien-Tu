@@ -33,7 +33,6 @@ const DEFAULT_USER = {
     idCard: '079095001234',
     avatar: '',
     joined: '01/2025',
-    memberTag: 'Thành viên Vàng',
     twoFA: true,
 };
 
@@ -50,14 +49,57 @@ const DEFAULT_ADDRESSES = [
     },
 ];
 
-function loadUser() { return JSON.parse(localStorage.getItem('ps_user') || 'null') || DEFAULT_USER; }
-function loadAddresses() { return JSON.parse(localStorage.getItem('ps_addrs') || 'null') || DEFAULT_ADDRESSES; }
+function loadUser() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    if (!currentUser) return null;
+    return {
+        ...DEFAULT_USER,
+        name: currentUser.name || currentUser.displayName || currentUser.fullName || DEFAULT_USER.name,
+        email: currentUser.email || DEFAULT_USER.email,
+        phone: currentUser.phone || DEFAULT_USER.phone,
+        birthday: currentUser.birthday || DEFAULT_USER.birthday,
+        gender: currentUser.gender || DEFAULT_USER.gender,
+        idCard: currentUser.idCard || DEFAULT_USER.idCard,
+        avatar: currentUser.avatar || DEFAULT_USER.avatar,
+        joined: currentUser.joined || DEFAULT_USER.joined,
+        memberTag: currentUser.memberTag || DEFAULT_USER.memberTag,
+        twoFA: typeof currentUser.twoFA === 'boolean' ? currentUser.twoFA : DEFAULT_USER.twoFA,
+    };
+}
+function loadAddresses() { return JSON.parse(localStorage.getItem('ps_addrs') || 'null') || []; }
 function loadOrders() { return JSON.parse(localStorage.getItem('ps_orders') || '[]'); }
 function saveUser(u) { localStorage.setItem('ps_user', JSON.stringify(u)); }
 function saveAddresses(a) { localStorage.setItem('ps_addrs', JSON.stringify(a)); }
 
 let user = loadUser();
 let addresses = loadAddresses();
+
+function showLoggedOutState() {
+    const wrapper = document.querySelector('.oh-wrapper');
+    const prompt = $('notLoggedInPrompt');
+    if (wrapper) wrapper.style.display = 'none';
+    if (prompt) prompt.style.display = 'block';
+    const logoutBtn = $('logoutBtn');
+    if (logoutBtn) logoutBtn.style.display = 'none';
+}
+
+function initProfilePage() {
+    if (!user) {
+        showLoggedOutState();
+        return;
+    }
+
+    renderUserUI();
+    renderAddresses();
+    initAvatarUpload();
+    initProfileForm();
+    initTwoFA();
+    initLogout();
+    initBackToTop();
+    initQuickNav();
+    initButtons();
+    syncCartCount();
+}
 
 // ─────────────────────────────────────────────
 //  RENDER HERO & SIDEBAR
@@ -165,7 +207,6 @@ function initProfileForm() {
         actions.style.display = 'flex';
         btnEdit.innerHTML = '<i class="fas fa-times"></i> Hủy chỉnh sửa';
         btnEdit.style.background = 'linear-gradient(45deg,#999,#666)';
-        btnEdit.onclick = cancelEdit;
     }
 
     function cancelEdit() {
@@ -181,10 +222,12 @@ function initProfileForm() {
         actions.style.display = 'none';
         btnEdit.innerHTML = '<i class="fas fa-pen"></i> Chỉnh sửa';
         btnEdit.style.background = '';
-        btnEdit.onclick = enableEdit;
     }
 
-    if (btnEdit) btnEdit.addEventListener('click', enableEdit);
+    if (btnEdit) btnEdit.addEventListener('click', () => {
+        if (editMode) cancelEdit();
+        else enableEdit();
+    });
     if (btnCancel) btnCancel.addEventListener('click', cancelEdit);
 
     if (form) {
@@ -534,17 +577,51 @@ function initTwoFA() {
 // ─────────────────────────────────────────────
 //  LOGOUT
 // ─────────────────────────────────────────────
+function openLogoutConfirm() {
+    const backdrop = $('logoutConfirmBackdrop');
+    if (!backdrop) return;
+    backdrop.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLogoutConfirm() {
+    const backdrop = $('logoutConfirmBackdrop');
+    if (!backdrop) return;
+    backdrop.classList.remove('show');
+    document.body.style.overflow = '';
+}
+
 function initLogout() {
     const btn = $('logoutBtn');
-    if (!btn) return;
+    const confirmBtn = $('logoutConfirmBtn');
+    const cancelBtn = $('logoutCancelBtn');
+    const backdrop = $('logoutConfirmBackdrop');
+    if (!btn || !confirmBtn || !cancelBtn || !backdrop) return;
+
     btn.addEventListener('click', e => {
         e.preventDefault();
-        if (confirm('Bạn có chắc muốn đăng xuất?')) {
-            localStorage.removeItem('ps_user');
-            localStorage.removeItem('ps_orders');
-            toast('Đã đăng xuất. Đang chuyển hướng...', 'info');
-            setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+        openLogoutConfirm();
+    });
+
+    cancelBtn.addEventListener('click', e => {
+        e.preventDefault();
+        closeLogoutConfirm();
+    });
+
+    backdrop.addEventListener('click', e => {
+        if (e.target === backdrop) {
+            closeLogoutConfirm();
         }
+    });
+
+    confirmBtn.addEventListener('click', e => {
+        e.preventDefault();
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('ps_user');
+        localStorage.removeItem('ps_orders');
+        closeLogoutConfirm();
+        toast('Đã đăng xuất. Đang chuyển hướng đến đăng nhập...', 'info');
+        setTimeout(() => { window.location.href = 'signin.html'; }, 1200);
     });
 }
 
@@ -599,15 +676,4 @@ function initButtons() {
 // ─────────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-    renderUserUI();
-    renderAddresses();
-    initAvatarUpload();
-    initProfileForm();
-    initTwoFA();
-    initLogout();
-    initBackToTop();
-    initQuickNav();
-    initButtons();
-    syncCartCount();
-});
+document.addEventListener('DOMContentLoaded', initProfilePage);

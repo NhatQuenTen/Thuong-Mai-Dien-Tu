@@ -6,152 +6,19 @@
    pagination, toast, cart sync
    ============================================= */
 
-// ─── SAMPLE DATA ────────────────────────────
-const SAMPLE_ORDERS = [
-    {
-        id: 'PS-2026-0041',
-        date: '2026-04-03T14:22:00',
-        status: 'shipping',
-        items: [
-            { name: 'iPhone 16 Pro Max 256GB', variant: 'Titan Đen / 256GB', qty: 1, price: 34990000, img: 'https://placehold.co/120x120/fff5e6/b7791f?text=iPhone+16' },
-            { name: 'Ốp lưng Apple Silicone', variant: 'Đen', qty: 1, price: 790000, img: 'https://placehold.co/120x120/fff5e6/b7791f?text=Case' },
-        ],
-        shipping: 0, discount: 500000,
-        address: { name: 'Nguyễn Văn A', phone: '0901 234 567', full: '123 Lê Lợi, Phường Bến Nghé, Quận 1, TP.HCM' },
-        payment: { method: 'Chuyển khoản ngân hàng', status: 'Đã thanh toán', bank: 'VCB - 1234 5678 9012' },
-        timeline: [
-            { step: 'Đặt hàng', time: '03/04/2026 14:22', done: true },
-            { step: 'Xác nhận', time: '03/04/2026 14:45', done: true },
-            { step: 'Đang đóng gói', time: '03/04/2026 16:00', done: true },
-            { step: 'Đang giao', time: '04/04/2026 08:30', done: true, current: true },
-            { step: 'Hoàn thành', time: '', done: false },
-        ],
-        note: 'Giao giờ hành chính, gọi trước 30 phút.',
-    },
-    {
-        id: 'PS-2026-0038',
-        date: '2026-03-28T09:15:00',
-        status: 'delivered',
-        items: [
-            { name: 'Samsung Galaxy S25 Ultra 256GB', variant: 'Titanium Gray / 256GB', qty: 1, price: 31990000, img: 'https://placehold.co/120x120/e3f2fd/1565c0?text=Samsung' },
-        ],
-        shipping: 30000, discount: 0,
-        address: { name: 'Nguyễn Văn A', phone: '0901 234 567', full: '123 Lê Lợi, Phường Bến Nghé, Quận 1, TP.HCM' },
-        payment: { method: 'Thẻ tín dụng Visa', status: 'Đã thanh toán', bank: '**** **** **** 4567' },
-        timeline: [
-            { step: 'Đặt hàng', time: '28/03/2026 09:15', done: true },
-            { step: 'Xác nhận', time: '28/03/2026 09:30', done: true },
-            { step: 'Đang đóng gói', time: '28/03/2026 11:00', done: true },
-            { step: 'Đang giao', time: '29/03/2026 07:20', done: true },
-            { step: 'Hoàn thành', time: '29/03/2026 14:15', done: true },
-        ],
-        note: '',
-        reviewed: false,
-    },
-    {
-        id: 'PS-2026-0035',
-        date: '2026-03-20T16:44:00',
-        status: 'delivered',
-        items: [
-            { name: 'AirPods Pro 2 (USB-C)', variant: 'Trắng', qty: 1, price: 7490000, img: 'https://placehold.co/120x120/f0ebfa/6f42c1?text=AirPods' },
-            { name: 'Apple Watch Series 10 44mm', variant: 'Nhôm Bạc / Sport Band', qty: 1, price: 12990000, img: 'https://placehold.co/120x120/f0ebfa/6f42c1?text=Watch' },
-            { name: 'Cáp MagSafe 1m', variant: 'Trắng', qty: 2, price: 890000, img: 'https://placehold.co/120x120/f0ebfa/6f42c1?text=Cable' },
-        ],
-        shipping: 0, discount: 1000000,
-        address: { name: 'Nguyễn Văn A', phone: '0901 234 567', full: '123 Lê Lợi, Phường Bến Nghé, Quận 1, TP.HCM' },
-        payment: { method: 'Ví MoMo', status: 'Đã thanh toán', bank: '' },
-        timeline: [
-            { step: 'Đặt hàng', time: '20/03/2026 16:44', done: true },
-            { step: 'Xác nhận', time: '20/03/2026 17:00', done: true },
-            { step: 'Đang đóng gói', time: '21/03/2026 08:30', done: true },
-            { step: 'Đang giao', time: '21/03/2026 14:00', done: true },
-            { step: 'Hoàn thành', time: '22/03/2026 10:30', done: true },
-        ],
-        note: '',
-        reviewed: true,
-    },
-    {
-        id: 'PS-2026-0031',
-        date: '2026-03-10T11:30:00',
-        status: 'delivered',
-        items: [
-            { name: 'MacBook Pro M4 14-inch 512GB', variant: 'Space Black / 16GB RAM', qty: 1, price: 52990000, img: 'https://placehold.co/120x120/e8f5e9/1b5e20?text=MacBook' },
-        ],
-        shipping: 0, discount: 2000000,
-        address: { name: 'Nguyễn Văn A', phone: '0901 234 567', full: '123 Lê Lợi, Phường Bến Nghé, Quận 1, TP.HCM' },
-        payment: { method: 'Chuyển khoản ngân hàng', status: 'Đã thanh toán', bank: 'TCB - 9988 7766 5544' },
-        timeline: [
-            { step: 'Đặt hàng', time: '10/03/2026 11:30', done: true },
-            { step: 'Xác nhận', time: '10/03/2026 12:00', done: true },
-            { step: 'Đang đóng gói', time: '10/03/2026 15:30', done: true },
-            { step: 'Đang giao', time: '11/03/2026 09:00', done: true },
-            { step: 'Hoàn thành', time: '11/03/2026 14:45', done: true },
-        ],
-        note: 'Không có ở nhà buổi sáng, giao chiều sau 13:00.',
-        reviewed: false,
-    },
-    {
-        id: 'PS-2026-0027',
-        date: '2026-02-28T20:05:00',
-        status: 'cancelled',
-        items: [
-            { name: 'OPPO Find X8 Pro 256GB', variant: 'Đen Vũ Trụ / 256GB', qty: 1, price: 29990000, img: 'https://placehold.co/120x120/fde8ea/c62828?text=OPPO' },
-        ],
-        shipping: 30000, discount: 500000,
-        address: { name: 'Nguyễn Văn A', phone: '0901 234 567', full: '123 Lê Lợi, Phường Bến Nghé, Quận 1, TP.HCM' },
-        payment: { method: 'Tiền mặt khi nhận hàng', status: 'Chưa thanh toán', bank: '' },
-        timeline: [
-            { step: 'Đặt hàng', time: '28/02/2026 20:05', done: true },
-            { step: 'Xác nhận', time: '28/02/2026 20:20', done: true },
-            { step: 'Đã hủy', time: '01/03/2026 09:00', done: true, cancelled: true },
-        ],
-        cancelReason: 'Tôi muốn thay đổi sản phẩm',
-        note: '',
-    },
-    {
-        id: 'PS-2026-0022',
-        date: '2026-02-14T13:20:00',
-        status: 'pending',
-        items: [
-            { name: 'Sony WH-1000XM5', variant: 'Đen', qty: 1, price: 8990000, img: 'https://placehold.co/120x120/e3f2fd/0d47a1?text=Sony' },
-            { name: 'Sạc nhanh Anker 67W GaNPrime', variant: 'Đen', qty: 1, price: 690000, img: 'https://placehold.co/120x120/e3f2fd/0d47a1?text=Anker' },
-        ],
-        shipping: 30000, discount: 0,
-        address: { name: 'Nguyễn Văn A', phone: '0901 234 567', full: '456 Nguyễn Huệ, Quận 1, TP.HCM' },
-        payment: { method: 'ZaloPay', status: 'Đã thanh toán', bank: '' },
-        timeline: [
-            { step: 'Đặt hàng', time: '14/02/2026 13:20', done: true },
-            { step: 'Xác nhận', time: '', done: false, current: true },
-            { step: 'Đang đóng gói', time: '', done: false },
-            { step: 'Đang giao', time: '', done: false },
-            { step: 'Hoàn thành', time: '', done: false },
-        ],
-        note: '',
-    },
-    {
-        id: 'PS-2026-0018',
-        date: '2026-02-05T08:50:00',
-        status: 'processing',
-        items: [
-            { name: 'iPad Air M2 64GB WiFi', variant: 'Xanh Dương / 64GB', qty: 1, price: 18990000, img: 'https://placehold.co/120x120/fff3e0/e65100?text=iPad' },
-            { name: 'Apple Pencil 2', variant: 'Trắng', qty: 1, price: 3990000, img: 'https://placehold.co/120x120/fff3e0/e65100?text=Pencil' },
-        ],
-        shipping: 0, discount: 500000,
-        address: { name: 'Nguyễn Văn A', phone: '0901 234 567', full: '789 Trần Hưng Đạo, Quận 5, TP.HCM' },
-        payment: { method: 'Thẻ tín dụng Mastercard', status: 'Đã thanh toán', bank: '**** **** **** 8890' },
-        timeline: [
-            { step: 'Đặt hàng', time: '05/02/2026 08:50', done: true },
-            { step: 'Xác nhận', time: '05/02/2026 09:00', done: true },
-            { step: 'Đang đóng gói', time: '05/02/2026 10:30', done: true, current: true },
-            { step: 'Đang giao', time: '', done: false },
-            { step: 'Hoàn thành', time: '', done: false },
-        ],
-        note: '',
-    },
-];
-
 // ─── STATE ──────────────────────────────────
-let orders = JSON.parse(localStorage.getItem('ps_orders') || 'null') || SAMPLE_ORDERS;
+function getCurrentUser() {
+    return JSON.parse(localStorage.getItem('currentUser'));
+}
+
+function loadUserOrders() {
+    const user = getCurrentUser();
+    if (!user) return [];
+    const key = 'ps_orders_' + user.id;
+    return JSON.parse(localStorage.getItem(key) || '[]');
+}
+
+let orders = loadUserOrders();
 let filtered = [...orders];
 let activeStatus = '';
 let searchQuery = '';
@@ -173,30 +40,38 @@ const DEFAULT_USER = {
     twoFA: true,
 };
 
-function loadUser() { return JSON.parse(localStorage.getItem('ps_user') || 'null') || DEFAULT_USER; }
+function loadUser() {
+    // Thử lấy từ ps_user trước (dữ liệu từ profile page)
+    let savedUser = JSON.parse(localStorage.getItem('ps_user') || 'null');
+    if (savedUser) {
+        return savedUser;
+    }
+    
+    // Nếu không có, lấy từ currentUser (người dùng vừa đăng nhập)
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    if (!currentUser) return DEFAULT_USER;
+    
+    return {
+        ...DEFAULT_USER,
+        name: currentUser.name || currentUser.displayName || currentUser.fullName || DEFAULT_USER.name,
+        email: currentUser.email || DEFAULT_USER.email,
+        phone: currentUser.phone || DEFAULT_USER.phone,
+        avatar: currentUser.avatar || DEFAULT_USER.avatar,
+        joined: currentUser.joined || DEFAULT_USER.joined,
+    };
+}
 let user = loadUser();
 
 function renderUserUI() {
-    const avatarSrc = user.avatar ||
+    user = loadUser();
+    if (!user) return;
+    
+    const avatar = user.avatar ||
         `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=b7791f&color=fff&size=80&rounded=true`;
 
-    if ($('sidebarAvatar')) $('sidebarAvatar').src = avatarSrc;
+    if ($('sidebarAvatar')) $('sidebarAvatar').src = avatar;
     if ($('sidebarName')) $('sidebarName').textContent = user.name;
     if ($('sidebarEmail')) $('sidebarEmail').textContent = user.email;
-}
-
-function initLogout() {
-    const btn = $('logoutBtn');
-    if (!btn) return;
-    btn.addEventListener('click', e => {
-        e.preventDefault();
-        if (confirm('Bạn có chắc muốn đăng xuất?')) {
-            localStorage.removeItem('ps_user');
-            localStorage.removeItem('ps_orders');
-            toast('Đã đăng xuất. Đang chuyển hướng...', 'info');
-            setTimeout(() => { window.location.href = 'index.html'; }, 1500);
-        }
-    });
 }
 
 // ─── HELPERS ────────────────────────────────
@@ -235,8 +110,25 @@ const TL_ICONS = {
     'Hoàn thành': 'fa-check-double', 'Đã hủy': 'fa-times'
 };
 
+function saveOrder(order) {
+    const user = getCurrentUser();
+    if (!user) return;
+    const key = 'ps_orders_' + user.id;
+    const existing = JSON.parse(localStorage.getItem(key) || '[]');
+    const index = existing.findIndex(o => o.id === order.id);
+    if (index >= 0) {
+        existing[index] = order;
+    } else {
+        existing.push(order);
+    }
+    localStorage.setItem(key, JSON.stringify(existing));
+}
+
 function saveOrders() {
-    localStorage.setItem('ps_orders', JSON.stringify(orders));
+    const user = getCurrentUser();
+    if (!user) return;
+    const key = 'ps_orders_' + user.id;
+    localStorage.setItem(key, JSON.stringify(orders));
 }
 
 // ─── CART COUNT SYNC (from main site) ───────
@@ -626,7 +518,13 @@ document.addEventListener('keydown', e => {
 });
 
 // ─── INIT ───────────────────────────────────
-renderUserUI();
-initLogout();
-syncCartCount();
-applyFilter();
+const currentUser = getCurrentUser();
+if (!currentUser) {
+    window.location.href = 'signin.html';
+} else {
+    window.addEventListener('load', () => {
+        renderUserUI();
+        syncCartCount();
+        applyFilter();
+    });
+}
