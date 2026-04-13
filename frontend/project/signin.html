@@ -11,6 +11,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <!-- Firebase Config -->
     <script src="js/firebase-config.js"></script>
@@ -239,7 +240,7 @@
         const password = document.getElementById('password')?.value || '';
 
         if (!email || !password) {
-            showError('Vui lòng nhập đủ email và mật khẩu.');
+            showError('Tài khoản và mật khẩu không đúng. Vui lòng nhập lại.');
             return;
         }
 
