@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tất cả sản phẩm - PhoneStore</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <h1>📱 PhoneStore</h1>
+            </div>
+
+            <div class="search-bar">
+                <input type="text" placeholder="Tìm kiếm sản phẩm..." id="searchInput">
+                <button id="searchBtn"><i class="fas fa-search"></i></button>
+            </div>
+
+            <div class="nav-menu">
+                <a href="index.html">Trang chủ</a>
+                <a href="products.html" class="active">Sản phẩm</a>
+                <a href="promotion.html">Khuyến mãi</a>
+                <a href="cart.html">
+                    <div class="cart-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                    </div>
+                </a>
+                <a href="profile.html" id="profileLink"><i class="fas fa-user"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <!-- BANNER -->
+    <div class="slider">
+        <img src="assets/images/banner.jpg" alt="Banner">
+    </div>
+
+    <!-- PAGE TITLE -->
+    <div class="page-title">
+        <h2> TẤT CẢ SẢN PHẨM</h2>
+        <p>Khám phá hàng ngàn sản phẩm công nghệ chính hãng</p>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+        <div class="filter-left">
+            <div class="category-tabs" id="category-tabs">
+                <button class="category-btn active" data-category="all">
+                    <i class="fas fa-th-large"></i> Tất cả
+                </button>
+                <button class="category-btn" data-category="phone">
+                    <i class="fas fa-mobile-alt"></i> Điện thoại
+                </button>
+                <button class="category-btn" data-category="charger">
+                    <i class="fas fa-plug"></i> Cáp sạc
+                </button>
+                <button class="category-btn" data-category="headphone">
+                    <i class="fas fa-headphones"></i> Tai nghe
+                </button>
+            </div>
+        </div>
+        <div class="filter-right">
+            <select id="sort-select">
+                <option value="default">Mới nhất</option>
+                <option value="price_asc">Giá tăng dần</option>
+                <option value="price_desc">Giá giảm dần</option>
+                <option value="name_asc">Tên A-Z</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- PRODUCTS GRID -->
+    <div id="all-products" class="product-grid"></div>
+
+    <!-- LOAD MORE -->
+    <div class="load-more-container">
+        <button id="load-more-btn" class="load-more-btn">
+            <i class="fas fa-sync-alt"></i> Xem thêm sản phẩm
+        </button>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3> PhoneStore</h3>
+                <p>Hệ thống bán lẻ điện thoại chính hãng</p>
+                <p>📍 740 Sư Vạn Hạnh, Quận 10, TP. Hồ Chí Minh</p>
+                <p>📞 1900 1234</p>
+                <p>✉️ support@phonestore.vn</p>
+            </div>
+
+            <div class="footer-section">
+                <h3>Về chúng tôi</h3>
+                <a href="#">Giới thiệu</a>
+                <a href="#">Tuyển dụng</a>
+                <a href="#">Chính sách bảo mật</a>
+                <a href="#">Điều khoản sử dụng</a>
+            </div>
+
+            <div class="footer-section">
+                <h3>Hỗ trợ khách hàng</h3>
+                <a href="#">Hướng dẫn mua hàng</a>
+                <a href="#">Phương thức thanh toán</a>
+                <a href="#">Chính sách đổi trả</a>
+                <a href="contact.html">Liên hệ</a>
+                <a href="warranty.html">Chính sách bảo hành</a>
+            </div>
+
+            <div class="footer-section">
+                <h3>Kết nối với chúng tôi</h3>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 PhoneStore. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <button id="backToTop" class="back-to-top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+    <script type="module" src="js/products.js"></script>
+</body>
+
+</html>
