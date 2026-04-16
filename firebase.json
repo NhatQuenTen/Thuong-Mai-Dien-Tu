@@ -7,13 +7,16 @@
   },
   "hosting": {
     "site": "myteamproject-36c2f",
-    "public": "public",
+    "public": "frontend/project",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
       "backend/**",
-      "frontend/**",
+      "frontend/src/**",
+      "frontend/ADMIN/**",
+      "frontend/Dashboard/**",
+      "frontend/package.json",
       "docs/**"
     ],
     "rewrites": [
