@@ -45,7 +45,7 @@ function subscribeProductsFromFirebase() {
                 isNew: Boolean(data.isNew),
                 isSale: Boolean(data.isSale),
                 discount: Number(data.discount) || 0,
-                createdAt: getProductCreatedAtValue(data)
+                updatedAt: getProductActivityValue(data)
             };
         });
 
@@ -57,13 +57,17 @@ function subscribeProductsFromFirebase() {
     });
 }
 
-function getProductCreatedAtValue(data) {
+function getProductActivityValue(data) {
+    const updatedAtMs = Number(data?.updatedAtMs) || 0;
+    const updatedAt = typeof data?.updatedAt?.toMillis === "function"
+        ? data.updatedAt.toMillis()
+        : 0;
     const createdAtMs = Number(data?.createdAtMs) || 0;
     const createdAt = typeof data?.createdAt?.toMillis === "function"
         ? data.createdAt.toMillis()
         : 0;
 
-    return Math.max(createdAtMs, createdAt);
+    return Math.max(updatedAtMs, updatedAt, createdAtMs, createdAt);
 }
 
 function resolveImageUrl(imagePath) {
@@ -99,7 +103,7 @@ function getSearchedProducts() {
 
 function sortByNewest(productList) {
     return [...productList].sort((a, b) => {
-        if (b.createdAt !== a.createdAt) return b.createdAt - a.createdAt;
+        if (b.updatedAt !== a.updatedAt) return b.updatedAt - a.updatedAt;
         return String(b.id).localeCompare(String(a.id));
     });
 }
@@ -160,11 +164,11 @@ function createProductCard(product) {
                     ${product.discount > 0 ? `<span class="old-price">${formatPrice(product.price)}</span>` : ""}
                 </div>
                 <div class="product-actions">
-                    <button class="btn-cart" onclick="addToCart('${product.id}')">
-                        <i class="fas fa-shopping-cart"></i> Mua ngay
+                    <button class="btn-cart" onclick="window.addToCart('${String(product.id).replace(/'/g, "\\'")}')">
+                        <i class="fas fa-shopping-cart"></i> Thêm giỏ
                     </button>
-                    <button class="btn-wishlist" onclick="addToWishlist('${product.id}')" aria-label="Thêm vào yêu thích">
-                        <i class="far fa-heart"></i>
+                    <button class="btn-buy-now" onclick="location.href='detail.html?id=${encodeURIComponent(product.id)}'">
+                        <i class="fas fa-bolt"></i> Mua hàng
                     </button>
                 </div>
             </div>
@@ -183,7 +187,7 @@ function setupProductClick() {
         if (!card) return;
 
         const id = card.getAttribute("data-id");
-        window.location.href = `detail.html?id=${id}`;
+        window.location.href = `detail.html?id=${encodeURIComponent(id)}`;
     });
 }
 
@@ -249,7 +253,7 @@ function sortProducts(productList, type) {
 }
 
 function updateCartCount() {
-    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const count = getCart().reduce((sum, item) => sum + item.quantity, 0);
     const cartCount = document.querySelector(".cart-count");
     if (cartCount) cartCount.textContent = count;
 }
@@ -286,29 +290,68 @@ function formatPrice(price) {
     return `${(Number(price) || 0).toLocaleString("vi-VN")}₫`;
 }
 
+function getCartStorageKey() {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+    return currentUser?.id ? `cart_${currentUser.id}` : "cart";
+}
+
+function getCart() {
+    return JSON.parse(localStorage.getItem(getCartStorageKey()) || "[]");
+}
+
+function saveCart(cartData) {
+    localStorage.setItem(getCartStorageKey(), JSON.stringify(cartData));
+}
+
+function showCartAddedModal(productName, quantity = 1) {
+    const existingModal = document.querySelector(".custom-modal");
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement("div");
+    modal.className = "custom-modal";
+    modal.innerHTML = `
+        <div class="custom-modal-content success">
+            <i class="fas fa-check-circle"></i>
+            <p>Đã thêm ${quantity} sản phẩm vào giỏ hàng${productName ? `: ${productName}` : ""}</p>
+            <button class="modal-close-btn">Đóng</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    modal.querySelector(".modal-close-btn").onclick = () => {
+        modal.classList.remove("show");
+        setTimeout(() => modal.remove(), 300);
+    };
+}
+
 window.addToCart = function (id) {
     const product = products.find((item) => String(item.id) === String(id));
     if (!product) return;
 
+    const cart = getCart();
     const existing = cart.find((item) => String(item.id) === String(id));
+    const currentPrice = product.discount > 0
+        ? Math.round(product.price * (100 - product.discount) / 100)
+        : product.price;
+
     if (existing) {
         existing.quantity += 1;
     } else {
-        cart.push({ ...product, quantity: 1 });
+        cart.push({
+            id: product.id,
+            name: product.name,
+            brand: product.brand,
+            image: product.image,
+            price: currentPrice,
+            originalPrice: product.price,
+            discount: product.discount || 0,
+            quantity: 1
+        });
     }
 
-    localStorage.setItem("cart", JSON.stringify(cart));
+    saveCart(cart);
     updateCartCount();
-};
-
-window.addToWishlist = function (id) {
-    const product = products.find((item) => String(item.id) === String(id));
-    if (!product) return;
-
-    const wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-    const exists = wishlist.some((item) => String(item.id) === String(id));
-    if (exists) return;
-
-    wishlist.push(product);
-    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+    showCartAddedModal(product.name, 1);
 };

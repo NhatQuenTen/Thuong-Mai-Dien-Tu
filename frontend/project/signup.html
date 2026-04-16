@@ -399,6 +399,17 @@
             await googleAuth.registerWithEmailPassword(email, password, fullname, phone);
         } catch (error) {
             console.error('Registration failed:', error);
+            const duplicateCodes = ['auth/account-already-exists', 'auth/email-already-in-use', 'auth/email-already-exists'];
+            if (error && duplicateCodes.includes(error.code)) {
+                if (error.accountField === 'phone') {
+                    setFieldError('phone', 'Tài khoản đã có, vui lòng nhập tài khoản khác.');
+                } else {
+                    setFieldError('email', 'Tài khoản đã có, vui lòng nhập tài khoản khác.');
+                }
+                showError('Tài khoản đã có, vui lòng nhập tài khoản khác.');
+                return;
+            }
+
             if (error && error.message) {
                 let msg = error.message.replace('Firebase:', '').trim();
                 showError(msg);

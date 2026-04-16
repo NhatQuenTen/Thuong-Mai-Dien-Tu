@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Render sản phẩm flash sale và giảm giá
     renderFlashSaleProducts();
-    renderSaleProducts();
     
     // Setup countdown timer
     startCountdown();
@@ -54,10 +53,18 @@ function renderFlashSaleProducts() {
     const container = document.getElementById('flash-sale-products');
     if (!container) return;
     
-    // Lấy sản phẩm có discount >= 20%
+    // Chỉ hiển thị sản phẩm có sale và sắp xếp từ giảm giá cao xuống thấp
     const flashSaleProducts = products
-        .filter(p => p.discount >= 20 || p.isSale === true)
-        .slice(0, 8);
+        .filter(p => p && (p.isSale === true || Number(p.discount) > 0))
+        .sort((a, b) => {
+            const discountDiff = Number(b.discount || 0) - Number(a.discount || 0);
+            if (discountDiff !== 0) return discountDiff;
+
+            const timeDiff = getProductActivityValue(b) - getProductActivityValue(a);
+            if (timeDiff !== 0) return timeDiff;
+
+            return String(b.id).localeCompare(String(a.id));
+        });
     
     if (flashSaleProducts.length === 0) {
         container.innerHTML = '<p>Đang cập nhật...</p>';
@@ -67,16 +74,17 @@ function renderFlashSaleProducts() {
     container.innerHTML = flashSaleProducts.map(product => createFlashSaleCard(product)).join('');
 }
 
-// ========== RENDER SALE PRODUCTS ==========
-function renderSaleProducts() {
-    const container = document.getElementById('sale-products');
-    if (!container) return;
-    
-    const saleProducts = products
-        .filter(p => p.isSale === true || p.discount > 0)
-        .slice(0, 8);
-    
-    container.innerHTML = saleProducts.map(product => createProductCard(product)).join('');
+function getProductActivityValue(product) {
+    const updatedAtMs = Number(product?.updatedAtMs) || 0;
+    const updatedAt = typeof product?.updatedAt?.toMillis === 'function'
+        ? product.updatedAt.toMillis()
+        : 0;
+    const createdAtMs = Number(product?.createdAtMs) || 0;
+    const createdAt = typeof product?.createdAt?.toMillis === 'function'
+        ? product.createdAt.toMillis()
+        : 0;
+
+    return Math.max(updatedAtMs, updatedAt, createdAtMs, createdAt);
 }
 
 // ========== CREATE FLASH SALE CARD ==========
@@ -112,8 +120,11 @@ function createFlashSaleCard(product) {
                     <span class="sold-text">Đã bán ${soldPercent}%</span>
                 </div>
                 <div class="product-actions">
-                    <button class="btn-cart" onclick="addToCart(${product.id})">
-                        <i class="fas fa-shopping-cart"></i> Mua ngay
+                    <button class="btn-cart" onclick="window.addToCart('${String(product.id).replace(/'/g, "\\'")}')">
+                        <i class="fas fa-shopping-cart"></i> Thêm giỏ
+                    </button>
+                    <button class="btn-buy-now" onclick="location.href='detail.html?id=${encodeURIComponent(product.id)}'">
+                        <i class="fas fa-bolt"></i> Mua hàng
                     </button>
                 </div>
             </div>
@@ -148,8 +159,11 @@ function createProductCard(product) {
                     ${product.discount > 0 ? `<span class="old-price">${formatPrice(product.price)}</span>` : ''}
                 </div>
                 <div class="product-actions">
-                    <button class="btn-cart" onclick="addToCart(${product.id})">
-                        <i class="fas fa-shopping-cart"></i> Mua ngay
+                    <button class="btn-cart" onclick="window.addToCart('${String(product.id).replace(/'/g, "\\'")}')">
+                        <i class="fas fa-shopping-cart"></i> Thêm giỏ
+                    </button>
+                    <button class="btn-buy-now" onclick="location.href='detail.html?id=${encodeURIComponent(product.id)}'">
+                        <i class="fas fa-bolt"></i> Mua hàng
                     </button>
                 </div>
             </div>
@@ -164,7 +178,7 @@ function setupProductClick() {
     if (flashSaleContainer) {
         flashSaleContainer.addEventListener('click', function(e) {
             // Không xử lý nếu click vào button mua ngay
-            if (e.target.closest('.btn-cart')) {
+            if (e.target.closest('button')) {
                 return;
             }
             
@@ -174,30 +188,11 @@ function setupProductClick() {
             const productId = productCard.getAttribute('data-id');
             if (productId) {
                 console.log(` Chuyển sang chi tiết sản phẩm ID: ${productId}`);
-                window.location.href = `detail.html?id=${productId}`;
+                window.location.href = `detail.html?id=${encodeURIComponent(productId)}`;
             }
         });
     }
     
-    // Lấy container của sale-products
-    const saleContainer = document.getElementById('sale-products');
-    if (saleContainer) {
-        saleContainer.addEventListener('click', function(e) {
-            // Không xử lý nếu click vào button mua ngay
-            if (e.target.closest('.btn-cart')) {
-                return;
-            }
-            
-            const productCard = e.target.closest('.product-card');
-            if (!productCard) return;
-            
-            const productId = productCard.getAttribute('data-id');
-            if (productId) {
-                console.log(` Chuyển sang chi tiết sản phẩm ID: ${productId}`);
-                window.location.href = `detail.html?id=${productId}`;
-            }
-        });
-    }
 }
 
 // ========== COUNTDOWN TIMER ==========
@@ -302,10 +297,77 @@ function addToCart(productId) {
 }
 
 function updateCartCount() {
-    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const count = JSON.parse(localStorage.getItem(getCartStorageKey()) || "[]")
+        .reduce((sum, item) => sum + item.quantity, 0);
     const cartSpan = document.querySelector('.cart-count');
     if (cartSpan) cartSpan.textContent = count;
 }
+
+function getCartStorageKey() {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+    return currentUser?.id ? `cart_${currentUser.id}` : "cart";
+}
+
+function getCart() {
+    return JSON.parse(localStorage.getItem(getCartStorageKey()) || "[]");
+}
+
+function saveCart(cartData) {
+    localStorage.setItem(getCartStorageKey(), JSON.stringify(cartData));
+}
+
+function showCartAddedModal(productName, quantity = 1) {
+    const existingModal = document.querySelector(".custom-modal");
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement("div");
+    modal.className = "custom-modal";
+    modal.innerHTML = `
+        <div class="custom-modal-content success">
+            <i class="fas fa-check-circle"></i>
+            <p>Đã thêm ${quantity} sản phẩm vào giỏ hàng${productName ? `: ${productName}` : ""}</p>
+            <button class="modal-close-btn">Đóng</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    modal.querySelector(".modal-close-btn").onclick = () => {
+        modal.classList.remove("show");
+        setTimeout(() => modal.remove(), 300);
+    };
+}
+
+window.addToCart = function (productId) {
+    const product = products.find((item) => String(item.id) === String(productId));
+    if (!product) return;
+
+    const cart = getCart();
+    const existing = cart.find((item) => String(item.id) === String(productId));
+    const currentPrice = product.discount > 0
+        ? Math.round(product.price * (100 - product.discount) / 100)
+        : product.price;
+
+    if (existing) {
+        existing.quantity += 1;
+    } else {
+        cart.push({
+            id: product.id,
+            name: product.name,
+            brand: product.brand,
+            image: product.image,
+            price: currentPrice,
+            originalPrice: product.price,
+            discount: product.discount || 0,
+            quantity: 1
+        });
+    }
+
+    saveCart(cart);
+    updateCartCount();
+    showCartAddedModal(product.name, 1);
+};
 
 // ========== UTILITY ==========
 function formatPrice(price) {

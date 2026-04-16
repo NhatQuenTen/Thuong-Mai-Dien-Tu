@@ -67,7 +67,25 @@ function loadUser() {
     };
 }
 function loadAddresses() { return JSON.parse(localStorage.getItem('ps_addrs') || 'null') || []; }
-function loadOrders() { return JSON.parse(localStorage.getItem('ps_orders') || '[]'); }
+function getOrderStorageKey(userId = getCurrentUser()?.id) {
+    return userId ? 'ps_orders_' + userId : 'ps_orders';
+}
+function loadOrders() {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return [];
+
+    const scopedKey = getOrderStorageKey(currentUser.id);
+    const scopedOrders = JSON.parse(localStorage.getItem(scopedKey) || 'null');
+    if (Array.isArray(scopedOrders)) return scopedOrders;
+
+    const legacyOrders = JSON.parse(localStorage.getItem('ps_orders') || '[]');
+    if (Array.isArray(legacyOrders) && legacyOrders.length > 0) {
+        localStorage.setItem(scopedKey, JSON.stringify(legacyOrders));
+        return legacyOrders;
+    }
+
+    return [];
+}
 function saveUser(u) { localStorage.setItem('ps_user', JSON.stringify(u)); }
 function saveAddresses(a) { localStorage.setItem('ps_addrs', JSON.stringify(a)); }
 
@@ -99,6 +117,14 @@ function initProfilePage() {
     initQuickNav();
     initButtons();
     syncCartCount();
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'currentUser' || e.key === 'cart' || (e.key && e.key.startsWith('cart_')) || e.key === null) {
+            syncCartCount();
+        }
+    });
+    window.addEventListener('cartUpdated', syncCartCount);
+    window.addEventListener('pageshow', syncCartCount);
+    window.addEventListener('focus', syncCartCount);
 }
 
 // ─────────────────────────────────────────────
@@ -614,11 +640,17 @@ function initLogout() {
         }
     });
 
-    confirmBtn.addEventListener('click', e => {
+    confirmBtn.addEventListener('click', async e => {
         e.preventDefault();
+        if (window.googleAuth && typeof window.googleAuth.logout === 'function') {
+            try {
+                await window.googleAuth.logout();
+            } catch (error) {
+                console.warn('Google auth logout failed, falling back to local logout:', error);
+            }
+        }
         localStorage.removeItem('currentUser');
-        localStorage.removeItem('ps_user');
-        localStorage.removeItem('ps_orders');
+        sessionStorage.removeItem('googleUserData');
         closeLogoutConfirm();
         toast('Đã đăng xuất. Đang chuyển hướng đến đăng nhập...', 'info');
         setTimeout(() => { window.location.href = 'signin.html'; }, 1200);
@@ -629,10 +661,55 @@ function initLogout() {
 //  CART COUNT (sync header)
 // ─────────────────────────────────────────────
 function syncCartCount() {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const count = cart.reduce((s, item) => s + (item.qty || 1), 0);
-    const el = $('cartCount');
-    if (el) el.textContent = count;
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    const key = currentUser ? `cart_${currentUser.id}` : 'cart';
+
+    let cart = [];
+    try {
+        const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+        cart = Array.isArray(parsed) ? parsed : [];
+    } catch {
+        cart = [];
+    }
+
+    if (currentUser && cart.length === 0) {
+        try {
+            const legacyParsed = JSON.parse(localStorage.getItem('cart') || '[]');
+            const legacyCart = Array.isArray(legacyParsed) ? legacyParsed : [];
+            if (Array.isArray(legacyCart) && legacyCart.length > 0) {
+                localStorage.setItem(key, JSON.stringify(legacyCart));
+                cart = legacyCart;
+            } else {
+                const fallbackCarts = [];
+                for (let index = 0; index < localStorage.length; index++) {
+                    const storageKey = localStorage.key(index);
+                    if (!storageKey || !storageKey.startsWith('cart_') || storageKey === key) continue;
+
+                    try {
+                        const fallbackParsed = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                        const fallbackCart = Array.isArray(fallbackParsed) ? fallbackParsed : [];
+                        if (fallbackCart.length > 0) {
+                            fallbackCarts.push(fallbackCart);
+                        }
+                    } catch {
+                        // ignore invalid fallback cart
+                    }
+                }
+
+                if (fallbackCarts.length === 1) {
+                    localStorage.setItem(key, JSON.stringify(fallbackCarts[0]));
+                    cart = fallbackCarts[0];
+                }
+            }
+        } catch {
+            // ignore invalid legacy cart
+        }
+    }
+
+    const count = cart.reduce((s, item) => s + (item.quantity || item.qty || 1), 0);
+    document.querySelectorAll('#cartCount, .cart-count').forEach((el) => {
+        el.textContent = String(count);
+    });
 }
 
 // ─────────────────────────────────────────────
