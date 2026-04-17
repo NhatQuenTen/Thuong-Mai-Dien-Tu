@@ -6,6 +6,104 @@
     <title>Khuyến mãi đặc biệt - PhoneStore</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .voucher-zone {
+            max-width: 1400px;
+            margin: 30px auto 15px;
+            padding: 0 16px;
+        }
+
+        .voucher-zone .section-header {
+            margin-bottom: 14px;
+        }
+
+        .voucher-scroll {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+            overflow: visible;
+            width: 100%;
+            align-items: stretch;
+        }
+
+        .voucher-card {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            border: 1px solid #f9c4a3;
+            border-radius: 14px;
+            padding: 14px;
+            min-height: 150px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+        }
+
+        .voucher-card h4 {
+            margin: 0;
+            color: #7c2d12;
+            font-size: 17px;
+            letter-spacing: 0.5px;
+        }
+
+        .voucher-card p {
+            margin: 8px 0 12px;
+            color: #7f1d1d;
+            font-size: 13px;
+            line-height: 1.4;
+            min-height: 38px;
+        }
+
+        .voucher-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .voucher-badge {
+            font-size: 12px;
+            font-weight: 700;
+            color: #9a3412;
+            background: #fffbeb;
+            border: 1px dashed #fdba74;
+            border-radius: 999px;
+            padding: 5px 10px;
+        }
+
+        .voucher-copy-btn {
+            border: none;
+            background: #ea580c;
+            color: #fff;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 7px 14px;
+            cursor: pointer;
+        }
+
+        .voucher-copy-btn:hover {
+            opacity: 0.92;
+        }
+
+        .voucher-note {
+            margin-top: 10px;
+            color: #7c2d12;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .voucher-scroll {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 520px) {
+            .voucher-scroll {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -71,6 +169,17 @@
     </div>
     <div id="flash-sale-products" class="product-grid"></div>
 </div>
+
+<!-- MÃ KHUYẾN MÃI -->
+<section class="voucher-zone">
+    <div class="section-header">
+        <h2> MÃ KHUYẾN MÃI </h2>
+        <span class="section-badge">Sao chép và dùng tại giỏ hàng</span>
+    </div>
+
+    <div class="voucher-scroll" id="voucherCardsContainer"></div>
+    <p class="voucher-note">Mẹo: Nhấn "Sao chép" ở đây, sang giỏ hàng hệ thống sẽ tự điền mã để bạn áp dụng nhanh.</p>
+</section>
 
 <!-- FOOTER -->
 <footer>

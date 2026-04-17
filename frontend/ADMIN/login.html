@@ -442,11 +442,7 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
         setStatus("Đang xác thực tài khoản admin...");
 
         const loginResult = await loginAdmin(email, pass);
-        try {
-            await ensureAdminRecord(loginResult.user, loginResult.payload.email || email);
-        } catch (recordError) {
-            console.warn("Không tạo/cập nhật được hồ sơ admin, nhưng đăng nhập đã thành công:", recordError);
-        }
+        await ensureAdminRecord(loginResult.user, loginResult.payload.email || email);
 
         localStorage.setItem("mobistore_auth", JSON.stringify({
             user: loginResult.payload.email || email,

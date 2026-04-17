@@ -3,6 +3,8 @@
 const ADMIN_PRODUCTS_KEY = 'mobistore_products';
 const FALLBACK_PRODUCTS = typeof products !== 'undefined' && Array.isArray(products) ? products : [];
 
+let PROMO_CODES = [];
+
 function isLoggedIn() {
     return localStorage.getItem('currentUser') !== null;
 }
@@ -131,13 +133,17 @@ function resolveCartItem(item) {
     const price = Number(item.price || catalogProduct?.price) || 0;
     const originalPrice = Number(item.originalPrice || catalogProduct?.originalPrice || 0) || 0;
     const image = item.image || catalogProduct?.image || 'https://placehold.co/300x200?text=No+Image';
+    const brand = item.brand || catalogProduct?.brand || '';
+    const category = item.category || catalogProduct?.category || '';
 
     return {
         ...item,
         name,
         price,
         originalPrice,
-        image
+        image,
+        brand,
+        category
     };
 }
 
@@ -180,23 +186,143 @@ function removeFromCart(productId) {
     saveCart(cart);
 }
 
-let discountPercent = 0;
+let appliedPromoCode = '';
+
+function getDefaultPromoCodes() {
+    return [
+        { id: 'ALL5A', code: 'ALL5A', title: 'Giảm 5%', percent: 5, desc: 'Áp dụng mọi sản phẩm', status: 'active' },
+        { id: 'ALL5B', code: 'ALL5B', title: 'Giảm 5%', percent: 5, desc: 'Áp dụng mọi sản phẩm', status: 'active' },
+        { id: 'ALL10A', code: 'ALL10A', title: 'Giảm 10%', percent: 10, desc: 'Áp dụng mọi sản phẩm', status: 'active' },
+        { id: 'ALL10B', code: 'ALL10B', title: 'Giảm 10%', percent: 10, desc: 'Áp dụng mọi sản phẩm', status: 'active' },
+        { id: 'ALL15A', code: 'ALL15A', title: 'Giảm 15%', percent: 15, desc: 'Áp dụng mọi sản phẩm', status: 'active' }
+    ];
+}
+
+function normalizeCode(value) {
+    return String(value || '').trim().toUpperCase();
+}
+
+function getPromoCalculation(cart, promoCode) {
+    const normalizedCode = normalizeCode(promoCode);
+    const promo = PROMO_CODES.find((item) => String(item.code).toUpperCase() === normalizedCode);
+
+    if (!promo) {
+        return {
+            code: '',
+            rule: null,
+            eligibleSubtotal: 0,
+            discountAmount: 0,
+            hasEligibleItem: false
+        };
+    }
+
+    let eligibleSubtotal = 0;
+    let hasEligibleItem = false;
+    const totalQuantity = cart.reduce((sum, cartItem) => sum + (cartItem.quantity || 1), 0);
+
+    if (totalQuantity !== 1 || cart.length !== 1) {
+        return {
+            code: normalizedCode,
+            rule: promo,
+            eligibleSubtotal: 0,
+            discountAmount: 0,
+            hasEligibleItem: false,
+            blockedByMultiItems: true
+        };
+    }
+
+    const item = resolveCartItem(cart[0]);
+    eligibleSubtotal = (Number(item.price) || 0) * (cart[0].quantity || 1);
+    hasEligibleItem = Number(promo.percent) > 0;
+
+    const discountAmount = hasEligibleItem
+        ? Math.round(eligibleSubtotal * Number(promo.percent) / 100)
+        : 0;
+
+    return {
+        code: normalizedCode,
+        rule: promo,
+        eligibleSubtotal,
+        discountAmount,
+        hasEligibleItem,
+        blockedByMultiItems: false
+    };
+}
+
+function getStoredCopiedPromoCode() {
+    return normalizeCode(localStorage.getItem('copiedPromoCode') || '');
+}
+
+function getRedeemedPromoCodes() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem('redeemedPromoCodes') || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+}
+
+function saveRedeemedPromoCodes(codes) {
+    localStorage.setItem('redeemedPromoCodes', JSON.stringify(codes));
+}
+
+function syncVoucherInputWithAppliedCode() {
+    const input = document.getElementById('voucherCode');
+    if (!input) return;
+    input.value = appliedPromoCode || '';
+}
+
+function applyVoucherFromCode(rawCode, showFeedback = true) {
+    const code = normalizeCode(rawCode);
+
+    if (!code) {
+        appliedPromoCode = '';
+        if (showFeedback) showModal('Đã xóa mã giảm giá', true);
+        renderCartPage();
+        return;
+    }
+
+    const promo = PROMO_CODES.find((item) => String(item.code).toUpperCase() === code);
+    if (!promo) {
+        if (showFeedback) showModal('❌ Mã giảm giá không hợp lệ!', false);
+        return;
+    }
+
+    const redeemedCodes = getRedeemedPromoCodes();
+    if (redeemedCodes.includes(code)) {
+        appliedPromoCode = '';
+        if (showFeedback) showModal(`⚠️ Mã ${code} đã được sử dụng 1 lần trước đó. Mỗi mã chỉ áp dụng 1 lần.`, false);
+        renderCartPage();
+        return;
+    }
+
+    const calculation = getPromoCalculation(getCart(), code);
+    if (calculation.blockedByMultiItems) {
+        appliedPromoCode = '';
+        if (showFeedback) showModal('⚠️ Mã chỉ áp dụng với 1 sản phẩm duy nhất. Giỏ hàng từ 2 món sẽ không được giảm.', false);
+        renderCartPage();
+        return;
+    }
+
+    if (!calculation.hasEligibleItem) {
+        appliedPromoCode = '';
+        if (showFeedback) showModal(`❌ Mã ${code} không áp dụng cho sản phẩm hiện có trong giỏ.`, false);
+        renderCartPage();
+        return;
+    }
+
+    appliedPromoCode = code;
+    redeemedCodes.push(code);
+    saveRedeemedPromoCodes(redeemedCodes);
+    if (showFeedback) {
+        showModal(`🎉 Áp dụng mã ${code} thành công! ${promo.desc || 'Áp dụng mọi sản phẩm'}.`, true);
+    }
+    renderCartPage();
+}
 
 function applyVoucher() {
     const code = document.getElementById('voucherCode')?.value;
-    if (code === 'PHONE10') {
-        discountPercent = 10;
-        showModal('🎉 Áp dụng mã PHONE10 thành công! Giảm 10%', true);
-    } else if (code === 'SALE20') {
-        discountPercent = 20;
-        showModal('🎉 Áp dụng mã SALE20 thành công! Giảm 20%', true);
-    } else if (code === '') {
-        discountPercent = 0;
-        showModal('Đã xóa mã giảm giá', true);
-    } else {
-        showModal('❌ Mã giảm giá không hợp lệ!', false);
-    }
-    renderCartPage();
+    applyVoucherFromCode(code, true);
 }
 
 function calculateSubtotal() {
@@ -213,10 +339,14 @@ function checkout() {
         return;
     }
 
+    const promoCalculation = getPromoCalculation(cart, appliedPromoCode);
+
     const orderInfo = {
         items: cart,
         subtotal: calculateSubtotal(),
-        discount: discountPercent,
+        discount: promoCalculation.discountAmount,
+        discountCode: promoCalculation.code,
+        discountPercent: promoCalculation.rule?.percent || 0,
         timestamp: new Date().toISOString(),
         userId: getCurrentUser().id
     };
@@ -346,7 +476,8 @@ function renderCartPage() {
         return;
     }
 
-    const discount = subtotal * discountPercent / 100;
+    const promoCalculation = getPromoCalculation(cart, appliedPromoCode);
+    const discount = promoCalculation.discountAmount;
     const shipping = subtotal > 500000 ? 0 : 30000;
     const finalTotal = subtotal - discount + shipping;
 
@@ -363,18 +494,23 @@ function renderCartPage() {
             <div class="cart-summary">
                 <h3>Đơn hàng</h3>
                 <div class="summary-row"><span>Tạm tính:</span><span>${formatPrice(subtotal)}</span></div>
+                ${promoCalculation.code ? `<div class="summary-row"><span>Mã đã chọn:</span><span>${promoCalculation.code}</span></div>` : ''}
+                ${promoCalculation.code ? `<div class="summary-row"><span>Ưu đãi hợp lệ:</span><span>${formatPrice(promoCalculation.eligibleSubtotal)}</span></div>` : ''}
                 <div class="summary-row"><span>Giảm giá:</span><span style="color:#ff4757">-${formatPrice(discount)}</span></div>
                 <div class="summary-row"><span>Phí ship:</span><span>${shipping === 0 ? 'Free' : formatPrice(shipping)}</span></div>
                 <div class="voucher-input">
-                    <input type="text" id="voucherCode" placeholder="Mã: PHONE10 hoặc SALE20">
+                    <input type="text" id="voucherCode" placeholder="Nhập mã: ALL5A, ALL5B, ALL10A, ALL10B, ALL15A" value="${appliedPromoCode}">
                     <button onclick="applyVoucher()">Áp dụng</button>
                 </div>
+                ${promoCalculation.blockedByMultiItems ? '<small style="display:block;margin-top:8px;color:#dc2626;line-height:1.45;">Mã giảm giá chỉ áp dụng khi giỏ hàng có đúng 1 sản phẩm duy nhất.</small>' : (promoCalculation.code ? `<small style="display:block;margin-top:8px;color:#64748b;line-height:1.45;">${promoCalculation.rule.desc || 'Áp dụng mọi sản phẩm'}. Mỗi mã chỉ dùng 1 lần.</small>` : '<small style="display:block;margin-top:8px;color:#64748b;line-height:1.45;">Mã 5% áp dụng mọi sản phẩm, 10% cho mọi sản phẩm, 15% cho mọi sản phẩm. Chỉ áp dụng cho 1 sản phẩm duy nhất và mỗi mã chỉ dùng 1 lần.</small>')}
                 <div class="summary-row total"><span>Tổng cộng:</span><span>${formatPrice(finalTotal)}</span></div>
                 <button class="checkout-btn" onclick="checkout()">💳 Thanh toán ngay</button>
                 <a href="index.html" class="continue-shopping">← Tiếp tục mua sắm</a>
             </div>
         </div>
     `;
+
+    syncVoucherInputWithAppliedCode();
 }
 
 function setupSearch() {
@@ -390,6 +526,12 @@ function setupSearch() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    PROMO_CODES = getDefaultPromoCodes();
+    const copiedCode = getStoredCopiedPromoCode();
+    if (copiedCode) {
+        appliedPromoCode = copiedCode;
+    }
+
     renderCartPage();
     updateCartCount();
     setupSearch();

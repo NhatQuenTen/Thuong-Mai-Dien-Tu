@@ -18,6 +18,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup click vào sản phẩm để chuyển trang chi tiết
     setupProductClick();
+
+    // Render mã khuyến mãi cố định để copy và áp dụng ở giỏ hàng
+    PROMO_CODES = getDefaultPromoCodes();
+    renderVoucherCards();
     
     // Update cart count
     updateCartCount();
@@ -257,11 +261,81 @@ function setupSearch() {
 
 // ========== VOUCHER FUNCTIONS ==========
 function copyVoucher(code) {
-    navigator.clipboard.writeText(code).then(() => {
-        alert(` Đã copy mã: ${code}\nSử dụng khi thanh toán để nhận ưu đãi!`);
+    const normalizedCode = String(code || '').trim().toUpperCase();
+    if (!normalizedCode) return;
+
+    localStorage.setItem('copiedPromoCode', normalizedCode);
+    localStorage.setItem('copiedPromoAt', new Date().toISOString());
+
+    navigator.clipboard.writeText(normalizedCode).then(() => {
+        showCopyVoucherPopup(`Đã sao chép mã khuyến mãi: ${normalizedCode}`);
     }).catch(() => {
-        alert(` Mã giảm giá: ${code}`);
+        showCopyVoucherPopup(`Đã lưu mã khuyến mãi: ${normalizedCode}`);
     });
+}
+
+function showCopyVoucherPopup(message) {
+    const oldModal = document.querySelector('.custom-modal');
+    if (oldModal) oldModal.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'custom-modal';
+    modal.innerHTML = `
+        <div class="custom-modal-content success">
+            <i class="fas fa-check-circle"></i>
+            <p>${message}</p>
+            <button class="modal-close-btn">Đóng</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('show'), 10);
+
+    modal.querySelector('.modal-close-btn').onclick = () => {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 300);
+    };
+
+    setTimeout(() => {
+        if (modal.parentNode) {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        }
+    }, 2200);
+}
+
+let PROMO_CODES = [];
+
+function getDefaultPromoCodes() {
+    return [
+        { id: 'ALL5A', code: 'ALL5A', title: 'Giảm 5%', percent: 5, desc: 'Áp dụng mọi sản phẩm', status: 'active' },
+        { id: 'ALL5B', code: 'ALL5B', title: 'Giảm 5%', percent: 5, desc: 'Áp dụng mọi sản phẩm', status: 'active' },
+        { id: 'ALL10A', code: 'ALL10A', title: 'Giảm 10%', percent: 10, desc: 'Áp dụng mọi sản phẩm', status: 'active' },
+        { id: 'ALL10B', code: 'ALL10B', title: 'Giảm 10%', percent: 10, desc: 'Áp dụng mọi sản phẩm', status: 'active' },
+        { id: 'ALL15A', code: 'ALL15A', title: 'Giảm 15%', percent: 15, desc: 'Áp dụng mọi sản phẩm', status: 'active' }
+    ];
+}
+
+function renderVoucherCards() {
+    const container = document.getElementById('voucherCardsContainer');
+    if (!container) return;
+
+    const vouchers = PROMO_CODES.length > 0 ? PROMO_CODES : getDefaultPromoCodes();
+
+    container.innerHTML = vouchers.map((voucher) => {
+        return `
+            <article class="voucher-card">
+                <div>
+                    <h4>${voucher.code}</h4>
+                    <p>${voucher.desc || 'Áp dụng mọi sản phẩm'}</p>
+                </div>
+                <div class="voucher-meta">
+                    <span class="voucher-badge">Giảm ${voucher.percent}%</span>
+                    <button class="voucher-copy-btn" onclick="copyVoucher('${voucher.code}')">Sao chép</button>
+                </div>
+            </article>
+        `;
+    }).join('');
 }
 
 // ========== COMBO FUNCTIONS ==========
