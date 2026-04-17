@@ -8,6 +8,78 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/order-history.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .confirm-backdrop {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.75);
+            z-index: 9999;
+        }
+
+        .confirm-backdrop.show {
+            display: flex;
+        }
+
+        .confirm-modal {
+            width: min(520px, calc(100% - 40px));
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 28px 24px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.16);
+            text-align: center;
+            color: #111827;
+        }
+
+        .confirm-modal h3 {
+            margin: 0 0 12px;
+            font-size: 1.35rem;
+        }
+
+        .confirm-modal p {
+            margin: 0 0 24px;
+            color: #475569;
+            line-height: 1.7;
+        }
+
+        .confirm-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .confirm-actions button {
+            min-width: 120px;
+            padding: 12px 18px;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform .2s ease;
+        }
+
+        .confirm-actions button:hover {
+            transform: translateY(-1px);
+        }
+
+        .confirm-actions .cancel {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .confirm-actions .confirm {
+            background: linear-gradient(135deg, #f8d569, #d19c31);
+            color: #111827;
+            box-shadow: 0 8px 16px rgba(209, 156, 49, 0.25);
+        }
+
+        .confirm-actions .confirm:hover {
+            background: linear-gradient(135deg, #fadd8a, #c78725);
+        }
+    </style>
 </head>
 
 <body>
@@ -67,6 +139,7 @@
                 <a href="profile.html" class="snav-link"><i class="fas fa-user-circle"></i> Thông tin cá nhân</a>
                 <a href="order-history.html" class="snav-link active"><i class="fas fa-receipt"></i> Lịch sử mua
                     hàng</a>
+                <a href="#" class="snav-link logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
             </nav>
         </aside>
 
@@ -184,6 +257,17 @@
     <!-- TOAST -->
     <div class="oh-toast-container" id="toastContainer"></div>
 
+    <div class="confirm-backdrop" id="logoutConfirmBackdrop">
+        <div class="confirm-modal">
+            <h3>Xác nhận đăng xuất</h3>
+            <p>Bạn có chắc muốn đăng xuất không? Chọn “Có” để thoát tài khoản.</p>
+            <div class="confirm-actions">
+                <button type="button" class="cancel" id="logoutCancelBtn">Không</button>
+                <button type="button" class="confirm" id="logoutConfirmBtn">Có, đăng xuất</button>
+            </div>
+        </div>
+    </div>
+
     <!-- BACK TO TOP -->
     <button id="backToTop" class="back-to-top"><i class="fas fa-arrow-up"></i></button>
 
@@ -212,13 +296,19 @@
                 <a href="contact.html">Liên hệ</a>
                 <a href="warranty.html">Chính sách bảo hành</a>
             </div>
-            <div class="footer-section">
-                <h3>Kết nối với chúng tôi</h3>
-                <div class="social-links">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-youtube"></i></a>
-                    <a href="#"><i class="fab fa-tiktok"></i></a>
+            <div class="footer-right">
+                <div class="footer-maps">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.4269564823567!2d106.66405!3d10.7773!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317527587ce61111%3A0xabf66146b5a5e8a!2s740%20S%C6%B0%20V%E1%BA%A1n%20H%E1%BA%A1nh%2C%20District%2010%2C%20Ho%20Chi%20Minh%20City!5e0!3m2!1sen!2s!4v1234567890" width="100%" height="300" style="border:0; border-radius:12px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+
+                <div class="footer-section footer-social-section">
+                    <h3>Kết nối với chúng tôi</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                        <a href="#"><i class="fab fa-tiktok"></i></a>
+                    </div>
                 </div>
             </div>
         </div>

@@ -167,7 +167,7 @@ function createProductCard(product) {
                     <button class="btn-cart" onclick="window.addToCart('${String(product.id).replace(/'/g, "\\'")}')">
                         <i class="fas fa-shopping-cart"></i> Thêm giỏ
                     </button>
-                    <button class="btn-buy-now" onclick="location.href='detail.html?id=${encodeURIComponent(product.id)}'">
+                    <button class="btn-buy-now" onclick="window.buyNow('${String(product.id).replace(/'/g, "\\'")}')">
                         <i class="fas fa-bolt"></i> Mua hàng
                     </button>
                 </div>
@@ -354,4 +354,38 @@ window.addToCart = function (id) {
     saveCart(cart);
     updateCartCount();
     showCartAddedModal(product.name, 1);
+};
+
+window.buyNow = function (id) {
+    const product = products.find((item) => String(item.id) === String(id));
+    if (!product) return;
+
+    const cart = getCart();
+    const existing = cart.find((item) => String(item.id) === String(id));
+    const currentPrice = product.discount > 0
+        ? Math.round(product.price * (100 - product.discount) / 100)
+        : product.price;
+
+    if (existing) {
+        existing.quantity += 1;
+    } else {
+        cart.push({
+            id: product.id,
+            name: product.name,
+            brand: product.brand,
+            image: product.image,
+            price: currentPrice,
+            originalPrice: product.price,
+            discount: product.discount || 0,
+            quantity: 1
+        });
+    }
+
+    saveCart(cart);
+    updateCartCount();
+    
+    // Redirect to cart after a short delay
+    setTimeout(() => {
+        window.location.href = "cart.html";
+    }, 500);
 };

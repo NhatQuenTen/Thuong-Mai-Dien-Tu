@@ -1,3 +1,19 @@
 {
-    "claudeCodeChat.permissions.yoloMode": false
+    "claudeCodeChat.permissions.yoloMode": false,
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/.git/**": true
+    },
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    },
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    }
 }

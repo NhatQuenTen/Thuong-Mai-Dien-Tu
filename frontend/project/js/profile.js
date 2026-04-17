@@ -53,17 +53,16 @@ function loadUser() {
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
     if (!currentUser) return null;
     return {
-        ...DEFAULT_USER,
-        name: currentUser.name || currentUser.displayName || currentUser.fullName || DEFAULT_USER.name,
-        email: currentUser.email || DEFAULT_USER.email,
-        phone: currentUser.phone || DEFAULT_USER.phone,
-        birthday: currentUser.birthday || DEFAULT_USER.birthday,
-        gender: currentUser.gender || DEFAULT_USER.gender,
-        idCard: currentUser.idCard || DEFAULT_USER.idCard,
-        avatar: currentUser.avatar || DEFAULT_USER.avatar,
-        joined: currentUser.joined || DEFAULT_USER.joined,
-        memberTag: currentUser.memberTag || DEFAULT_USER.memberTag,
-        twoFA: typeof currentUser.twoFA === 'boolean' ? currentUser.twoFA : DEFAULT_USER.twoFA,
+        name: currentUser.name || currentUser.displayName || currentUser.fullName || '',
+        email: currentUser.email || '',
+        phone: currentUser.phone || '',
+        birthday: currentUser.birthday || '',
+        gender: currentUser.gender || '',
+        idCard: currentUser.idCard || '',
+        avatar: currentUser.avatar || '',
+        joined: currentUser.joined || new Date().toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit' }),
+        memberTag: currentUser.memberTag || '',
+        twoFA: typeof currentUser.twoFA === 'boolean' ? currentUser.twoFA : true,
     };
 }
 function getCurrentUser() {

@@ -52,7 +52,7 @@ function subscribeProducts() {
                 isSale: Boolean(data.isSale),
                 discount: Number(data.discount) || 0,
                 rating: Number(data.rating) || 4.5,
-                createdAt: getProductCreatedAtValue(data)
+                updatedAt: getProductActivityValue(data)
             };
         });
 
@@ -65,13 +65,17 @@ function subscribeProducts() {
     });
 }
 
-function getProductCreatedAtValue(data) {
+function getProductActivityValue(data) {
+    const updatedAtMs = Number(data?.updatedAtMs) || 0;
+    const updatedAt = typeof data?.updatedAt?.toMillis === "function"
+        ? data.updatedAt.toMillis()
+        : 0;
     const createdAtMs = Number(data?.createdAtMs) || 0;
     const createdAt = typeof data?.createdAt?.toMillis === "function"
         ? data.createdAt.toMillis()
         : 0;
 
-    return Math.max(createdAtMs, createdAt);
+    return Math.max(updatedAtMs, updatedAt, createdAtMs, createdAt);
 }
 
 function resolveImageUrl(imagePath) {
@@ -96,7 +100,7 @@ function resolveImageUrl(imagePath) {
 
 function getSortedProducts(productList) {
     return [...productList].sort((a, b) => {
-        if (b.createdAt !== a.createdAt) return b.createdAt - a.createdAt;
+        if (b.updatedAt !== a.updatedAt) return b.updatedAt - a.updatedAt;
         return String(b.id).localeCompare(String(a.id));
     });
 }
@@ -152,13 +156,13 @@ function createProductCard(product) {
         : product.price;
 
     let badgeHtml = "";
-    if (product.createdAt > 0 || product.isNew) badgeHtml += '<span class="badge-new">Mới</span>';
+    if (product.updatedAt > 0 || product.isNew) badgeHtml += '<span class="badge-new">Mới</span>';
     if (product.isSale || product.discount > 0) {
         badgeHtml += `<span class="badge-sale">-${product.discount || 10}%</span>`;
     }
 
     return `
-        <div class="product-card" data-id="${product.id}" onclick="goToProductDetail('${product.id}')" style="cursor: pointer;">
+        <div class="product-card" data-id="${product.id}" onclick="window.goToProductDetail('${String(product.id).replace(/'/g, "\\'")}')" style="cursor: pointer;">
             <div class="product-badge">${badgeHtml}</div>
             <div class="product-image">
                 <img src="${product.image}" alt="${product.name}" onerror="this.src='https://placehold.co/300x200?text=No+Image'">
@@ -171,11 +175,11 @@ function createProductCard(product) {
                     ${product.discount > 0 ? `<span class="old-price">${formatPrice(product.price)}</span>` : ""}
                 </div>
                 <div class="product-actions">
-                    <button class="btn-cart" onclick="event.stopPropagation(); addToCart('${product.id}')">
-                        <i class="fas fa-shopping-cart"></i> Mua ngay
+                    <button class="btn-cart" onclick="event.stopPropagation(); window.addToCart('${String(product.id).replace(/'/g, "\\'")}')">
+                        <i class="fas fa-shopping-cart"></i> Thêm giỏ
                     </button>
-                    <button class="btn-wishlist" onclick="event.stopPropagation(); addToWishlist()">
-                        <i class="far fa-heart"></i>
+                    <button class="btn-buy-now" onclick="event.stopPropagation(); window.buyNow('${String(product.id).replace(/'/g, "\\'")}')">
+                        <i class="fas fa-bolt"></i> Mua hàng
                     </button>
                 </div>
             </div>
@@ -318,8 +322,7 @@ function updateCartCount() {
         return;
     }
 
-    const userId = getCurrentUser().id;
-    const cart = JSON.parse(localStorage.getItem("cart_" + userId)) || [];
+    const cart = JSON.parse(localStorage.getItem(getCartStorageKey()) || "[]");
     const count = cart.reduce((sum, item) => sum + item.quantity, 0);
     cartSpan.textContent = count;
 }
@@ -329,8 +332,106 @@ function formatPrice(price) {
 }
 
 window.goToProductDetail = function (productId) {
-    window.location.href = `detail.html?id=${productId}`;
+    window.location.href = `detail.html?id=${encodeURIComponent(productId)}`;
 };
 
-window.addToCart = addToCart;
-window.addToWishlist = addToWishlist;
+window.buyNow = function (productId) {
+    if (!isLoggedIn()) {
+        localStorage.setItem("redirectAfterLogin", window.location.href);
+        const confirmLogin = confirm("Bạn cần đăng nhập để mua hàng. Đăng nhập ngay?");
+        if (confirmLogin) window.location.href = "signin.html";
+        return;
+    }
+
+    const product = products.find((item) => String(item.id) === String(productId));
+    if (!product) return;
+
+    const userId = getCurrentUser().id;
+    const cartKey = "cart_" + userId;
+    const cart = JSON.parse(localStorage.getItem(cartKey)) || [];
+    const existing = cart.find((item) => String(item.id) === String(productId));
+
+    if (existing) existing.quantity++;
+    else cart.push({ ...product, quantity: 1 });
+
+    localStorage.setItem(cartKey, JSON.stringify(cart));
+    updateCartCount();
+    
+    // Redirect to cart after a short delay
+    setTimeout(() => {
+        window.location.href = "cart.html";
+    }, 500);
+};
+
+function getCartStorageKey() {
+    const currentUser = getCurrentUser();
+    return currentUser?.id ? `cart_${currentUser.id}` : "cart";
+}
+
+function getSharedCart() {
+    return JSON.parse(localStorage.getItem(getCartStorageKey()) || "[]");
+}
+
+function saveSharedCart(cart) {
+    localStorage.setItem(getCartStorageKey(), JSON.stringify(cart));
+}
+
+function showCartAddedModal(productName, quantity = 1) {
+    const existingModal = document.querySelector(".custom-modal");
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement("div");
+    modal.className = "custom-modal";
+    modal.innerHTML = `
+        <div class="custom-modal-content success">
+            <i class="fas fa-check-circle"></i>
+            <p>Đã thêm ${quantity} sản phẩm vào giỏ hàng${productName ? `: ${productName}` : ""}</p>
+            <button class="modal-close-btn">Đóng</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("show"), 10);
+
+    modal.querySelector(".modal-close-btn").onclick = () => {
+        modal.classList.remove("show");
+        setTimeout(() => modal.remove(), 300);
+    };
+}
+
+window.addToCart = function (productId) {
+    if (!isLoggedIn()) {
+        localStorage.setItem("redirectAfterLogin", window.location.href);
+        const confirmLogin = confirm("Báº¡n cáº§n Ä‘Äƒng nháº­p Ä‘á»ƒ thÃªm sáº£n pháº©m vÃ o giá». ÄÄƒng nháº­p ngay?");
+        if (confirmLogin) window.location.href = "signin.html";
+        return;
+    }
+
+    const product = products.find((item) => String(item.id) === String(productId));
+    if (!product) return;
+
+    const cart = getSharedCart();
+    const existing = cart.find((item) => String(item.id) === String(productId));
+    const currentPrice = product.discount > 0
+        ? Math.round(product.price * (100 - product.discount) / 100)
+        : product.price;
+
+    if (existing) {
+        existing.quantity += 1;
+    } else {
+        cart.push({
+            id: product.id,
+            name: product.name,
+            brand: product.brand,
+            image: product.image,
+            price: currentPrice,
+            originalPrice: product.price,
+            discount: product.discount || 0,
+            quantity: 1
+        });
+    }
+
+    saveSharedCart(cart);
+    updateCartCount();
+    showCartAddedModal(product.name, 1);
+};

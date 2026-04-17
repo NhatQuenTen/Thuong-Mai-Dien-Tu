@@ -178,7 +178,7 @@ function createProductCard(product) {
                     <button class="btn-cart" onclick="event.stopPropagation(); window.addToCart('${String(product.id).replace(/'/g, "\\'")}')">
                         <i class="fas fa-shopping-cart"></i> Thêm giỏ
                     </button>
-                    <button class="btn-buy-now" onclick="event.stopPropagation(); window.goToProductDetail('${String(product.id).replace(/'/g, "\\'")}')">
+                    <button class="btn-buy-now" onclick="event.stopPropagation(); window.buyNow('${String(product.id).replace(/'/g, "\\'")}')">
                         <i class="fas fa-bolt"></i> Mua hàng
                     </button>
                 </div>
@@ -333,6 +333,34 @@ function formatPrice(price) {
 
 window.goToProductDetail = function (productId) {
     window.location.href = `detail.html?id=${encodeURIComponent(productId)}`;
+};
+
+window.buyNow = function (productId) {
+    if (!isLoggedIn()) {
+        localStorage.setItem("redirectAfterLogin", window.location.href);
+        const confirmLogin = confirm("Bạn cần đăng nhập để mua hàng. Đăng nhập ngay?");
+        if (confirmLogin) window.location.href = "signin.html";
+        return;
+    }
+
+    const product = products.find((item) => String(item.id) === String(productId));
+    if (!product) return;
+
+    const userId = getCurrentUser().id;
+    const cartKey = "cart_" + userId;
+    const cart = JSON.parse(localStorage.getItem(cartKey)) || [];
+    const existing = cart.find((item) => String(item.id) === String(productId));
+
+    if (existing) existing.quantity++;
+    else cart.push({ ...product, quantity: 1 });
+
+    localStorage.setItem(cartKey, JSON.stringify(cart));
+    updateCartCount();
+    
+    // Redirect to cart after a short delay
+    setTimeout(() => {
+        window.location.href = "cart.html";
+    }, 500);
 };
 
 function getCartStorageKey() {

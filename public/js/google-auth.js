@@ -18,6 +18,52 @@ class GoogleAuthManager {
         this.db = null;
     }
 
+    normalizeEmail(email) {
+        return (email || '').trim().toLowerCase();
+    }
+
+    normalizePhone(phone) {
+        return (phone || '').replace(/[^\d]/g, '');
+    }
+
+    async checkDuplicateAccount(email, phone = '') {
+        if (!this.db) return null;
+
+        const normalizedEmail = this.normalizeEmail(email);
+        const normalizedPhone = this.normalizePhone(phone);
+        const usersRef = this.db.collection("users");
+
+        if (normalizedEmail) {
+            const emailNormalizedSnapshot = await usersRef
+                .where("emailNormalized", "==", normalizedEmail)
+                .limit(1)
+                .get();
+            if (!emailNormalizedSnapshot.empty) return 'email';
+
+            const emailSnapshot = await usersRef
+                .where("email", "==", normalizedEmail)
+                .limit(1)
+                .get();
+            if (!emailSnapshot.empty) return 'email';
+        }
+
+        if (normalizedPhone) {
+            const phoneNormalizedSnapshot = await usersRef
+                .where("phoneNormalized", "==", normalizedPhone)
+                .limit(1)
+                .get();
+            if (!phoneNormalizedSnapshot.empty) return 'phone';
+
+            const phoneSnapshot = await usersRef
+                .where("phone", "==", phone)
+                .limit(1)
+                .get();
+            if (!phoneSnapshot.empty) return 'phone';
+        }
+
+        return null;
+    }
+
     /**
      * Show error message
      * @param {string} message
@@ -168,7 +214,7 @@ class GoogleAuthManager {
             const userData = {
                 id: user.uid,
                 name: user.displayName || user.email.split('@')[0], // fallback for email users
-                email: user.email,
+                email: this.normalizeEmail(user.email),
                 phone: user.phoneNumber || '',
                 avatar: user.photoURL || '',
                 authProvider: authProvider
@@ -186,8 +232,10 @@ class GoogleAuthManager {
                         await userDocRef.set({
                             uid: user.uid,
                             displayName: user.displayName || user.email.split('@')[0],
-                            email: user.email,
+                            email: this.normalizeEmail(user.email),
+                            emailNormalized: this.normalizeEmail(user.email),
                             phone: user.phoneNumber || '',
+                            phoneNormalized: this.normalizePhone(user.phoneNumber || ''),
                             role: 'user',
                             authProvider: authProvider,
                             createdAt: new Date(),
@@ -227,7 +275,7 @@ class GoogleAuthManager {
             this.currentUser = {
                 id: user.uid,
                 name: user.displayName || user.email.split('@')[0], // fallback for email users
-                email: user.email,
+                email: this.normalizeEmail(user.email),
                 phone: user.phoneNumber || '',
                 avatar: user.photoURL || '',
                 authProvider: authProvider
@@ -246,7 +294,8 @@ class GoogleAuthManager {
      */
     async signInWithEmailPassword(email, password) {
         try {
-            const userCredential = await window.firebaseAuth.signInWithEmailAndPassword(email, password);
+            const normalizedEmail = this.normalizeEmail(email);
+            const userCredential = await window.firebaseAuth.signInWithEmailAndPassword(normalizedEmail, password);
             const user = userCredential.user;
             
             // Xử lý user data
@@ -306,21 +355,43 @@ class GoogleAuthManager {
      */
     async registerWithEmailPassword(email, password, displayName, phone) {
         try {
+            const normalizedEmail = this.normalizeEmail(email);
+            const normalizedPhone = this.normalizePhone(phone);
+            const cleanDisplayName = (displayName || '').trim();
+            const cleanPhone = (phone || '').trim();
+
+            if (this.db) {
+                try {
+                    const duplicateField = await this.checkDuplicateAccount(normalizedEmail, cleanPhone);
+                    if (duplicateField) {
+                        const duplicateError = new Error('Tài khoản đã có, vui lòng nhập tài khoản khác.');
+                        duplicateError.code = 'auth/account-already-exists';
+                        duplicateError.accountField = duplicateField;
+                        throw duplicateError;
+                    }
+                } catch (duplicateCheckError) {
+                    if (duplicateCheckError.code === 'auth/account-already-exists') {
+                        throw duplicateCheckError;
+                    }
+                    console.warn('Could not verify duplicate account in Firestore:', duplicateCheckError.message);
+                }
+            }
+
             // Tạo user với Firebase Auth
-            const userCredential = await window.firebaseAuth.createUserWithEmailAndPassword(email, password);
+            const userCredential = await window.firebaseAuth.createUserWithEmailAndPassword(normalizedEmail, password);
             const user = userCredential.user;
 
             // Cập nhật profile với display name
             await user.updateProfile({
-                displayName: displayName
+                displayName: cleanDisplayName
             });
 
             // Lưu thông tin bổ sung (phone) vào localStorage hoặc Firestore nếu cần
             const userData = {
                 id: user.uid,
-                name: displayName,
-                email: user.email,
-                phone: phone,
+                name: cleanDisplayName,
+                email: normalizedEmail,
+                phone: cleanPhone,
                 authProvider: 'email'
             };
 
@@ -332,9 +403,11 @@ class GoogleAuthManager {
                 try {
                     await this.db.collection("users").doc(user.uid).set({
                         uid: user.uid,
-                        displayName: displayName,
-                        email: user.email,
-                        phone: phone,
+                        displayName: cleanDisplayName,
+                        email: normalizedEmail,
+                        emailNormalized: normalizedEmail,
+                        phone: cleanPhone,
+                        phoneNormalized: normalizedPhone,
                         role: 'user',
                         authProvider: 'email',
                         createdAt: new Date(),
@@ -369,9 +442,10 @@ class GoogleAuthManager {
 
             // Kiểm tra error code trước
             switch (error.code) {
+                case 'auth/account-already-exists':
                 case 'auth/email-already-in-use':
                 case 'auth/email-already-exists':
-                    errorMessage = 'Email này đã được đăng ký rồi! Vui lòng sử dụng email khác hoặc đăng nhập nếu đã có tài khoản.';
+                    errorMessage = 'Tài khoản đã có, vui lòng nhập tài khoản khác.';
                     break;
                 case 'auth/invalid-email':
                     errorMessage = 'Địa chỉ email không hợp lệ! Vui lòng kiểm tra lại định dạng email.';

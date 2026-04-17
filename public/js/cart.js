@@ -50,7 +50,7 @@ function updateCartCount() {
 
 function updateQuantity(productId, delta) {
     let cart = getCart();
-    const itemIndex = cart.findIndex(i => i.id === productId);
+    const itemIndex = cart.findIndex(i => String(i.id) === String(productId));
     if (itemIndex !== -1) {
         cart[itemIndex].quantity += delta;
         if (cart[itemIndex].quantity <= 0) {
@@ -62,7 +62,7 @@ function updateQuantity(productId, delta) {
 
 function removeFromCart(productId) {
     let cart = getCart();
-    cart = cart.filter(item => item.id !== productId);
+    cart = cart.filter(item => String(item.id) !== String(productId));
     saveCart(cart);
 }
 
@@ -193,7 +193,7 @@ function renderCartPage() {
     let cartItemsHtml = '';
 
     cart.forEach(item => {
-        const product = products.find(p => p.id === item.id);
+        const product = products.find(p => String(p.id) === String(item.id));
         if (!product) return;
         
         const qty = item.quantity || 1;
@@ -221,6 +221,19 @@ function renderCartPage() {
             </tr>
         `;
     });
+
+    if (!cartItemsHtml.trim()) {
+        saveCart([]);
+        container.innerHTML = userInfoHtml + `
+            <div class="empty-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <h3>Giỏ hàng trống</h3>
+                <p>Chưa có sản phẩm trong giỏ. Mời bạn mua sắm.</p>
+                <a href="index.html" class="shop-now-btn">🛍️ Mua ngay</a>
+            </div>
+        `;
+        return;
+    }
 
     const discount = subtotal * discountPercent / 100;
     const shipping = subtotal > 500000 ? 0 : 30000;

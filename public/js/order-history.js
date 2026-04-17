@@ -11,11 +11,25 @@ function getCurrentUser() {
     return JSON.parse(localStorage.getItem('currentUser'));
 }
 
+function getOrderStorageKey(userId = getCurrentUser()?.id) {
+    return userId ? 'ps_orders_' + userId : 'ps_orders';
+}
+
 function loadUserOrders() {
     const user = getCurrentUser();
     if (!user) return [];
-    const key = 'ps_orders_' + user.id;
-    return JSON.parse(localStorage.getItem(key) || '[]');
+
+    const scopedKey = getOrderStorageKey(user.id);
+    const scopedOrders = JSON.parse(localStorage.getItem(scopedKey) || 'null');
+    if (Array.isArray(scopedOrders)) return scopedOrders;
+
+    const legacyOrders = JSON.parse(localStorage.getItem('ps_orders') || '[]');
+    if (Array.isArray(legacyOrders) && legacyOrders.length > 0) {
+        localStorage.setItem(scopedKey, JSON.stringify(legacyOrders));
+        return legacyOrders;
+    }
+
+    return [];
 }
 
 let orders = loadUserOrders();
@@ -41,13 +55,7 @@ const DEFAULT_USER = {
 };
 
 function loadUser() {
-    // Thử lấy từ ps_user trước (dữ liệu từ profile page)
-    let savedUser = JSON.parse(localStorage.getItem('ps_user') || 'null');
-    if (savedUser) {
-        return savedUser;
-    }
-    
-    // Nếu không có, lấy từ currentUser (người dùng vừa đăng nhập)
+    // Giống profile.js: luôn ưu tiên currentUser để đúng tài khoản đang đăng nhập
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
     if (!currentUser) return DEFAULT_USER;
     
@@ -113,7 +121,7 @@ const TL_ICONS = {
 function saveOrder(order) {
     const user = getCurrentUser();
     if (!user) return;
-    const key = 'ps_orders_' + user.id;
+    const key = getOrderStorageKey(user.id);
     const existing = JSON.parse(localStorage.getItem(key) || '[]');
     const index = existing.findIndex(o => o.id === order.id);
     if (index >= 0) {
@@ -127,17 +135,51 @@ function saveOrder(order) {
 function saveOrders() {
     const user = getCurrentUser();
     if (!user) return;
-    const key = 'ps_orders_' + user.id;
+    const key = getOrderStorageKey(user.id);
     localStorage.setItem(key, JSON.stringify(orders));
 }
 
 // ─── CART COUNT SYNC (from main site) ───────
 function syncCartCount() {
     try {
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const currentUser = getCurrentUser();
+        const key = currentUser ? `cart_${currentUser.id}` : 'cart';
+        let cart = JSON.parse(localStorage.getItem(key) || '[]');
+        if (!Array.isArray(cart)) cart = [];
+
+        if (currentUser && cart.length === 0) {
+            const legacyCart = JSON.parse(localStorage.getItem('cart') || '[]');
+            if (Array.isArray(legacyCart) && legacyCart.length > 0) {
+                localStorage.setItem(key, JSON.stringify(legacyCart));
+                cart = legacyCart;
+            } else {
+                const fallbackCarts = [];
+                for (let index = 0; index < localStorage.length; index++) {
+                    const storageKey = localStorage.key(index);
+                    if (!storageKey || !storageKey.startsWith('cart_') || storageKey === key) continue;
+
+                    try {
+                        const fallbackParsed = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                        const fallbackCart = Array.isArray(fallbackParsed) ? fallbackParsed : [];
+                        if (fallbackCart.length > 0) {
+                            fallbackCarts.push(fallbackCart);
+                        }
+                    } catch {
+                        // ignore invalid fallback cart
+                    }
+                }
+
+                if (fallbackCarts.length === 1) {
+                    localStorage.setItem(key, JSON.stringify(fallbackCarts[0]));
+                    cart = fallbackCarts[0];
+                }
+            }
+        }
+
         const count = cart.reduce((s, i) => s + (i.quantity || 1), 0);
-        const el = $('cartCount');
-        if (el) el.textContent = count;
+        document.querySelectorAll('#cartCount, .cart-count').forEach((el) => {
+            el.textContent = String(count);
+        });
     } catch (e) { /* silent */ }
 }
 
@@ -295,10 +337,13 @@ document.querySelectorAll('.oh-tab').forEach(tab => {
 });
 
 // ─── SEARCH ─────────────────────────────────
-$('ohSearch').addEventListener('input', e => {
-    searchQuery = e.target.value;
-    applyFilter();
-});
+const ohSearchInput = $('ohSearch');
+if (ohSearchInput) {
+    ohSearchInput.addEventListener('input', e => {
+        searchQuery = e.target.value;
+        applyFilter();
+    });
+}
 
 // ─── DETAIL MODAL ───────────────────────────
 function openDetail(id) {
@@ -405,6 +450,62 @@ $('modalBackdrop').addEventListener('click', e => {
     if (e.target === $('modalBackdrop')) closeDetail();
 });
 
+function openLogoutConfirm() {
+    const backdrop = $('logoutConfirmBackdrop');
+    if (!backdrop) return;
+    backdrop.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLogoutConfirm() {
+    const backdrop = $('logoutConfirmBackdrop');
+    if (!backdrop) return;
+    backdrop.classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+function initLogout() {
+    const btn = $('logoutBtn');
+    const confirmBtn = $('logoutConfirmBtn');
+    const cancelBtn = $('logoutCancelBtn');
+    const backdrop = $('logoutConfirmBackdrop');
+    if (!btn || !confirmBtn || !cancelBtn || !backdrop) return;
+
+    btn.addEventListener('click', e => {
+        e.preventDefault();
+        openLogoutConfirm();
+    });
+
+    cancelBtn.addEventListener('click', e => {
+        e.preventDefault();
+        closeLogoutConfirm();
+    });
+
+    backdrop.addEventListener('click', e => {
+        if (e.target === backdrop) {
+            closeLogoutConfirm();
+        }
+    });
+
+    confirmBtn.addEventListener('click', async e => {
+        e.preventDefault();
+
+        if (window.googleAuth && typeof window.googleAuth.logout === 'function') {
+            try {
+                await window.googleAuth.logout();
+            } catch (error) {
+                console.warn('Google auth logout failed, falling back to local logout:', error);
+            }
+        }
+
+        localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('googleUserData');
+        closeLogoutConfirm();
+        toast('Đã đăng xuất. Đang chuyển hướng đến đăng nhập...', 'info');
+        setTimeout(() => { window.location.href = 'signin.html'; }, 1200);
+    });
+}
+
 // ─── CANCEL ORDER ───────────────────────────
 function openCancelModal(id) {
     cancelId = id;
@@ -509,7 +610,9 @@ backToTop.addEventListener('click', () => {
 // ─── KEYBOARD SHORTCUT: ESC to close modals ─
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-        if ($('cancelBackdrop').classList.contains('show')) {
+        if ($('logoutConfirmBackdrop').classList.contains('show')) {
+            closeLogoutConfirm();
+        } else if ($('cancelBackdrop').classList.contains('show')) {
             hideModal('cancelBackdrop');
         } else if ($('modalBackdrop').classList.contains('show')) {
             closeDetail();
@@ -523,8 +626,12 @@ if (!currentUser) {
     window.location.href = 'signin.html';
 } else {
     window.addEventListener('load', () => {
+        initLogout();
         renderUserUI();
         syncCartCount();
+        window.addEventListener('cartUpdated', syncCartCount);
+        window.addEventListener('pageshow', syncCartCount);
+        window.addEventListener('focus', syncCartCount);
         applyFilter();
     });
 }

@@ -53,21 +53,45 @@ function loadUser() {
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
     if (!currentUser) return null;
     return {
-        ...DEFAULT_USER,
-        name: currentUser.name || currentUser.displayName || currentUser.fullName || DEFAULT_USER.name,
-        email: currentUser.email || DEFAULT_USER.email,
-        phone: currentUser.phone || DEFAULT_USER.phone,
-        birthday: currentUser.birthday || DEFAULT_USER.birthday,
-        gender: currentUser.gender || DEFAULT_USER.gender,
-        idCard: currentUser.idCard || DEFAULT_USER.idCard,
-        avatar: currentUser.avatar || DEFAULT_USER.avatar,
-        joined: currentUser.joined || DEFAULT_USER.joined,
-        memberTag: currentUser.memberTag || DEFAULT_USER.memberTag,
-        twoFA: typeof currentUser.twoFA === 'boolean' ? currentUser.twoFA : DEFAULT_USER.twoFA,
+        name: currentUser.name || currentUser.displayName || currentUser.fullName || '',
+        email: currentUser.email || '',
+        phone: currentUser.phone || '',
+        birthday: currentUser.birthday || '',
+        gender: currentUser.gender || '',
+        idCard: currentUser.idCard || '',
+        avatar: currentUser.avatar || '',
+        joined: currentUser.joined || new Date().toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit' }),
+        memberTag: currentUser.memberTag || '',
+        twoFA: typeof currentUser.twoFA === 'boolean' ? currentUser.twoFA : true,
     };
 }
+function getCurrentUser() {
+    try {
+        return JSON.parse(localStorage.getItem('currentUser') || 'null');
+    } catch {
+        return null;
+    }
+}
 function loadAddresses() { return JSON.parse(localStorage.getItem('ps_addrs') || 'null') || []; }
-function loadOrders() { return JSON.parse(localStorage.getItem('ps_orders') || '[]'); }
+function getOrderStorageKey(userId = getCurrentUser()?.id) {
+    return userId ? 'ps_orders_' + userId : 'ps_orders';
+}
+function loadOrders() {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return [];
+
+    const scopedKey = getOrderStorageKey(currentUser.id);
+    const scopedOrders = JSON.parse(localStorage.getItem(scopedKey) || 'null');
+    if (Array.isArray(scopedOrders)) return scopedOrders;
+
+    const legacyOrders = JSON.parse(localStorage.getItem('ps_orders') || '[]');
+    if (Array.isArray(legacyOrders) && legacyOrders.length > 0) {
+        localStorage.setItem(scopedKey, JSON.stringify(legacyOrders));
+        return legacyOrders;
+    }
+
+    return [];
+}
 function saveUser(u) { localStorage.setItem('ps_user', JSON.stringify(u)); }
 function saveAddresses(a) { localStorage.setItem('ps_addrs', JSON.stringify(a)); }
 
@@ -99,6 +123,14 @@ function initProfilePage() {
     initQuickNav();
     initButtons();
     syncCartCount();
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'currentUser' || e.key === 'cart' || (e.key && e.key.startsWith('cart_')) || e.key === null) {
+            syncCartCount();
+        }
+    });
+    window.addEventListener('cartUpdated', syncCartCount);
+    window.addEventListener('pageshow', syncCartCount);
+    window.addEventListener('focus', syncCartCount);
 }
 
 // ─────────────────────────────────────────────
@@ -591,6 +623,48 @@ function closeLogoutConfirm() {
     document.body.style.overflow = '';
 }
 
+function clearFirebaseAuthCache() {
+    const authPrefixes = ['firebase:authUser:', 'firebase:host:'];
+    const removeKeysByPrefix = (storage) => {
+        const keys = [];
+        for (let index = 0; index < storage.length; index++) {
+            const key = storage.key(index);
+            if (key && authPrefixes.some(prefix => key.startsWith(prefix))) {
+                keys.push(key);
+            }
+        }
+        keys.forEach((key) => storage.removeItem(key));
+    };
+
+    removeKeysByPrefix(localStorage);
+    removeKeysByPrefix(sessionStorage);
+}
+
+async function performLogout() {
+    if (window.googleAuth && typeof window.googleAuth.logout === 'function') {
+        try {
+            await window.googleAuth.logout();
+        } catch (error) {
+            console.warn('Google auth logout failed, falling back to local logout:', error);
+        }
+    } else if (window.firebaseAuth && typeof window.firebaseAuth.signOut === 'function') {
+        try {
+            await window.firebaseAuth.signOut();
+        } catch (error) {
+            console.warn('Firebase auth signOut failed, fallback to local cleanup:', error);
+        }
+    }
+
+    const currentUser = getCurrentUser();
+    if (currentUser?.id) {
+        localStorage.removeItem(`ps_orders_${currentUser.id}`);
+    }
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('ps_user');
+    sessionStorage.removeItem('googleUserData');
+    clearFirebaseAuthCache();
+}
+
 function initLogout() {
     const btn = $('logoutBtn');
     const confirmBtn = $('logoutConfirmBtn');
@@ -614,11 +688,9 @@ function initLogout() {
         }
     });
 
-    confirmBtn.addEventListener('click', e => {
+    confirmBtn.addEventListener('click', async e => {
         e.preventDefault();
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('ps_user');
-        localStorage.removeItem('ps_orders');
+        await performLogout();
         closeLogoutConfirm();
         toast('Đã đăng xuất. Đang chuyển hướng đến đăng nhập...', 'info');
         setTimeout(() => { window.location.href = 'signin.html'; }, 1200);
@@ -629,10 +701,55 @@ function initLogout() {
 //  CART COUNT (sync header)
 // ─────────────────────────────────────────────
 function syncCartCount() {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const count = cart.reduce((s, item) => s + (item.qty || 1), 0);
-    const el = $('cartCount');
-    if (el) el.textContent = count;
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    const key = currentUser ? `cart_${currentUser.id}` : 'cart';
+
+    let cart = [];
+    try {
+        const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+        cart = Array.isArray(parsed) ? parsed : [];
+    } catch {
+        cart = [];
+    }
+
+    if (currentUser && cart.length === 0) {
+        try {
+            const legacyParsed = JSON.parse(localStorage.getItem('cart') || '[]');
+            const legacyCart = Array.isArray(legacyParsed) ? legacyParsed : [];
+            if (Array.isArray(legacyCart) && legacyCart.length > 0) {
+                localStorage.setItem(key, JSON.stringify(legacyCart));
+                cart = legacyCart;
+            } else {
+                const fallbackCarts = [];
+                for (let index = 0; index < localStorage.length; index++) {
+                    const storageKey = localStorage.key(index);
+                    if (!storageKey || !storageKey.startsWith('cart_') || storageKey === key) continue;
+
+                    try {
+                        const fallbackParsed = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                        const fallbackCart = Array.isArray(fallbackParsed) ? fallbackParsed : [];
+                        if (fallbackCart.length > 0) {
+                            fallbackCarts.push(fallbackCart);
+                        }
+                    } catch {
+                        // ignore invalid fallback cart
+                    }
+                }
+
+                if (fallbackCarts.length === 1) {
+                    localStorage.setItem(key, JSON.stringify(fallbackCarts[0]));
+                    cart = fallbackCarts[0];
+                }
+            }
+        } catch {
+            // ignore invalid legacy cart
+        }
+    }
+
+    const count = cart.reduce((s, item) => s + (item.quantity || item.qty || 1), 0);
+    document.querySelectorAll('#cartCount, .cart-count').forEach((el) => {
+        el.textContent = String(count);
+    });
 }
 
 // ─────────────────────────────────────────────

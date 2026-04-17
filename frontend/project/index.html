@@ -33,7 +33,25 @@
                         <span class="cart-count">0</span>
                     </div>
                 </a>
-                <a href="profile.html" id="profileLink"><i class="fas fa-user"></i></a>
+                <div class="profile-area">
+                    <div class="profile-trigger">
+                        <img src="https://ui-avatars.com/api/?name=User&background=b7791f&color=fff&size=40&rounded=true" alt="Avatar" class="profile-avatar">
+                        <span class="profile-name" style="display:none;">User</span>
+                        <i class="fas fa-chevron-down profile-icon"></i>
+                    </div>
+                    <div class="profile-dropdown" style="display:none;">
+                        <a href="profile.html" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i> Thông tin cá nhân
+                        </a>
+                        <a href="order-history.html" class="dropdown-item">
+                            <i class="fas fa-receipt"></i> Lịch sử mua hàng
+                        </a>
+                        <button class="dropdown-item logout-btn">
+                            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                        </button>
+                    </div>
+                    <a href="signin.html" class="login-btn" style="display:none;">Đăng nhập</a>
+                </div>
             </div>
         </div>
     </header>
@@ -211,13 +229,19 @@
                 <a href="warranty.html">Chính sách bảo hành</a>
             </div>
 
-            <div class="footer-section">
-                <h3>Kết nối với chúng tôi</h3>
-                <div class="social-links">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-youtube"></i></a>
-                    <a href="#"><i class="fab fa-tiktok"></i></a>
+            <div class="footer-right">
+                <div class="footer-maps">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.4269564823567!2d106.66405!3d10.7773!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317527587ce61111%3A0xabf66146b5a5e8a!2s740%20S%C6%B0%20V%E1%BA%A1n%20H%E1%BA%A1nh%2C%20District%2010%2C%20Ho%20Chi%20Minh%20City!5e0!3m2!1sen!2s!4v1234567890" width="100%" height="300" style="border:0; border-radius:12px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+
+                <div class="footer-section footer-social-section">
+                    <h3>Kết nối với chúng tôi</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                        <a href="#"><i class="fab fa-tiktok"></i></a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -227,6 +251,7 @@
     </footer>
 
     <script type="module" src="js/main.js"></script>
+    <script src="js/profile-ui.js"></script>
 
 </body>
 
