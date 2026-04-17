@@ -66,6 +66,13 @@ function loadUser() {
         twoFA: typeof currentUser.twoFA === 'boolean' ? currentUser.twoFA : DEFAULT_USER.twoFA,
     };
 }
+function getCurrentUser() {
+    try {
+        return JSON.parse(localStorage.getItem('currentUser') || 'null');
+    } catch {
+        return null;
+    }
+}
 function loadAddresses() { return JSON.parse(localStorage.getItem('ps_addrs') || 'null') || []; }
 function getOrderStorageKey(userId = getCurrentUser()?.id) {
     return userId ? 'ps_orders_' + userId : 'ps_orders';
@@ -617,6 +624,48 @@ function closeLogoutConfirm() {
     document.body.style.overflow = '';
 }
 
+function clearFirebaseAuthCache() {
+    const authPrefixes = ['firebase:authUser:', 'firebase:host:'];
+    const removeKeysByPrefix = (storage) => {
+        const keys = [];
+        for (let index = 0; index < storage.length; index++) {
+            const key = storage.key(index);
+            if (key && authPrefixes.some(prefix => key.startsWith(prefix))) {
+                keys.push(key);
+            }
+        }
+        keys.forEach((key) => storage.removeItem(key));
+    };
+
+    removeKeysByPrefix(localStorage);
+    removeKeysByPrefix(sessionStorage);
+}
+
+async function performLogout() {
+    if (window.googleAuth && typeof window.googleAuth.logout === 'function') {
+        try {
+            await window.googleAuth.logout();
+        } catch (error) {
+            console.warn('Google auth logout failed, falling back to local logout:', error);
+        }
+    } else if (window.firebaseAuth && typeof window.firebaseAuth.signOut === 'function') {
+        try {
+            await window.firebaseAuth.signOut();
+        } catch (error) {
+            console.warn('Firebase auth signOut failed, fallback to local cleanup:', error);
+        }
+    }
+
+    const currentUser = getCurrentUser();
+    if (currentUser?.id) {
+        localStorage.removeItem(`ps_orders_${currentUser.id}`);
+    }
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('ps_user');
+    sessionStorage.removeItem('googleUserData');
+    clearFirebaseAuthCache();
+}
+
 function initLogout() {
     const btn = $('logoutBtn');
     const confirmBtn = $('logoutConfirmBtn');
@@ -642,15 +691,7 @@ function initLogout() {
 
     confirmBtn.addEventListener('click', async e => {
         e.preventDefault();
-        if (window.googleAuth && typeof window.googleAuth.logout === 'function') {
-            try {
-                await window.googleAuth.logout();
-            } catch (error) {
-                console.warn('Google auth logout failed, falling back to local logout:', error);
-            }
-        }
-        localStorage.removeItem('currentUser');
-        sessionStorage.removeItem('googleUserData');
+        await performLogout();
         closeLogoutConfirm();
         toast('Đã đăng xuất. Đang chuyển hướng đến đăng nhập...', 'info');
         setTimeout(() => { window.location.href = 'signin.html'; }, 1200);
