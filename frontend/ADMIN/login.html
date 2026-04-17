@@ -106,6 +106,7 @@
 
         .highlight {
             background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -286,6 +287,7 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const ADMIN_LOGIN_API = "http://localhost:3001/api/admin-login";
 const loginStatus = document.getElementById("loginStatus");
 const seedAdminBtn = document.getElementById("seedAdminBtn");
 
@@ -333,16 +335,8 @@ async function ensureAdminRecord(user, fallbackEmail) {
     }
 }
 
-async function loginAdmin(email, password) {
-    if (!isKnownAdminCredential(email, password)) {
-        throw new Error("Sai tài khoản hoặc mật khẩu admin.");
-    }
-
-    try {
-        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    } catch (persistenceError) {
-        console.warn("Không đặt được persistence local:", persistenceError);
-    }
+async function signInAdminWithEmailPassword(email, password) {
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
     try {
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
@@ -363,56 +357,75 @@ async function loginAdmin(email, password) {
     }
 }
 
+async function loginAdmin(email, password) {
+    if (!isKnownAdminCredential(email, password)) {
+        throw new Error("Sai tài khoản hoặc mật khẩu admin.");
+    }
+
+    try {
+        const response = await fetch(ADMIN_LOGIN_API, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error(payload.error || "Sai tài khoản hoặc mật khẩu admin.");
+            }
+
+            console.warn("Admin backend trả về lỗi, chuyển sang Firebase Auth trực tiếp:", payload.error || response.status);
+            return await signInAdminWithEmailPassword(email, password);
+        }
+
+        try {
+            await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+            const userCredential = await auth.signInWithCustomToken(payload.token);
+            return {
+                user: userCredential.user,
+                payload: { email: payload.email || email }
+            };
+        } catch (authError) {
+            console.warn("Không đăng nhập được bằng custom token, chuyển sang Firebase Auth trực tiếp:", authError);
+            return await signInAdminWithEmailPassword(email, password);
+        }
+    } catch (error) {
+        if (error instanceof TypeError || error.message === "Failed to fetch") {
+            console.warn("Không gọi được backend admin-login, chuyển sang Firebase Auth trực tiếp.");
+            return await signInAdminWithEmailPassword(email, password);
+        }
+
+        throw error;
+    }
+}
+
 async function seedDefaultAdmin() {
     const defaultAdmin = ADMIN_ACCOUNTS[0];
 
     try {
-        const userCredential = await auth.createUserWithEmailAndPassword(defaultAdmin.email, defaultAdmin.password);
+        const loginResult = await loginAdmin(defaultAdmin.email, defaultAdmin.password);
         try {
-            await ensureAdminRecord(userCredential.user, defaultAdmin.email);
+            await ensureAdminRecord(loginResult.user, defaultAdmin.email);
         } catch (recordError) {
             console.warn("Không ghi được hồ sơ admin sau khi tạo:", recordError);
         }
 
         localStorage.setItem("mobistore_auth", JSON.stringify({
             user: defaultAdmin.email,
-            uid: userCredential.user.uid,
+            uid: loginResult.user.uid,
             loginTime: new Date().toISOString(),
-            token: "firebase-auth"
+            token: "firebase-custom-token"
         }));
 
         setStatus("Đã tạo admin mặc định.");
         alert("Đã tạo admin mặc định: admin@gmail.com / 123456");
         return;
     } catch (createError) {
-        if (createError.code !== "auth/email-already-in-use") {
-            throw createError;
-        }
-
-        try {
-            const userCredential = await auth.signInWithEmailAndPassword(defaultAdmin.email, defaultAdmin.password);
-            try {
-                await ensureAdminRecord(userCredential.user, defaultAdmin.email);
-            } catch (recordError) {
-                console.warn("Không ghi được hồ sơ admin sau khi đăng nhập:", recordError);
-            }
-
-            localStorage.setItem("mobistore_auth", JSON.stringify({
-                user: defaultAdmin.email,
-                uid: userCredential.user.uid,
-                loginTime: new Date().toISOString(),
-                token: "firebase-auth"
-            }));
-
-            setStatus("Admin mặc định đã tồn tại và được khôi phục.");
-            alert("Admin mặc định đã tồn tại. Mình đã khôi phục lại quyền admin.");
-            return;
-        } catch (signInError) {
-            if (signInError.code === "auth/wrong-password") {
-                throw new Error("Admin đã tồn tại nhưng mật khẩu không khớp. Hãy xóa user admin cũ trong Firebase Console rồi bấm lại.");
-            }
-            throw signInError;
-        }
+        throw createError;
     }
 }
 
