@@ -52,17 +52,16 @@ service cloud.firestore {
     // ============================================
     match /orders/{orderId} {
       // Người dùng chỉ có thể xem đơn hàng của chính họ
-      allow get: if isOwner(resource.data.userId) || isAdmin();
-      allow list: if isAdmin() ? true : (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow get, list: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
       
       // Người dùng có thể tạo đơn hàng cho chính họ
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       
-      // Người dùng có thể cập nhật đơn hàng của mình
-      allow update: if isOwner(resource.data.userId);
+      // Người dùng có thể cập nhật đơn hàng của mình, admin có thể xử lý trạng thái
+      allow update: if isAdmin() || isOwner(resource.data.userId);
       
-      // Chỉ admin có thể xóa đơn hàng
-      allow delete: if isAdmin();
+      // Chủ đơn hoặc admin có thể xóa đơn hàng
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
     }
 
     // ============================================
