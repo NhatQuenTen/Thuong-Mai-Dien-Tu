@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 /* =============================================
    PHONESTORE – ORDER HISTORY  |  order-history.js
    Features: list, filter, search, detail modal
@@ -8,257 +8,541 @@
 
 // ─── STATE ──────────────────────────────────
 function getCurrentUser() {
-    return JSON.parse(localStorage.getItem('currentUser'));
+  return JSON.parse(localStorage.getItem("currentUser") || "null");
 }
 
-function getOrderStorageKey(userId = getCurrentUser()?.id) {
-    return userId ? 'ps_orders_' + userId : 'ps_orders';
+function getUserId(user = getCurrentUser()) {
+  return user?.id || user?.uid || "";
+}
+
+function getOrderStorageKey(userId = getUserId()) {
+  return userId ? "ps_orders_" + userId : "ps_orders";
 }
 
 function loadUserOrders() {
-    const user = getCurrentUser();
-    if (!user) return [];
+  const user = getCurrentUser();
+  if (!user) return [];
 
-    const scopedKey = getOrderStorageKey(user.id);
-    const scopedOrders = JSON.parse(localStorage.getItem(scopedKey) || 'null');
-    if (Array.isArray(scopedOrders)) return scopedOrders;
+  const scopedKey = getOrderStorageKey(getUserId(user));
+  const scopedOrders = JSON.parse(localStorage.getItem(scopedKey) || "null");
+  if (Array.isArray(scopedOrders)) return scopedOrders;
 
-    const legacyOrders = JSON.parse(localStorage.getItem('ps_orders') || '[]');
-    if (Array.isArray(legacyOrders) && legacyOrders.length > 0) {
-        localStorage.setItem(scopedKey, JSON.stringify(legacyOrders));
-        return legacyOrders;
+  return [];
+}
+
+function clearLegacyOrderCaches(activeUserId) {
+  try {
+    const activeKey = getOrderStorageKey(activeUserId);
+    localStorage.removeItem("ps_orders");
+
+    const removableKeys = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (!key || !key.startsWith("ps_orders_")) continue;
+      if (key !== activeKey) removableKeys.push(key);
     }
 
-    return [];
+    removableKeys.forEach((key) => localStorage.removeItem(key));
+  } catch (error) {
+    console.warn("Không thể dọn cache đơn hàng cũ:", error.message);
+  }
 }
 
 let orders = loadUserOrders();
 let filtered = [...orders];
-let activeStatus = '';
-let searchQuery = '';
+let activeStatus = "";
+let searchQuery = "";
 let currentPage = 1;
 const PAGE_SIZE = 5;
 let detailId = null;
 let cancelId = null;
 
 const DEFAULT_USER = {
-    name: 'Nguyễn Văn A',
-    email: 'nguyenvana@gmail.com',
-    phone: '0901 234 567',
-    birthday: '1995-06-15',
-    gender: 'male',
-    idCard: '079095001234',
-    avatar: '',
-    joined: '01/2025',
-    memberTag: 'Thành viên Vàng',
-    twoFA: true,
+  name: "Nguyễn Văn A",
+  email: "nguyenvana@gmail.com",
+  phone: "0901 234 567",
+  birthday: "1995-06-15",
+  gender: "male",
+  idCard: "079095001234",
+  avatar: "",
+  joined: "01/2025",
+  memberTag: "Thành viên Vàng",
+  twoFA: true,
 };
 
 function loadUser() {
-    // Giống profile.js: luôn ưu tiên currentUser để đúng tài khoản đang đăng nhập
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-    if (!currentUser) return DEFAULT_USER;
-    
-    return {
-        ...DEFAULT_USER,
-        name: currentUser.name || currentUser.displayName || currentUser.fullName || DEFAULT_USER.name,
-        email: currentUser.email || DEFAULT_USER.email,
-        phone: currentUser.phone || DEFAULT_USER.phone,
-        avatar: currentUser.avatar || DEFAULT_USER.avatar,
-        joined: currentUser.joined || DEFAULT_USER.joined,
-    };
+  // Giống profile.js: luôn ưu tiên currentUser để đúng tài khoản đang đăng nhập
+  const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+  if (!currentUser) return DEFAULT_USER;
+
+  return {
+    ...DEFAULT_USER,
+    name:
+      currentUser.name ||
+      currentUser.displayName ||
+      currentUser.fullName ||
+      DEFAULT_USER.name,
+    email: currentUser.email || DEFAULT_USER.email,
+    phone: currentUser.phone || DEFAULT_USER.phone,
+    avatar: currentUser.avatar || DEFAULT_USER.avatar,
+    joined: currentUser.joined || DEFAULT_USER.joined,
+  };
 }
 let user = loadUser();
 
 function renderUserUI() {
-    user = loadUser();
-    if (!user) return;
-    
-    const avatar = user.avatar ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=b7791f&color=fff&size=80&rounded=true`;
+  user = loadUser();
+  if (!user) return;
 
-    if ($('sidebarAvatar')) $('sidebarAvatar').src = avatar;
-    if ($('sidebarName')) $('sidebarName').textContent = user.name;
-    if ($('sidebarEmail')) $('sidebarEmail').textContent = user.email;
+  const avatar =
+    user.avatar ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=b7791f&color=fff&size=80&rounded=true`;
+
+  if ($("sidebarAvatar")) $("sidebarAvatar").src = avatar;
+  if ($("sidebarName")) $("sidebarName").textContent = user.name;
+  if ($("sidebarEmail")) $("sidebarEmail").textContent = user.email;
 }
 
 // ─── HELPERS ────────────────────────────────
 const $ = (id) => document.getElementById(id);
-const fmt = (n) => new Intl.NumberFormat('vi-VN').format(n) + ' ₫';
+const fmt = (n) => new Intl.NumberFormat("vi-VN").format(n) + " ₫";
 const fmtDate = (iso) => {
-    const d = new Date(iso);
-    return d.toLocaleDateString('vi-VN', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    });
+  const d = new Date(iso);
+  return d.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
-const orderSubtotal = (o) => o.items.reduce((s, i) => s + i.price * i.qty, 0);
-const orderTotal = (o) => orderSubtotal(o) + (o.shipping || 0) - (o.discount || 0);
+const orderSubtotal = (o) =>
+  (Array.isArray(o.items) ? o.items : []).reduce(
+    (sum, item) =>
+      sum +
+      (Number(item.price) || 0) * (Number(item.qty || item.quantity) || 1),
+    0,
+  );
+const orderTotal = (o) =>
+  orderSubtotal(o) + (Number(o.shipping) || 0) - (Number(o.discount) || 0);
+const statusClassName = (status) => {
+  const map = {
+    pending: "pending",
+    "Chờ xác nhận": "pending",
+    confirmed: "confirmed",
+    "Đã xác nhận": "confirmed",
+    shipping: "shipping",
+    "Đang giao hàng": "shipping",
+    delivered: "delivered",
+    "Đã giao hàng thành công": "delivered",
+    cancelled: "cancelled",
+    "Đã hủy": "cancelled",
+  };
+  return `status-${map[status] || "pending"}`;
+};
 
 const STATUS_LABEL = {
-    pending: 'Chờ xác nhận', processing: 'Đang xử lý',
-    shipping: 'Đang giao', delivered: 'Đã giao', cancelled: 'Đã hủy'
+  pending: "Chờ xác nhận",
+  "Chờ xác nhận": "Chờ xác nhận",
+  confirmed: "Đã xác nhận",
+  "Đã xác nhận": "Đã xác nhận",
+  shipping: "Đang giao hàng",
+  "Đang giao hàng": "Đang giao hàng",
+  delivered: "Đã giao hàng thành công",
+  "Đã giao hàng thành công": "Đã giao hàng thành công",
+  cancelled: "Đã hủy",
+  "Đã hủy": "Đã hủy",
 };
 const STATUS_ICON = {
-    pending: 'fa-clock', processing: 'fa-cog fa-spin',
-    shipping: 'fa-truck', delivered: 'fa-check-circle', cancelled: 'fa-times-circle'
+  pending: "fa-clock",
+  "Chờ xác nhận": "fa-clock",
+  confirmed: "fa-check-circle",
+  "Đã xác nhận": "fa-check-circle",
+  shipping: "fa-truck",
+  "Đang giao hàng": "fa-truck",
+  delivered: "fa-circle-check",
+  "Đã giao hàng thành công": "fa-circle-check",
+  cancelled: "fa-times-circle",
+  "Đã hủy": "fa-times-circle",
 };
 const PAY_ICON = {
-    'Chuyển khoản ngân hàng': 'fa-university',
-    'Thẻ tín dụng Visa': 'fa-credit-card',
-    'Thẻ tín dụng Mastercard': 'fa-credit-card',
-    'Tiền mặt khi nhận hàng': 'fa-money-bill-wave',
-    'Ví MoMo': 'fa-wallet',
-    'ZaloPay': 'fa-wallet',
-    'VNPay': 'fa-qrcode'
+  "Chuyển khoản ngân hàng": "fa-university",
+  "Tiền mặt khi nhận hàng": "fa-money-bill-wave",
+  "Ví MoMo": "fa-wallet",
+  VNPay: "fa-qrcode",
 };
 const TL_ICONS = {
-    'Đặt hàng': 'fa-shopping-cart', 'Xác nhận': 'fa-check',
-    'Đang đóng gói': 'fa-box', 'Đang giao': 'fa-truck',
-    'Hoàn thành': 'fa-check-double', 'Đã hủy': 'fa-times'
+  "Đặt hàng": "fa-shopping-cart",
+  "Đã xác nhận": "fa-check",
+  "Đang giao hàng": "fa-truck",
+  "Đã giao hàng thành công": "fa-circle-check",
+  "Đã hủy": "fa-times",
 };
 
 function saveOrder(order) {
-    const user = getCurrentUser();
-    if (!user) return;
-    const key = getOrderStorageKey(user.id);
-    const existing = JSON.parse(localStorage.getItem(key) || '[]');
-    const index = existing.findIndex(o => o.id === order.id);
-    if (index >= 0) {
-        existing[index] = order;
-    } else {
-        existing.push(order);
-    }
-    localStorage.setItem(key, JSON.stringify(existing));
+  const user = getCurrentUser();
+  if (!user) return;
+  const key = getOrderStorageKey(getUserId(user));
+  const existing = JSON.parse(localStorage.getItem(key) || "[]");
+  const index = existing.findIndex((o) => o.id === order.id);
+  if (index >= 0) {
+    existing[index] = order;
+  } else {
+    existing.push(order);
+  }
+  localStorage.setItem(key, JSON.stringify(existing));
 }
 
 function saveOrders() {
-    const user = getCurrentUser();
-    if (!user) return;
-    const key = getOrderStorageKey(user.id);
-    localStorage.setItem(key, JSON.stringify(orders));
+  const user = getCurrentUser();
+  if (!user) return;
+  const key = getOrderStorageKey(getUserId(user));
+  localStorage.setItem(key, JSON.stringify(orders));
+  syncOrdersToFirestore();
+}
+
+function waitForFirebase() {
+  return new Promise((resolve, reject) => {
+    let attempts = 0;
+    const timer = setInterval(() => {
+      if (window.firebaseDb && window.firebaseAuth) {
+        clearInterval(timer);
+        resolve({ auth: window.firebaseAuth, db: window.firebaseDb });
+        return;
+      }
+
+      attempts += 1;
+      if (attempts > 100) {
+        clearInterval(timer);
+        reject(new Error("Firebase chưa sẵn sàng"));
+      }
+    }, 50);
+  });
+}
+
+function normalizeOrder(raw = {}, fallbackId = "") {
+  const paymentMethod =
+    raw.payment?.method ||
+    raw.paymentMethod ||
+    raw.payment ||
+    "Tiền mặt khi nhận hàng";
+  const paymentStatus =
+    raw.payment?.status || raw.paymentStatus || "Chờ xác nhận";
+  const items = Array.isArray(raw.items) ? raw.items : [];
+
+  return {
+    id: raw.id || fallbackId,
+    orderCode: raw.orderCode || raw.id || fallbackId,
+    userId: raw.userId || "",
+    customer: raw.customer || raw.name || "",
+    phone: raw.phone || "",
+    email: raw.email || "",
+    address: raw.addressText || raw.address || "",
+    addressText: raw.addressText || raw.address || "",
+    province: raw.province || "",
+    district: raw.district || "",
+    ward: raw.ward || "",
+    note: raw.note || "",
+    items: items.map((item) => ({
+      name: item.name || "",
+      qty: Number(item.qty || item.quantity) || 1,
+      price: Number(item.price) || 0,
+      img: item.img || item.image || "",
+      variant: item.variant || "",
+    })),
+    subtotal: Number(raw.subtotal) || 0,
+    discount: Number(raw.discount) || 0,
+    shipping: Number(raw.shipping) || 0,
+    status: raw.status || "Chờ xác nhận",
+    payment: {
+      method: paymentMethod,
+      status: paymentStatus,
+    },
+    paymentMethod,
+    paymentStatus,
+    reviewed: !!raw.reviewed,
+    timeline: Array.isArray(raw.timeline) ? raw.timeline : [],
+    createdAt: raw.createdAt || null,
+    updatedAt: raw.updatedAt || null,
+  };
+}
+
+function buildTimelineForStatus(status, createdAt = new Date()) {
+  const timestamp = new Date(createdAt).toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  if (status === "Đã hủy") {
+    return [
+      { step: "Đặt hàng", done: true, current: false, time: timestamp },
+      {
+        step: "Đã hủy",
+        done: true,
+        current: true,
+        cancelled: true,
+        time: timestamp,
+      },
+    ];
+  }
+
+  return [
+    {
+      step: "Đặt hàng",
+      done: true,
+      current: status === "Chờ xác nhận",
+      time: timestamp,
+    },
+    {
+      step: "Đã xác nhận",
+      done: [
+        "Đã xác nhận",
+        "Đang giao hàng",
+        "Đã giao hàng thành công",
+      ].includes(status),
+      current: status === "Đã xác nhận",
+      time: status === "Đã xác nhận" ? timestamp : "",
+    },
+    {
+      step: "Đang giao hàng",
+      done: ["Đang giao hàng", "Đã giao hàng thành công"].includes(status),
+      current: status === "Đang giao hàng",
+      time: status === "Đang giao hàng" ? timestamp : "",
+    },
+    {
+      step: "Đã giao hàng thành công",
+      done: status === "Đã giao hàng thành công",
+      current: status === "Đã giao hàng thành công",
+      time: status === "Đã giao hàng thành công" ? timestamp : "",
+    },
+  ];
+}
+
+async function persistOrderToFirestore(order) {
+  try {
+    const { db } = await waitForFirebase();
+    const payload = { ...order };
+    delete payload.id;
+    delete payload.orderCode;
+    await db.collection("orders").doc(order.id).set(payload, { merge: true });
+  } catch (error) {
+    console.warn("Không thể đồng bộ đơn hàng lên Firebase:", error.message);
+  }
+}
+
+async function syncOrdersToFirestore() {
+  const tasks = orders.map((order) => persistOrderToFirestore(order));
+  await Promise.all(tasks);
+}
+
+function subscribeFirebaseOrders() {
+  waitForFirebase()
+    .then(({ db, auth }) => {
+      const user = getCurrentUser();
+      if (!user) return;
+
+      const authUid = auth?.currentUser?.uid || getUserId(user);
+      if (!authUid) {
+        console.warn("Không có UID đăng nhập để đồng bộ đơn hàng");
+        return;
+      }
+
+      if (getUserId(user) !== authUid) {
+        localStorage.setItem(
+          "currentUser",
+          JSON.stringify({
+            ...user,
+            id: authUid,
+          }),
+        );
+      }
+
+      clearLegacyOrderCaches(authUid);
+      orders = [];
+      filtered = [];
+      applyFilter();
+
+      db.collection("orders")
+        .where("userId", "==", authUid)
+        .onSnapshot(
+          (snapshot) => {
+            const remoteOrders = snapshot.docs.map((doc) =>
+              normalizeOrder({ id: doc.id, ...doc.data() }, doc.id),
+            );
+
+            remoteOrders.sort((a, b) => {
+              const left =
+                a.createdAt?.seconds != null
+                  ? a.createdAt.seconds * 1000
+                  : new Date(a.createdAt || a.date || 0).getTime();
+              const right =
+                b.createdAt?.seconds != null
+                  ? b.createdAt.seconds * 1000
+                  : new Date(b.createdAt || b.date || 0).getTime();
+              return right - left;
+            });
+
+            orders = remoteOrders;
+            const key = getOrderStorageKey(authUid);
+            localStorage.setItem(key, JSON.stringify(orders));
+            filtered = [...orders];
+            applyFilter();
+          },
+          (error) => {
+            console.error("Firestore orders listener failed:", error);
+          },
+        );
+    })
+    .catch((error) => {
+      console.warn("Không thể lắng nghe đơn hàng Firebase:", error.message);
+    });
 }
 
 // ─── CART COUNT SYNC (from main site) ───────
 function syncCartCount() {
-    try {
-        const currentUser = getCurrentUser();
-        const key = currentUser ? `cart_${currentUser.id}` : 'cart';
-        let cart = JSON.parse(localStorage.getItem(key) || '[]');
-        if (!Array.isArray(cart)) cart = [];
+  try {
+    const currentUser = getCurrentUser();
+    const key = currentUser ? `cart_${getUserId(currentUser)}` : "cart";
+    let cart = JSON.parse(localStorage.getItem(key) || "[]");
+    if (!Array.isArray(cart)) cart = [];
 
-        if (currentUser && cart.length === 0) {
-            const legacyCart = JSON.parse(localStorage.getItem('cart') || '[]');
-            if (Array.isArray(legacyCart) && legacyCart.length > 0) {
-                localStorage.setItem(key, JSON.stringify(legacyCart));
-                cart = legacyCart;
-            } else {
-                const fallbackCarts = [];
-                for (let index = 0; index < localStorage.length; index++) {
-                    const storageKey = localStorage.key(index);
-                    if (!storageKey || !storageKey.startsWith('cart_') || storageKey === key) continue;
+    if (currentUser && cart.length === 0) {
+      const legacyCart = JSON.parse(localStorage.getItem("cart") || "[]");
+      if (Array.isArray(legacyCart) && legacyCart.length > 0) {
+        localStorage.setItem(key, JSON.stringify(legacyCart));
+        cart = legacyCart;
+      } else {
+        const fallbackCarts = [];
+        for (let index = 0; index < localStorage.length; index++) {
+          const storageKey = localStorage.key(index);
+          if (
+            !storageKey ||
+            !storageKey.startsWith("cart_") ||
+            storageKey === key
+          )
+            continue;
 
-                    try {
-                        const fallbackParsed = JSON.parse(localStorage.getItem(storageKey) || '[]');
-                        const fallbackCart = Array.isArray(fallbackParsed) ? fallbackParsed : [];
-                        if (fallbackCart.length > 0) {
-                            fallbackCarts.push(fallbackCart);
-                        }
-                    } catch {
-                        // ignore invalid fallback cart
-                    }
-                }
-
-                if (fallbackCarts.length === 1) {
-                    localStorage.setItem(key, JSON.stringify(fallbackCarts[0]));
-                    cart = fallbackCarts[0];
-                }
+          try {
+            const fallbackParsed = JSON.parse(
+              localStorage.getItem(storageKey) || "[]",
+            );
+            const fallbackCart = Array.isArray(fallbackParsed)
+              ? fallbackParsed
+              : [];
+            if (fallbackCart.length > 0) {
+              fallbackCarts.push(fallbackCart);
             }
+          } catch {
+            // ignore invalid fallback cart
+          }
         }
 
-        const count = cart.reduce((s, i) => s + (i.quantity || 1), 0);
-        document.querySelectorAll('#cartCount, .cart-count').forEach((el) => {
-            el.textContent = String(count);
-        });
-    } catch (e) { /* silent */ }
+        if (fallbackCarts.length === 1) {
+          localStorage.setItem(key, JSON.stringify(fallbackCarts[0]));
+          cart = fallbackCarts[0];
+        }
+      }
+    }
+
+    const count = cart.reduce((s, i) => s + (i.quantity || 1), 0);
+    document.querySelectorAll("#cartCount, .cart-count").forEach((el) => {
+      el.textContent = String(count);
+    });
+  } catch (e) {
+    /* silent */
+  }
 }
 
 // ─── TOAST ──────────────────────────────────
-function toast(msg, type = 'success') {
-    const icons = {
-        success: 'fa-check-circle', error: 'fa-times-circle',
-        info: 'fa-tag', warning: 'fa-exclamation-circle'
-    };
-    const el = document.createElement('div');
-    el.className = `oh-toast ${type}`;
-    el.innerHTML = `
+function toast(msg, type = "success") {
+  const icons = {
+    success: "fa-check-circle",
+    error: "fa-times-circle",
+    info: "fa-tag",
+    warning: "fa-exclamation-circle",
+  };
+  const el = document.createElement("div");
+  el.className = `oh-toast ${type}`;
+  el.innerHTML = `
         <div class="oh-toast-icon"><i class="fas ${icons[type]}"></i></div>
         <span>${msg}</span>`;
-    $('toastContainer').appendChild(el);
-    setTimeout(() => {
-        el.classList.add('hide');
-        setTimeout(() => el.remove(), 320);
-    }, 3200);
+  $("toastContainer").appendChild(el);
+  setTimeout(() => {
+    el.classList.add("hide");
+    setTimeout(() => el.remove(), 320);
+  }, 3200);
 }
 
 // ─── FILTER & RENDER ────────────────────────
 function applyFilter() {
-    filtered = orders.filter(o => {
-        const mStatus = !activeStatus || o.status === activeStatus;
-        const q = searchQuery.toLowerCase();
-        const mSearch = !q || o.id.toLowerCase().includes(q) ||
-            o.items.some(i => i.name.toLowerCase().includes(q));
-        return mStatus && mSearch;
-    });
-    currentPage = 1;
-    renderList();
-    renderPagination();
-    updateBadge();
+  filtered = orders.filter((o) => {
+    const mStatus = !activeStatus || o.status === activeStatus;
+    const q = searchQuery.toLowerCase();
+    const mSearch =
+      !q ||
+      o.id.toLowerCase().includes(q) ||
+      o.items.some((i) => i.name.toLowerCase().includes(q));
+    return mStatus && mSearch;
+  });
+  currentPage = 1;
+  renderList();
+  renderPagination();
+  updateBadge();
 }
 
 function updateBadge() {
-    $('ohTotalBadge').textContent = `${filtered.length} đơn hàng`;
+  $("ohTotalBadge").textContent = `${filtered.length} đơn hàng`;
 }
 
 // ─── RENDER ORDER LIST ──────────────────────
 function renderList() {
-    const list = $('ohList');
-    const empty = $('ohEmpty');
-    const start = (currentPage - 1) * PAGE_SIZE;
-    const page = filtered.slice(start, start + PAGE_SIZE);
+  const list = $("ohList");
+  const empty = $("ohEmpty");
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filtered.slice(start, start + PAGE_SIZE);
 
-    if (page.length === 0) {
-        list.innerHTML = '';
-        empty.classList.add('show');
-        return;
-    }
-    empty.classList.remove('show');
+  if (page.length === 0) {
+    list.innerHTML = "";
+    empty.classList.add("show");
+    return;
+  }
+  empty.classList.remove("show");
 
-    list.innerHTML = page.map((o, idx) => {
-        const total = orderTotal(o);
-        const showItems = o.items.slice(0, 2);
-        const moreCount = o.items.length - 2;
-        const payIcon = PAY_ICON[o.payment.method] || 'fa-credit-card';
-        const canCancel = ['pending', 'processing'].includes(o.status);
-        const isDelivered = o.status === 'delivered';
-        const isShipping = o.status === 'shipping';
+  list.innerHTML = page
+    .map((o, idx) => {
+      const total = orderTotal(o);
+      const showItems = o.items.slice(0, 2);
+      const moreCount = o.items.length - 2;
+      const paymentMethod =
+        o.payment?.method || o.paymentMethod || "Tiền mặt khi nhận hàng";
+      const paymentStatus =
+        o.payment?.status || o.paymentStatus || "Chờ xác nhận";
+      const payIcon = PAY_ICON[paymentMethod] || "fa-credit-card";
+      const canCancel = ["Chờ xác nhận", "Đã xác nhận"].includes(o.status);
+      const isDelivered = o.status === "Đã giao hàng thành công";
+      const isShipping = o.status === "Đang giao hàng";
 
-        return `
-        <div class="order-card" style="animation-delay:${idx * .07}s">
+      return `
+        <div class="order-card" style="animation-delay:${idx * 0.07}s">
           <div class="order-card-header">
             <span class="order-card-id" onclick="openDetail('${o.id}')">
               <i class="fas fa-receipt" style="font-size:11px;margin-right:4px"></i>${o.id}
             </span>
-            <span class="order-card-date">
-              <i class="fas fa-calendar-alt"></i> ${fmtDate(o.date)}
-            </span>
-            <span class="order-status-badge status-${o.status}">
-              <i class="fas ${STATUS_ICON[o.status]}"></i> ${STATUS_LABEL[o.status]}
+                        <span class="order-card-date">
+                            <i class="fas fa-calendar-alt"></i> ${fmtDate(o.date || o.createdAt || new Date().toISOString())}
+                        </span>
+                        <span class="order-status-badge ${statusClassName(o.status)}">
+                            <i class="fas ${STATUS_ICON[o.status] || "fa-clock"}"></i> ${STATUS_LABEL[o.status] || o.status}
             </span>
           </div>
 
           <div class="order-card-products">
-            ${showItems.map(item => `
+            ${showItems
+              .map(
+                (item) => `
             <div class="order-prod-thumb">
               <img class="order-prod-img" src="${item.img}" alt="${item.name}"
                    onerror="this.src='https://placehold.co/56x56/fff5e6/b7791f?text=SP'">
@@ -270,8 +554,10 @@ function renderList() {
                   <span class="order-prod-price">${fmt(item.price)}</span>
                 </div>
               </div>
-            </div>`).join('')}
-            ${moreCount > 0 ? `<span class="order-more-items" onclick="openDetail('${o.id}')"><i class="fas fa-plus"></i> +${moreCount} sản phẩm</span>` : ''}
+            </div>`,
+              )
+              .join("")}
+            ${moreCount > 0 ? `<span class="order-more-items" onclick="openDetail('${o.id}')"><i class="fas fa-plus"></i> +${moreCount} sản phẩm</span>` : ""}
           </div>
 
           <div class="order-card-footer">
@@ -281,84 +567,101 @@ function renderList() {
                 <span class="order-total-value">${fmt(total)}</span>
               </div>
               <div class="order-payment-method" style="margin-top:6px">
-                <i class="fas ${payIcon}"></i> ${o.payment.method} · ${o.payment.status}
+                                <i class="fas ${payIcon}"></i> ${paymentMethod} · ${paymentStatus}
               </div>
             </div>
             <div class="order-card-actions">
               <button class="btn-view-detail" onclick="openDetail('${o.id}')"><i class="fas fa-eye"></i> Chi tiết</button>
-              ${isShipping ? `<button class="btn-track" onclick="openDetail('${o.id}')"><i class="fas fa-map-marker-alt"></i> Theo dõi</button>` : ''}
-              ${isDelivered ? `<button class="btn-review${o.reviewed ? ' btn-review-done' : ''}" onclick="reviewOrder('${o.id}')">
-                <i class="fas fa-star"></i> ${o.reviewed ? 'Đã đánh giá' : 'Đánh giá'}
-              </button>` : ''}
-              ${isDelivered || o.status === 'cancelled' ? `<button class="btn-reorder" onclick="reorder('${o.id}')"><i class="fas fa-redo"></i> Mua lại</button>` : ''}
-              ${canCancel ? `<button class="btn-cancel-order" onclick="openCancelModal('${o.id}')"><i class="fas fa-times"></i> Hủy đơn</button>` : ''}
+              ${isShipping ? `<button class="btn-track" onclick="openDetail('${o.id}')"><i class="fas fa-map-marker-alt"></i> Theo dõi</button>` : ""}
+              ${
+                isDelivered
+                  ? `<button class="btn-review${o.reviewed ? " btn-review-done" : ""}" onclick="reviewOrder('${o.id}')">
+                <i class="fas fa-star"></i> ${o.reviewed ? "Đã đánh giá" : "Đánh giá"}
+              </button>`
+                  : ""
+              }
+              ${isDelivered || o.status === "Đã hủy" ? `<button class="btn-reorder" onclick="reorder('${o.id}')"><i class="fas fa-redo"></i> Mua lại</button>` : ""}
+              ${canCancel ? `<button class="btn-cancel-order" onclick="openCancelModal('${o.id}')"><i class="fas fa-times"></i> Hủy đơn</button>` : ""}
             </div>
           </div>
         </div>`;
-    }).join('');
+    })
+    .join("");
 }
 
 // ─── PAGINATION ─────────────────────────────
 function renderPagination() {
-    const total = filtered.length;
-    const pages = Math.ceil(total / PAGE_SIZE);
-    const pg = $('ohPagination');
-    if (pages <= 1) { pg.innerHTML = ''; return; }
+  const total = filtered.length;
+  const pages = Math.ceil(total / PAGE_SIZE);
+  const pg = $("ohPagination");
+  if (pages <= 1) {
+    pg.innerHTML = "";
+    return;
+  }
 
-    let h = `<button class="pg-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
-    for (let i = 1; i <= pages; i++) {
-        if (pages > 7 && i > 2 && i < pages - 1 && Math.abs(i - currentPage) > 1) {
-            if (i === 3 || i === pages - 2) h += `<span class="pg-btn" style="cursor:default;pointer-events:none">…</span>`;
-            continue;
-        }
-        h += `<button class="pg-btn ${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+  let h = `<button class="pg-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? "disabled" : ""}><i class="fas fa-chevron-left"></i></button>`;
+  for (let i = 1; i <= pages; i++) {
+    if (pages > 7 && i > 2 && i < pages - 1 && Math.abs(i - currentPage) > 1) {
+      if (i === 3 || i === pages - 2)
+        h += `<span class="pg-btn" style="cursor:default;pointer-events:none">…</span>`;
+      continue;
     }
-    h += `<button class="pg-btn" onclick="goPage(${currentPage + 1})" ${currentPage === pages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
-    pg.innerHTML = h;
+    h += `<button class="pg-btn ${i === currentPage ? "active" : ""}" onclick="goPage(${i})">${i}</button>`;
+  }
+  h += `<button class="pg-btn" onclick="goPage(${currentPage + 1})" ${currentPage === pages ? "disabled" : ""}><i class="fas fa-chevron-right"></i></button>`;
+  pg.innerHTML = h;
 }
 
 function goPage(p) {
-    const pages = Math.ceil(filtered.length / PAGE_SIZE);
-    if (p < 1 || p > pages) return;
-    currentPage = p;
-    renderList();
-    renderPagination();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const pages = Math.ceil(filtered.length / PAGE_SIZE);
+  if (p < 1 || p > pages) return;
+  currentPage = p;
+  renderList();
+  renderPagination();
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 // ─── TAB FILTER ─────────────────────────────
-document.querySelectorAll('.oh-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.oh-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        activeStatus = tab.dataset.status;
-        applyFilter();
-    });
+document.querySelectorAll(".oh-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    document
+      .querySelectorAll(".oh-tab")
+      .forEach((t) => t.classList.remove("active"));
+    tab.classList.add("active");
+    activeStatus = tab.dataset.status;
+    applyFilter();
+  });
 });
 
 // ─── SEARCH ─────────────────────────────────
-const ohSearchInput = $('ohSearch');
+const ohSearchInput = $("ohSearch");
 if (ohSearchInput) {
-    ohSearchInput.addEventListener('input', e => {
-        searchQuery = e.target.value;
-        applyFilter();
-    });
+  ohSearchInput.addEventListener("input", (e) => {
+    searchQuery = e.target.value;
+    applyFilter();
+  });
 }
 
 // ─── DETAIL MODAL ───────────────────────────
 function openDetail(id) {
-    const o = orders.find(x => x.id === id);
-    if (!o) return;
-    detailId = id;
+  const o = orders.find((x) => x.id === id);
+  if (!o) return;
+  detailId = id;
+  const paymentMethod =
+    o.payment?.method || o.paymentMethod || "Tiền mặt khi nhận hàng";
+  const paymentStatus = o.payment?.status || o.paymentStatus || "Chờ xác nhận";
 
-    $('modalOrderId').innerHTML = `<i class="fas fa-receipt"></i> ${o.id}`;
-    $('modalDate').textContent = `Đặt ngày: ${fmtDate(o.date)}`;
+  $("modalOrderId").innerHTML = `<i class="fas fa-receipt"></i> ${o.id}`;
+  $("modalDate").textContent =
+    `Đặt ngày: ${fmtDate(o.date || o.createdAt || new Date().toISOString())}`;
 
-    // Timeline
-    renderTimeline(o);
+  // Timeline
+  renderTimeline(o);
 
-    // Products
-    $('modalProducts').innerHTML = o.items.map(item => `
+  // Products
+  $("modalProducts").innerHTML = o.items
+    .map(
+      (item) => `
     <div class="modal-prod-row">
       <img class="modal-prod-img" src="${item.img}" alt="${item.name}"
            onerror="this.src='https://placehold.co/64x64/fff5e6/b7791f?text=SP'">
@@ -370,268 +673,307 @@ function openDetail(id) {
         </div>
       </div>
       <span class="modal-prod-subtotal">${fmt(item.price * item.qty)}</span>
-    </div>`).join('');
+    </div>`,
+    )
+    .join("");
 
-    // Address
-    $('modalAddress').innerHTML = `
-      <strong>${o.address.name}</strong> &nbsp;
-      <i class="fas fa-phone" style="color:var(--gold-primary);font-size:11px"></i> ${o.address.phone}<br>
-      ${o.address.full}
-      ${o.note ? `<br><span style="color:var(--gold-primary);font-size:12px;margin-top:4px;display:inline-block">
-        <i class="fas fa-sticky-note"></i> ${o.note}</span>` : ''}`;
+  // Address
+  $("modalAddress").innerHTML = `
+            <strong>${o.customer || "Khách hàng"}</strong> &nbsp;
+            <i class="fas fa-phone" style="color:var(--gold-primary);font-size:11px"></i> ${o.phone || "—"}<br>
+            ${o.addressText || o.address || "—"}
+            ${
+              o.note
+                ? `<br><span style="color:var(--gold-primary);font-size:12px;margin-top:4px;display:inline-block">
+                <i class="fas fa-sticky-note"></i> ${o.note}</span>`
+                : ""
+            }`;
 
-    // Payment
-    const payIcon = PAY_ICON[o.payment.method] || 'fa-credit-card';
-    $('modalPayment').innerHTML = `
-      <strong><i class="fas ${payIcon}" style="color:var(--gold-primary);margin-right:5px"></i>${o.payment.method}</strong><br>
-      ${o.payment.bank ? `<span style="font-size:12px;color:var(--text-muted)">${o.payment.bank}</span><br>` : ''}
-      <span style="color:${o.payment.status === 'Đã thanh toán' ? 'var(--success)' : 'var(--warning)'};font-weight:700;font-size:12.5px">
-        <i class="fas fa-${o.payment.status === 'Đã thanh toán' ? 'check-circle' : 'hourglass-half'}"></i> ${o.payment.status}
+  // Payment
+  const payIcon = PAY_ICON[paymentMethod] || "fa-credit-card";
+  $("modalPayment").innerHTML = `
+            <strong><i class="fas ${payIcon}" style="color:var(--gold-primary);margin-right:5px"></i>${paymentMethod}</strong><br>
+            <span style="color:${paymentStatus === "Chờ thanh toán" ? "var(--warning)" : "var(--success)"};font-weight:700;font-size:12.5px">
+                <i class="fas fa-${paymentStatus === "Chờ thanh toán" ? "hourglass-half" : "check-circle"}"></i> ${paymentStatus}
       </span>`;
 
-    // Summary
-    const sub = orderSubtotal(o);
-    $('sumSubtotal').textContent = fmt(sub);
-    $('sumShipping').textContent = o.shipping === 0 ? 'Miễn phí' : fmt(o.shipping);
-    if (o.discount > 0) {
-        $('discountRow').style.display = 'flex';
-        $('sumDiscount').textContent = '- ' + fmt(o.discount);
-    } else {
-        $('discountRow').style.display = 'none';
-    }
-    $('sumTotal').textContent = fmt(orderTotal(o));
+  // Summary
+  const sub = orderSubtotal(o);
+  $("sumSubtotal").textContent = fmt(sub);
+  $("sumShipping").textContent =
+    o.shipping === 0 ? "Miễn phí" : fmt(o.shipping);
+  if (o.discount > 0) {
+    $("discountRow").style.display = "flex";
+    $("sumDiscount").textContent = "- " + fmt(o.discount);
+  } else {
+    $("discountRow").style.display = "none";
+  }
+  $("sumTotal").textContent = fmt(orderTotal(o));
 
-    // Footer buttons
-    const canCancel = ['pending', 'processing'].includes(o.status);
-    const isDelivered = o.status === 'delivered';
-    const isShipping = o.status === 'shipping';
-    $('modalFooter').innerHTML = `
-      ${isShipping ? `<button class="btn-track" onclick="trackOrder()"><i class="fas fa-map-marker-alt"></i> Theo dõi đơn hàng</button>` : ''}
-      ${isDelivered ? `<button class="btn-review${o.reviewed ? ' btn-review-done' : ''}" onclick="reviewOrder('${o.id}')">
-        <i class="fas fa-star"></i> ${o.reviewed ? 'Đã đánh giá' : 'Đánh giá ngay'}
-      </button>` : ''}
-      ${isDelivered || o.status === 'cancelled' ? `<button class="btn-reorder" onclick="reorder('${o.id}')"><i class="fas fa-redo"></i> Mua lại</button>` : ''}
-      ${canCancel ? `<button class="btn-cancel-order" onclick="closeDetail();openCancelModal('${o.id}')"><i class="fas fa-times"></i> Hủy đơn</button>` : ''}
+  // Footer buttons
+  const canCancel = ["Chờ xác nhận", "Đã xác nhận"].includes(o.status);
+  const isDelivered = o.status === "Đã giao hàng thành công";
+  const isShipping = o.status === "Đang giao hàng";
+  $("modalFooter").innerHTML = `
+      ${isShipping ? `<button class="btn-track" onclick="trackOrder()"><i class="fas fa-map-marker-alt"></i> Theo dõi đơn hàng</button>` : ""}
+      ${
+        isDelivered
+          ? `<button class="btn-review${o.reviewed ? " btn-review-done" : ""}" onclick="reviewOrder('${o.id}')">
+        <i class="fas fa-star"></i> ${o.reviewed ? "Đã đánh giá" : "Đánh giá ngay"}
+      </button>`
+          : ""
+      }
+    ${isDelivered || o.status === "Đã hủy" ? `<button class="btn-reorder" onclick="reorder('${o.id}')"><i class="fas fa-redo"></i> Mua lại</button>` : ""}
+      ${canCancel ? `<button class="btn-cancel-order" onclick="closeDetail();openCancelModal('${o.id}')"><i class="fas fa-times"></i> Hủy đơn</button>` : ""}
       <button class="btn-view-detail" onclick="closeDetail()"><i class="fas fa-times"></i> Đóng</button>`;
 
-    showModal('modalBackdrop');
+  showModal("modalBackdrop");
 }
 
 function renderTimeline(o) {
-    const wrap = $('timelineWrap');
-    const steps = o.timeline;
-    const doneCount = steps.filter(s => s.done && !s.cancelled).length;
-    const total = steps.length;
-    let pct = total > 1 ? Math.max(0, (doneCount - 1) / (total - 1) * 100) : 0;
-    if (o.status === 'cancelled') pct = ((steps.filter(s => s.done).length - 1) / (total - 1) * 100);
+  const wrap = $("timelineWrap");
+  const steps =
+    Array.isArray(o.timeline) && o.timeline.length > 0
+      ? o.timeline
+      : buildTimelineForStatus(o.status, o.date || o.createdAt || new Date());
+  const doneCount = steps.filter((s) => s.done && !s.cancelled).length;
+  const total = steps.length;
+  let pct = total > 1 ? Math.max(0, ((doneCount - 1) / (total - 1)) * 100) : 0;
+  if (o.status === "Đã hủy")
+    pct = ((steps.filter((s) => s.done).length - 1) / (total - 1)) * 100;
 
-    wrap.innerHTML = `<div class="timeline-line-fill" style="width:${pct}%"></div>` +
-        steps.map((step) => {
-            let cls = 'tl-step-inactive';
-            let dotCls = 'inactive';
-            if (step.cancelled) { cls = 'tl-step-cancelled'; dotCls = 'done'; }
-            else if (step.current) { cls = 'tl-step-current'; dotCls = 'current'; }
-            else if (step.done) { cls = 'tl-step-done'; dotCls = 'done'; }
-            const icon = TL_ICONS[step.step] || 'fa-circle';
-            return `
+  wrap.innerHTML =
+    `<div class="timeline-line-fill" style="width:${pct}%"></div>` +
+    steps
+      .map((step) => {
+        let cls = "tl-step-inactive";
+        let dotCls = "inactive";
+        if (step.cancelled) {
+          cls = "tl-step-cancelled";
+          dotCls = "done";
+        } else if (step.current) {
+          cls = "tl-step-current";
+          dotCls = "current";
+        } else if (step.done) {
+          cls = "tl-step-done";
+          dotCls = "done";
+        }
+        const icon = TL_ICONS[step.step] || "fa-circle";
+        return `
             <div class="timeline-step ${cls}">
-              <div class="tl-dot ${dotCls}" style="${step.cancelled ? 'background:var(--danger);border-color:var(--danger);color:#fff' : ''}">
+              <div class="tl-dot ${dotCls}" style="${step.cancelled ? "background:var(--danger);border-color:var(--danger);color:#fff" : ""}">
                 <i class="fas ${icon}" style="font-size:13px"></i>
               </div>
               <div class="tl-label">${step.step}</div>
-              ${step.time ? `<div class="tl-time">${step.time}</div>` : ''}
+              ${step.time ? `<div class="tl-time">${step.time}</div>` : ""}
             </div>`;
-        }).join('');
+      })
+      .join("");
 }
 
-function closeDetail() { hideModal('modalBackdrop'); }
-$('modalClose').addEventListener('click', closeDetail);
-$('modalBackdrop').addEventListener('click', e => {
-    if (e.target === $('modalBackdrop')) closeDetail();
+function closeDetail() {
+  hideModal("modalBackdrop");
+}
+$("modalClose").addEventListener("click", closeDetail);
+$("modalBackdrop").addEventListener("click", (e) => {
+  if (e.target === $("modalBackdrop")) closeDetail();
 });
 
 function openLogoutConfirm() {
-    const backdrop = $('logoutConfirmBackdrop');
-    if (!backdrop) return;
-    backdrop.classList.add('show');
-    document.body.style.overflow = 'hidden';
+  const backdrop = $("logoutConfirmBackdrop");
+  if (!backdrop) return;
+  backdrop.classList.add("show");
+  document.body.style.overflow = "hidden";
 }
 
 function closeLogoutConfirm() {
-    const backdrop = $('logoutConfirmBackdrop');
-    if (!backdrop) return;
-    backdrop.classList.remove('show');
-    document.body.style.overflow = '';
+  const backdrop = $("logoutConfirmBackdrop");
+  if (!backdrop) return;
+  backdrop.classList.remove("show");
+  document.body.style.overflow = "";
 }
 
 function initLogout() {
-    const btn = $('logoutBtn');
-    const confirmBtn = $('logoutConfirmBtn');
-    const cancelBtn = $('logoutCancelBtn');
-    const backdrop = $('logoutConfirmBackdrop');
-    if (!btn || !confirmBtn || !cancelBtn || !backdrop) return;
+  const btn = $("logoutBtn");
+  const confirmBtn = $("logoutConfirmBtn");
+  const cancelBtn = $("logoutCancelBtn");
+  const backdrop = $("logoutConfirmBackdrop");
+  if (!btn || !confirmBtn || !cancelBtn || !backdrop) return;
 
-    btn.addEventListener('click', e => {
-        e.preventDefault();
-        openLogoutConfirm();
-    });
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    openLogoutConfirm();
+  });
 
-    cancelBtn.addEventListener('click', e => {
-        e.preventDefault();
-        closeLogoutConfirm();
-    });
+  cancelBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeLogoutConfirm();
+  });
 
-    backdrop.addEventListener('click', e => {
-        if (e.target === backdrop) {
-            closeLogoutConfirm();
-        }
-    });
+  backdrop.addEventListener("click", (e) => {
+    if (e.target === backdrop) {
+      closeLogoutConfirm();
+    }
+  });
 
-    confirmBtn.addEventListener('click', async e => {
-        e.preventDefault();
+  confirmBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
 
-        if (window.googleAuth && typeof window.googleAuth.logout === 'function') {
-            try {
-                await window.googleAuth.logout();
-            } catch (error) {
-                console.warn('Google auth logout failed, falling back to local logout:', error);
-            }
-        }
+    if (window.googleAuth && typeof window.googleAuth.logout === "function") {
+      try {
+        await window.googleAuth.logout();
+      } catch (error) {
+        console.warn(
+          "Google auth logout failed, falling back to local logout:",
+          error,
+        );
+      }
+    }
 
-        localStorage.removeItem('currentUser');
-        sessionStorage.removeItem('googleUserData');
-        closeLogoutConfirm();
-        toast('Đã đăng xuất. Đang chuyển hướng đến đăng nhập...', 'info');
-        setTimeout(() => { window.location.href = 'signin.html'; }, 1200);
-    });
+    localStorage.removeItem("currentUser");
+    sessionStorage.removeItem("googleUserData");
+    closeLogoutConfirm();
+    toast("Đã đăng xuất. Đang chuyển hướng đến đăng nhập...", "info");
+    setTimeout(() => {
+      window.location.href = "signin.html";
+    }, 1200);
+  });
 }
 
 // ─── CANCEL ORDER ───────────────────────────
 function openCancelModal(id) {
-    cancelId = id;
-    $('cancelText').innerHTML = `Bạn có chắc muốn hủy đơn hàng <strong>${id}</strong>? Thao tác này không thể hoàn tác.`;
-    $('cancelReason').value = '';
-    showModal('cancelBackdrop');
+  cancelId = id;
+  $("cancelText").innerHTML =
+    `Bạn có chắc muốn hủy đơn hàng <strong>${id}</strong>? Thao tác này không thể hoàn tác.`;
+  $("cancelReason").value = "";
+  showModal("cancelBackdrop");
 }
 
-$('cancelYes').addEventListener('click', () => {
-    if (!$('cancelReason').value) {
-        toast('Vui lòng chọn lý do hủy đơn!', 'warning');
-        return;
-    }
-    const o = orders.find(x => x.id === cancelId);
-    if (!o) return;
-    o.status = 'cancelled';
-    o.cancelReason = $('cancelReason').value;
-    o.timeline = [
-        ...o.timeline.filter(t => t.done),
-        {
-            step: 'Đã hủy',
-            time: new Date().toLocaleDateString('vi-VN', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            }),
-            done: true, cancelled: true
-        }
-    ];
-    saveOrders();
-    hideModal('cancelBackdrop');
-    applyFilter();
-    toast(`Đã hủy đơn hàng ${cancelId} thành công!`, 'info');
-    cancelId = null;
+$("cancelYes").addEventListener("click", () => {
+  if (!$("cancelReason").value) {
+    toast("Vui lòng chọn lý do hủy đơn!", "warning");
+    return;
+  }
+  const o = orders.find((x) => x.id === cancelId);
+  if (!o) return;
+  o.status = "Đã hủy";
+  o.cancelReason = $("cancelReason").value;
+  o.timeline = [
+    ...o.timeline.filter((t) => t.done),
+    {
+      step: "Đã hủy",
+      time: new Date().toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      done: true,
+      cancelled: true,
+    },
+  ];
+  saveOrders();
+  hideModal("cancelBackdrop");
+  applyFilter();
+  toast(`Đã hủy đơn hàng ${cancelId} thành công!`, "info");
+  cancelId = null;
 });
 
-$('cancelNo').addEventListener('click', () => hideModal('cancelBackdrop'));
-$('cancelBackdrop').addEventListener('click', e => {
-    if (e.target === $('cancelBackdrop')) hideModal('cancelBackdrop');
+$("cancelNo").addEventListener("click", () => hideModal("cancelBackdrop"));
+$("cancelBackdrop").addEventListener("click", (e) => {
+  if (e.target === $("cancelBackdrop")) hideModal("cancelBackdrop");
 });
 
 // ─── ACTIONS ────────────────────────────────
 function reorder(id) {
-    const o = orders.find(x => x.id === id);
-    if (!o) return;
-    // Sync with main site cart logic
-    try {
-        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        o.items.forEach(item => {
-            const existing = cart.find(c => c.name === item.name);
-            if (existing) {
-                existing.quantity = (existing.quantity || 1) + item.qty;
-            } else {
-                cart.push({
-                    name: item.name,
-                    price: item.price,
-                    image: item.img,
-                    quantity: item.qty
-                });
-            }
+  const o = orders.find((x) => x.id === id);
+  if (!o) return;
+  // Sync with main site cart logic
+  try {
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    o.items.forEach((item) => {
+      const existing = cart.find((c) => c.name === item.name);
+      if (existing) {
+        existing.quantity = (existing.quantity || 1) + item.qty;
+      } else {
+        cart.push({
+          name: item.name,
+          price: item.price,
+          image: item.img,
+          quantity: item.qty,
         });
-        localStorage.setItem('cart', JSON.stringify(cart));
-        syncCartCount();
-    } catch (e) { /* silent */ }
-    toast(`Đã thêm ${o.items.length} sản phẩm vào giỏ hàng!`, 'success');
-    closeDetail();
+      }
+    });
+    localStorage.setItem("cart", JSON.stringify(cart));
+    syncCartCount();
+  } catch (e) {
+    /* silent */
+  }
+  toast(`Đã thêm ${o.items.length} sản phẩm vào giỏ hàng!`, "success");
+  closeDetail();
 }
 
 function reviewOrder(id) {
-    const o = orders.find(x => x.id === id);
-    if (!o) return;
-    if (o.reviewed) {
-        toast('Bạn đã đánh giá đơn hàng này rồi!', 'info');
-        return;
-    }
-    toast('Mở trang đánh giá sản phẩm...', 'info');
-    // window.location.href = `review.html?order=${id}`;
+  const o = orders.find((x) => x.id === id);
+  if (!o) return;
+  if (o.reviewed) {
+    toast("Bạn đã đánh giá đơn hàng này rồi!", "info");
+    return;
+  }
+  toast("Mở trang đánh giá sản phẩm...", "info");
+  // window.location.href = `review.html?order=${id}`;
 }
 
 function trackOrder() {
-    toast('Đang tải thông tin vận chuyển...', 'info');
+  toast("Đang tải thông tin vận chuyển...", "info");
 }
 
 // ─── MODAL HELPERS ──────────────────────────
 function showModal(id) {
-    $(id).classList.add('show');
-    document.body.style.overflow = 'hidden';
+  $(id).classList.add("show");
+  document.body.style.overflow = "hidden";
 }
 function hideModal(id) {
-    $(id).classList.remove('show');
-    document.body.style.overflow = '';
+  $(id).classList.remove("show");
+  document.body.style.overflow = "";
 }
 
 // ─── BACK TO TOP ────────────────────────────
-const backToTop = $('backToTop');
-window.addEventListener('scroll', () => {
-    backToTop.classList.toggle('show', window.scrollY > 300);
+const backToTop = $("backToTop");
+window.addEventListener("scroll", () => {
+  backToTop.classList.toggle("show", window.scrollY > 300);
 });
-backToTop.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+backToTop.addEventListener("click", () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
 // ─── KEYBOARD SHORTCUT: ESC to close modals ─
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-        if ($('logoutConfirmBackdrop').classList.contains('show')) {
-            closeLogoutConfirm();
-        } else if ($('cancelBackdrop').classList.contains('show')) {
-            hideModal('cancelBackdrop');
-        } else if ($('modalBackdrop').classList.contains('show')) {
-            closeDetail();
-        }
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    if ($("logoutConfirmBackdrop").classList.contains("show")) {
+      closeLogoutConfirm();
+    } else if ($("cancelBackdrop").classList.contains("show")) {
+      hideModal("cancelBackdrop");
+    } else if ($("modalBackdrop").classList.contains("show")) {
+      closeDetail();
     }
+  }
 });
 
 // ─── INIT ───────────────────────────────────
 const currentUser = getCurrentUser();
 if (!currentUser) {
-    window.location.href = 'signin.html';
+  window.location.href = "signin.html";
 } else {
-    window.addEventListener('load', () => {
-        initLogout();
-        renderUserUI();
-        syncCartCount();
-        window.addEventListener('cartUpdated', syncCartCount);
-        window.addEventListener('pageshow', syncCartCount);
-        window.addEventListener('focus', syncCartCount);
-        applyFilter();
-    });
+  window.addEventListener("load", () => {
+    initLogout();
+    renderUserUI();
+    syncCartCount();
+    window.addEventListener("cartUpdated", syncCartCount);
+    window.addEventListener("pageshow", syncCartCount);
+    window.addEventListener("focus", syncCartCount);
+    applyFilter();
+    subscribeFirebaseOrders();
+  });
 }
