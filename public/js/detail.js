@@ -312,7 +312,7 @@ function setupSearch() {
             const keyword = searchInput.value.trim();
             if (!keyword) return;
             localStorage.setItem("searchKeyword", keyword);
-            window.location.href = "products.html";
+            window.location.href = "index.html";
         });
     }
 
@@ -322,7 +322,7 @@ function setupSearch() {
             const keyword = event.target.value.trim();
             if (!keyword) return;
             localStorage.setItem("searchKeyword", keyword);
-            window.location.href = "products.html";
+            window.location.href = "index.html";
         });
     }
 }

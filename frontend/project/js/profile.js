@@ -60,7 +60,7 @@ function loadUser() {
         gender: currentUser.gender || '',
         idCard: currentUser.idCard || '',
         avatar: currentUser.avatar || '',
-        joined: currentUser.joined || new Date().toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit' }),
+        joined: currentUser.joined || new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }),
         memberTag: currentUser.memberTag || '',
         twoFA: typeof currentUser.twoFA === 'boolean' ? currentUser.twoFA : true,
     };

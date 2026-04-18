@@ -227,6 +227,15 @@ function setupLoadMore() {
 function setupSearch() {
     const input = document.getElementById("searchInput");
     const button = document.getElementById("searchBtn");
+    
+    // Đọc từ localStorage nếu trang khác chuyển sang
+    const savedKeyword = localStorage.getItem("searchKeyword");
+    if (savedKeyword) {
+        searchKeyword = savedKeyword;
+        if (input) input.value = savedKeyword;
+        localStorage.removeItem("searchKeyword");
+    }
+
     if (!input || !button) return;
 
     const search = () => {

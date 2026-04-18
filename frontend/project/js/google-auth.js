@@ -210,6 +210,14 @@ class GoogleAuthManager {
                 authProvider = user.providerData[0].providerId === 'google.com' ? 'google' : 'email';
             }
 
+            let joinedDateStr = '';
+            if (user && user.metadata && user.metadata.creationTime) {
+                const date = new Date(user.metadata.creationTime);
+                joinedDateStr = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            } else {
+                joinedDateStr = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            }
+
             // Lưu user vào localStorage
             const userData = {
                 id: user.uid,
@@ -217,7 +225,8 @@ class GoogleAuthManager {
                 email: this.normalizeEmail(user.email),
                 phone: user.phoneNumber || '',
                 avatar: user.photoURL || '',
-                authProvider: authProvider
+                authProvider: authProvider,
+                joined: joinedDateStr
             };
 
             localStorage.setItem('currentUser', JSON.stringify(userData));
@@ -272,13 +281,22 @@ class GoogleAuthManager {
                 authProvider = user.providerData[0].providerId === 'google.com' ? 'google' : 'email';
             }
 
+            let joinedDateStr = '';
+            if (user && user.metadata && user.metadata.creationTime) {
+                const date = new Date(user.metadata.creationTime);
+                joinedDateStr = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            } else {
+                joinedDateStr = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            }
+
             this.currentUser = {
                 id: user.uid,
                 name: user.displayName || user.email.split('@')[0], // fallback for email users
                 email: this.normalizeEmail(user.email),
                 phone: user.phoneNumber || '',
                 avatar: user.photoURL || '',
-                authProvider: authProvider
+                authProvider: authProvider,
+                joined: joinedDateStr
             };
             localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
         } else {
@@ -386,13 +404,22 @@ class GoogleAuthManager {
                 displayName: cleanDisplayName
             });
 
+            let joinedDateStr = '';
+            if (user && user.metadata && user.metadata.creationTime) {
+                const date = new Date(user.metadata.creationTime);
+                joinedDateStr = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            } else {
+                joinedDateStr = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            }
+
             // Lưu thông tin bổ sung (phone) vào localStorage hoặc Firestore nếu cần
             const userData = {
                 id: user.uid,
                 name: cleanDisplayName,
                 email: normalizedEmail,
                 phone: cleanPhone,
-                authProvider: 'email'
+                authProvider: 'email',
+                joined: joinedDateStr
             };
 
             localStorage.setItem('currentUser', JSON.stringify(userData));
