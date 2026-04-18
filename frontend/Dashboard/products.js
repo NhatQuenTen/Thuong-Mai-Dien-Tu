@@ -23,14 +23,19 @@ function getCategoryLabels() {
         } catch { /* fall through */ }
     }
     // Fallback if no categories exist yet
-    return {
+    const defaults = {
         'dien-thoai': 'Điện thoại',
         'may-tinh-bang': 'Máy tính bảng',
         'laptop': 'Laptop',
         'phu-kien': 'Phụ kiện',
         'smartwatch': 'Smartwatch',
-        'tai-nghe-loa': 'Tai nghe / Loa'
+        'tai-nghe-loa': 'Tai nghe / Loa',
+        // Categories from main website (Firestore)
+        'phone': 'Điện thoại',
+        'headphone': 'Tai nghe',
+        'charger': 'Sạc & Cáp'
     };
+    return defaults;
 }
 
 let CATEGORY_LABELS = {};
@@ -50,10 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
     CATEGORY_LABELS = getCategoryLabels();
     initDateDisplay();
     populateCategoryDropdowns();
-    loadProducts();
+    loadProducts(); // Load from localStorage cache first for instant display
     renderProducts();
     updateStats();
     initEventListeners();
+    // Subscribe to real-time Firestore updates
+    subscribeProducts();
 });
 
 // ============================================
@@ -133,6 +140,141 @@ function loadProducts() {
 
 function saveProducts() {
     localStorage.setItem('mobistore_products', JSON.stringify(products));
+}
+
+// ============================================
+// FIREBASE FIRESTORE SYNC
+// ============================================
+
+// Wait for Firebase DB to be initialized
+function waitForFirebase() {
+    return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const check = () => {
+            if (window.firebaseDb) {
+                resolve(window.firebaseDb);
+            } else if (attempts++ > 50) {
+                reject(new Error('Firebase DB not available after timeout'));
+            } else {
+                setTimeout(check, 100);
+            }
+        };
+        check();
+    });
+}
+
+// Map Firestore document to Dashboard product format
+function mapFirestoreToProduct(docId, data) {
+    const price = Number(data.price) || 0;
+    const discount = Number(data.discount) || 0;
+    const discountedPrice = discount > 0 ? Math.round(price * (100 - discount) / 100) : price;
+
+    return {
+        id: docId,
+        name: data.name || 'Sản phẩm chưa có tên',
+        category: data.category || '',
+        brand: data.brand || '',
+        price: discountedPrice,
+        originalPrice: discount > 0 ? price : (Number(data.originalPrice) || 0),
+        stock: Number(data.stock) || 100,
+        sku: data.sku || '',
+        status: data.status || 'active',
+        description: data.description || '',
+        image: resolveProductImage(data.image),
+        createdAt: data.createdAt
+            ? (typeof data.createdAt.toDate === 'function'
+                ? data.createdAt.toDate().toISOString()
+                : data.createdAt)
+            : new Date().toISOString(),
+        // Keep original fields from main website
+        isNew: Boolean(data.isNew),
+        isSale: Boolean(data.isSale),
+        discount: discount,
+        rating: Number(data.rating) || 4.5
+    };
+}
+
+// Resolve image URL (handle relative paths from main website)
+function resolveProductImage(imagePath) {
+    if (!imagePath) return '';
+    const normalized = String(imagePath).replace(/\\/g, '/').trim();
+    if (normalized.startsWith('http') || normalized.startsWith('data:')) return normalized;
+    // Relative paths from main website need prefix
+    if (normalized.startsWith('assets/')) return '../project/' + normalized;
+    return normalized;
+}
+
+// Map Dashboard product to Firestore document format
+function mapProductToFirestore(product) {
+    const fullPrice = product.originalPrice && product.originalPrice > product.price
+        ? product.originalPrice : product.price;
+    const discount = product.originalPrice && product.originalPrice > product.price
+        ? Math.round((1 - product.price / product.originalPrice) * 100) : 0;
+
+    return {
+        name: product.name || '',
+        price: fullPrice,
+        brand: product.brand || '',
+        category: product.category || '',
+        image: product.image || '',
+        isNew: product.isNew || false,
+        isSale: discount > 0,
+        discount: discount,
+        rating: product.rating || 4.5,
+        stock: product.stock || 0,
+        sku: product.sku || '',
+        status: product.status || 'active',
+        description: product.description || '',
+        originalPrice: product.originalPrice || 0,
+        createdAtMs: Date.now(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+}
+
+// Subscribe to real-time Firestore product updates
+function subscribeProducts() {
+    waitForFirebase().then(db => {
+        console.log('🔄 Subscribing to Firestore products collection...');
+        db.collection('products').onSnapshot(snapshot => {
+            products = snapshot.docs.map(doc => {
+                return mapFirestoreToProduct(doc.id, doc.data());
+            });
+            // Cache to localStorage
+            localStorage.setItem('mobistore_products', JSON.stringify(products));
+            console.log(`✅ Loaded ${products.length} products from Firestore`);
+            renderProducts();
+            updateStats();
+        }, error => {
+            console.error('❌ Firestore subscription error:', error);
+            // Keep using localStorage cache
+        });
+    }).catch(err => {
+        console.warn('⚠️ Firebase not available, using localStorage:', err.message);
+    });
+}
+
+// Sync a single product to Firestore (add or update)
+async function syncProductToFirestore(product) {
+    const db = await waitForFirebase();
+    const firestoreData = mapProductToFirestore(product);
+
+    if (product.id && !product.id.startsWith('SP')) {
+        // Existing Firestore document — update
+        await db.collection('products').doc(product.id).set(firestoreData, { merge: true });
+    } else {
+        // New product — let Firestore generate ID
+        const docRef = await db.collection('products').add(firestoreData);
+        product.id = docRef.id;
+    }
+    console.log('✅ Product synced to Firestore:', product.id);
+    return product;
+}
+
+// Delete a product from Firestore
+async function deleteProductFromFirestore(id) {
+    const db = await waitForFirebase();
+    await db.collection('products').doc(id).delete();
+    console.log('🗑️ Product deleted from Firestore:', id);
 }
 
 function generateId() {
@@ -416,7 +558,7 @@ function closeProductModal() {
     currentImageData = null;
 }
 
-function handleFormSubmit(e) {
+async function handleFormSubmit(e) {
     e.preventDefault();
 
     const name = document.getElementById('productName').value.trim();
@@ -438,13 +580,23 @@ function handleFormSubmit(e) {
         // UPDATE
         const index = products.findIndex(p => p.id === editingProductId);
         if (index !== -1) {
-            products[index] = {
+            const updatedProduct = {
                 ...products[index],
                 name, category, brand, price, originalPrice,
                 stock, sku, status, description,
                 image: currentImageData || products[index].image
             };
-            showToast(`Đã cập nhật "${name}" thành công!`, 'success');
+            try {
+                await syncProductToFirestore(updatedProduct);
+                showToast(`Đã cập nhật "${name}" thành công!`, 'success');
+            } catch (error) {
+                console.error('Firestore update failed:', error);
+                products[index] = updatedProduct;
+                saveProducts();
+                renderProducts();
+                updateStats();
+                showToast(`Đã cập nhật "${name}" (offline)`, 'warning');
+            }
         }
     } else {
         // CREATE
@@ -455,13 +607,19 @@ function handleFormSubmit(e) {
             image: currentImageData || '',
             createdAt: new Date().toISOString()
         };
-        products.unshift(newProduct);
-        showToast(`Đã thêm "${name}" thành công!`, 'success');
+        try {
+            await syncProductToFirestore(newProduct);
+            showToast(`Đã thêm "${name}" thành công!`, 'success');
+        } catch (error) {
+            console.error('Firestore create failed:', error);
+            products.unshift(newProduct);
+            saveProducts();
+            renderProducts();
+            updateStats();
+            showToast(`Đã thêm "${name}" (offline)`, 'warning');
+        }
     }
 
-    saveProducts();
-    renderProducts();
-    updateStats();
     closeProductModal();
 }
 
@@ -486,19 +644,26 @@ function closeDeleteModal() {
     deleteProductId = null;
 }
 
-function confirmDelete() {
+async function confirmDelete() {
     if (!deleteProductId) return;
 
     const product = products.find(p => p.id === deleteProductId);
     const name = product ? product.name : '';
 
-    products = products.filter(p => p.id !== deleteProductId);
-    saveProducts();
-    renderProducts();
-    updateStats();
-    closeDeleteModal();
+    try {
+        await deleteProductFromFirestore(deleteProductId);
+        showToast(`Đã xóa "${name}" thành công!`, 'success');
+    } catch (error) {
+        console.error('Firestore delete failed:', error);
+        // Fallback to local delete
+        products = products.filter(p => p.id !== deleteProductId);
+        saveProducts();
+        renderProducts();
+        updateStats();
+        showToast(`Đã xóa "${name}" (offline)`, 'warning');
+    }
 
-    showToast(`Đã xóa "${name}" thành công!`, 'success');
+    closeDeleteModal();
 }
 
 // ============================================

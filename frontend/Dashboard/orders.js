@@ -14,7 +14,7 @@ const SAMPLE_ORDERS = [];
 // ─────────────────────────────────────────────
 //  STATE
 // ─────────────────────────────────────────────
-let orders = JSON.parse(localStorage.getItem('ms_orders') || 'null') || [];
+let orders = [];
 let filtered = [...orders];
 let currentPage = 1;
 const PAGE_SIZE = 8;
@@ -25,33 +25,8 @@ let deleteTarget = null;   // id or array
 let isEditMode = false;
 let viewDetailId = null;
 
-// product catalog for autocomplete
-const PRODUCTS = [
-    { name: 'iPhone 16 Pro Max 256GB', price: 34990000 },
-    { name: 'iPhone 16 Pro 128GB', price: 29990000 },
-    { name: 'iPhone 15 128GB', price: 22990000 },
-    { name: 'Samsung Galaxy S25 Ultra', price: 31990000 },
-    { name: 'Samsung Galaxy S25+', price: 24990000 },
-    { name: 'Samsung Galaxy Tab S9 Ultra', price: 19990000 },
-    { name: 'iPad Air M2 64GB', price: 18990000 },
-    { name: 'iPad Pro M4 11-inch', price: 28990000 },
-    { name: 'MacBook Pro M4 14-inch', price: 52990000 },
-    { name: 'MacBook Air M3 13-inch', price: 32990000 },
-    { name: 'Apple Watch Ultra 2', price: 23990000 },
-    { name: 'Apple Watch Series 10', price: 12990000 },
-    { name: 'AirPods Pro 2', price: 7490000 },
-    { name: 'AirPods 4', price: 3990000 },
-    { name: 'Apple Pencil 2', price: 3990000 },
-    { name: 'Sony WH-1000XM5', price: 8990000 },
-    { name: 'OPPO Find X8 Pro', price: 29990000 },
-    { name: 'Xiaomi 14 Ultra', price: 24990000 },
-    { name: 'Google Pixel 9 Pro', price: 26990000 },
-    { name: 'Mi Band 9', price: 1290000 },
-    { name: 'Sạc nhanh 67W', price: 690000 },
-    { name: 'Sạc nhanh 30W', price: 790000 },
-    { name: 'Cáp sạc MagSafe', price: 990000 },
-    { name: 'Ốp lưng Apple silicone', price: 590000 },
-];
+// product catalog — loaded from Firestore
+let PRODUCTS = [];
 
 // ─────────────────────────────────────────────
 //  HELPERS
@@ -85,6 +60,75 @@ function parsePrice(str) {
 
 function saveToStorage() {
     localStorage.setItem('ms_orders', JSON.stringify(orders));
+}
+
+// ─────────────────────────────────────────────
+//  FIREBASE FIRESTORE SYNC
+// ─────────────────────────────────────────────
+function waitForFirebase() {
+    return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const check = () => {
+            if (window.firebaseDb) resolve(window.firebaseDb);
+            else if (attempts++ > 50) reject(new Error('Firebase DB not available'));
+            else setTimeout(check, 100);
+        };
+        check();
+    });
+}
+
+function subscribeOrders() {
+    waitForFirebase().then(db => {
+        console.log('🔄 Subscribing to Firestore orders...');
+        db.collection('orders').onSnapshot(snapshot => {
+            orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            localStorage.setItem('ms_orders', JSON.stringify(orders));
+            filtered = [...orders];
+            console.log(`✅ Loaded ${orders.length} orders from Firestore`);
+            applyFilter();
+        }, error => {
+            console.error('❌ Firestore orders error:', error);
+        });
+    }).catch(err => console.warn('⚠️ Firebase not available for orders:', err.message));
+}
+
+function subscribeProductsCatalog() {
+    waitForFirebase().then(db => {
+        db.collection('products').onSnapshot(snapshot => {
+            PRODUCTS = snapshot.docs.map(doc => {
+                const d = doc.data();
+                return { name: d.name || '', price: Number(d.price) || 0 };
+            });
+            console.log(`✅ Product catalog loaded: ${PRODUCTS.length} products`);
+        });
+    }).catch(() => {});
+}
+
+async function saveOrderToFirestore(order) {
+    try {
+        const db = await waitForFirebase();
+        const data = { ...order };
+        const docId = data.id; delete data.id;
+        if (docId && !docId.startsWith('DH-')) {
+            await db.collection('orders').doc(docId).set(data, { merge: true });
+        } else {
+            data.originalId = docId;
+            const ref = await db.collection('orders').add(data);
+            order.id = ref.id;
+        }
+    } catch (e) {
+        console.error('Firestore save order failed:', e);
+        saveToStorage();
+    }
+}
+
+async function deleteOrderFromFirestore(id) {
+    try {
+        const db = await waitForFirebase();
+        await db.collection('orders').doc(id).delete();
+    } catch (e) {
+        console.error('Firestore delete order failed:', e);
+    }
 }
 
 function statusClass(s) {
@@ -733,4 +777,10 @@ $('btnExport').addEventListener('click', () => {
 //  INIT
 // ─────────────────────────────────────────────
 initDate();
+// Load from localStorage cache first
+orders = JSON.parse(localStorage.getItem('ms_orders') || '[]');
+filtered = [...orders];
 applyFilter();
+// Subscribe to Firestore for real-time sync
+subscribeOrders();
+subscribeProductsCatalog();

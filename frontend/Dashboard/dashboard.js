@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initRevenueChart();
     initCategoryChart();
     initEventListeners();
+    // Load real-time KPI data from Firestore
+    subscribeFirebaseKPI();
 });
 
 // ============================================
@@ -65,16 +67,120 @@ function initDateDisplay() {
 // KPI ANIMATED COUNTERS
 // ============================================
 function initKPICounters() {
+    // Show zeros initially — will be updated by subscribeFirebaseKPI
     const counters = [
-        { el: document.getElementById('totalRevenue'), target: 2.85, suffix: ' tỷ', decimals: 2, duration: 2000 },
+        { el: document.getElementById('totalRevenue'), target: 0, suffix: ' tỷ', decimals: 2, duration: 2000 },
         { el: document.getElementById('totalOrders'), target: 0, suffix: '', decimals: 0, duration: 2000 },
         { el: document.getElementById('newCustomers'), target: 0, suffix: '', decimals: 0, duration: 2000 },
         { el: document.getElementById('conversionRate'), target: 0, suffix: '%', decimals: 1, duration: 2000 },
     ];
 
     counters.forEach(counter => {
-        animateCounter(counter.el, 0, counter.target, counter.duration, counter.suffix, counter.decimals);
+        if (counter.el) animateCounter(counter.el, 0, counter.target, counter.duration, counter.suffix, counter.decimals);
     });
+}
+
+// ============================================
+// FIREBASE REAL-TIME KPI
+// ============================================
+function waitForFirebaseDB() {
+    return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const check = () => {
+            if (window.firebaseDb) {
+                resolve(window.firebaseDb);
+            } else if (attempts++ > 50) {
+                reject(new Error('Firebase DB not available'));
+            } else {
+                setTimeout(check, 100);
+            }
+        };
+        check();
+    });
+}
+
+function subscribeFirebaseKPI() {
+    waitForFirebaseDB().then(db => {
+        console.log('📊 Subscribing to Firestore for dashboard KPIs...');
+
+        // Subscribe to products collection for KPIs
+        db.collection('products').onSnapshot(snapshot => {
+            const products = snapshot.docs.map(doc => doc.data());
+            const totalProducts = products.length;
+
+            // Calculate total revenue from product prices
+            const totalRevenueValue = products.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
+            const revenueInBillion = totalRevenueValue / 1e9;
+
+            // Count active products (newly added or on sale)
+            const activeProducts = products.filter(p => p.status === 'active' || p.isNew || p.isSale).length;
+
+            // Calculate categories for chart
+            updateCategoryChartFromFirestore(products);
+
+            // Animate KPI counters with real data
+            const revEl = document.getElementById('totalRevenue');
+            const ordEl = document.getElementById('totalOrders');
+            const cusEl = document.getElementById('newCustomers');
+            const convEl = document.getElementById('conversionRate');
+
+            if (revEl) animateCounter(revEl, 0, revenueInBillion, 2000, ' tỷ', 2);
+            if (ordEl) animateCounter(ordEl, 0, totalProducts, 2000, '', 0);
+            if (cusEl) animateCounter(cusEl, 0, activeProducts, 2000, '', 0);
+            if (convEl) {
+                const rate = totalProducts > 0 ? (activeProducts / totalProducts * 100) : 0;
+                animateCounter(convEl, 0, rate, 2000, '%', 1);
+            }
+
+            console.log(`✅ Dashboard KPIs updated: ${totalProducts} products, ${revenueInBillion.toFixed(2)} tỷ total value`);
+        }, error => {
+            console.error('❌ Firestore KPI subscription error:', error);
+        });
+    }).catch(err => {
+        console.warn('⚠️ Firebase not available for dashboard KPIs:', err.message);
+    });
+}
+
+function updateCategoryChartFromFirestore(products) {
+    // Count products by category
+    const categoryCount = {};
+    const categoryLabels = {
+        'phone': 'Điện thoại', 'headphone': 'Tai nghe', 'charger': 'Sạc & Cáp',
+        'dien-thoai': 'Điện thoại', 'may-tinh-bang': 'Máy tính bảng',
+        'laptop': 'Laptop', 'phu-kien': 'Phụ kiện',
+        'smartwatch': 'Smartwatch', 'tai-nghe-loa': 'Tai nghe / Loa'
+    };
+    const colors = ['#7c3aed', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
+
+    products.forEach(p => {
+        const cat = p.category || 'other';
+        categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+    });
+
+    const total = products.length || 1;
+    const categories = Object.entries(categoryCount).map(([key, count], i) => ({
+        label: categoryLabels[key] || key,
+        value: Math.round(count / total * 100),
+        color: colors[i % colors.length]
+    }));
+
+    // Update legend
+    const legendContainer = document.getElementById('categoryLegend');
+    if (legendContainer) {
+        legendContainer.innerHTML = '';
+        categories.forEach(cat => {
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            item.innerHTML = `
+                <div class="legend-left">
+                    <span class="legend-color" style="background: ${cat.color}"></span>
+                    <span class="legend-label">${cat.label}</span>
+                </div>
+                <span class="legend-value">${cat.value}%</span>
+            `;
+            legendContainer.appendChild(item);
+        });
+    }
 }
 
 function animateCounter(el, start, end, duration, suffix, decimals) {

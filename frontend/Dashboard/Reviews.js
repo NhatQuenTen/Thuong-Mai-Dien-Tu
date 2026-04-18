@@ -29,7 +29,7 @@ const REPLY_TEMPLATES = [
 const SAMPLE_REVIEWS = [];
 
 // ─── STATE ───
-let reviews = JSON.parse(localStorage.getItem('ms_reviews') || 'null') || [];
+let reviews = [];
 let filtered = [...reviews];
 let currentPage = 1;
 const PAGE_SIZE = 6;
@@ -51,6 +51,71 @@ function genId() {
     return 'RV-' + (Math.max(0, ...nums) + 1).toString().padStart(3, '0');
 }
 function saveStorage() { localStorage.setItem('ms_reviews', JSON.stringify(reviews)); }
+
+// ─── FIREBASE FIRESTORE SYNC ───
+function waitForFirebase() {
+    return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const check = () => {
+            if (window.firebaseDb) resolve(window.firebaseDb);
+            else if (attempts++ > 50) reject(new Error('Firebase DB not available'));
+            else setTimeout(check, 100);
+        };
+        check();
+    });
+}
+
+function subscribeReviews() {
+    waitForFirebase().then(db => {
+        console.log('🔄 Subscribing to Firestore reviews...');
+        db.collection('reviews').onSnapshot(snapshot => {
+            reviews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            localStorage.setItem('ms_reviews', JSON.stringify(reviews));
+            filtered = [...reviews];
+            console.log(`✅ Loaded ${reviews.length} reviews from Firestore`);
+            applyFilter();
+        }, error => {
+            console.error('❌ Firestore reviews error:', error);
+        });
+    }).catch(err => console.warn('⚠️ Firebase not available for reviews:', err.message));
+}
+
+async function saveReviewToFirestore(review) {
+    try {
+        const db = await waitForFirebase();
+        const data = { ...review };
+        const docId = data.id; delete data.id;
+        if (docId && !docId.startsWith('RV-')) {
+            await db.collection('reviews').doc(docId).set(data, { merge: true });
+        } else {
+            data.originalId = docId;
+            const ref = await db.collection('reviews').add(data);
+            review.id = ref.id;
+        }
+    } catch (e) {
+        console.error('Firestore save review failed:', e);
+        saveStorage();
+    }
+}
+
+async function deleteReviewFromFirestore(id) {
+    try {
+        const db = await waitForFirebase();
+        await db.collection('reviews').doc(id).delete();
+    } catch (e) {
+        console.error('Firestore delete review failed:', e);
+    }
+}
+
+async function updateReviewInFirestore(id, updates) {
+    try {
+        const db = await waitForFirebase();
+        await db.collection('reviews').doc(id).update(updates);
+    } catch (e) {
+        console.error('Firestore update review failed:', e);
+        saveStorage();
+    }
+}
 
 function renderStars(n, size = '.82rem') {
     let h = '';
@@ -519,4 +584,9 @@ $('btnExport').addEventListener('click', () => {
 
 // ─── INIT ───
 initDate();
+// Load from localStorage cache first
+reviews = JSON.parse(localStorage.getItem('ms_reviews') || '[]');
+filtered = [...reviews];
 applyFilter();
+// Subscribe to Firestore
+subscribeReviews();

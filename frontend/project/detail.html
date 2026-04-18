@@ -50,6 +50,48 @@
             <!-- JS sẽ render vào đây -->
         </div>
 
+        <!-- Đánh giá và bình luận -->
+        <div class="product-reviews-container">
+            <div class="section-header">
+                <h2>ĐÁNH GIÁ & BÌNH LUẬN</h2>
+            </div>
+            
+            <div class="reviews-summary" id="reviewsSummary">
+                <!-- JS sẽ render thống kê đánh giá vào đây -->
+            </div>
+
+            <div class="write-review-btn-wrapper" style="text-align: center; margin-bottom: 20px;">
+                <button id="btnToggleReviewForm" style="background: linear-gradient(45deg, #d4a373, #b7791f); color: white; border: none; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 15px; box-shadow: 0 4px 10px rgba(183, 121, 31, 0.3);"><i class="fas fa-pencil-alt"></i> Viết đánh giá</button>
+            </div>
+
+            <div class="review-form-container" id="reviewFormContainer" style="display: none; background: #fff9f0; padding: 24px; border-radius: 16px; margin-bottom: 30px; border: 1px solid #ffe8cc; box-shadow: 0 5px 15px rgba(0,0,0,0.03);">
+                <h3 style="margin-top: 0; color: #2c1810; margin-bottom: 20px; font-size: 18px;">Gửi đánh giá của bạn</h3>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom: 8px; color: #495057; font-weight: 600;">Tên của bạn:</label>
+                    <input type="text" id="reviewName" placeholder="Nhập tên..." style="width: 100%; padding: 12px; border: 1px solid #e9ecef; border-radius: 10px; box-sizing: border-box; font-size: 14px; outline: none;">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom: 8px; color: #495057; font-weight: 600;">Đánh giá sao:</label>
+                    <div id="starSelector" style="color: #ffc107; font-size: 24px; cursor: pointer; display: flex; gap: 5px;">
+                        <i class="fas fa-star" data-val="1"></i>
+                        <i class="fas fa-star" data-val="2"></i>
+                        <i class="fas fa-star" data-val="3"></i>
+                        <i class="fas fa-star" data-val="4"></i>
+                        <i class="fas fa-star" data-val="5"></i>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display:block; margin-bottom: 8px; color: #495057; font-weight: 600;">Nội dung đánh giá:</label>
+                    <textarea id="reviewContent" placeholder="Nhận xét của bạn về sản phẩm..." style="width: 100%; padding: 12px; border: 1px solid #e9ecef; border-radius: 10px; box-sizing: border-box; min-height: 100px; resize: vertical; font-size: 14px; outline: none; font-family: inherit;"></textarea>
+                </div>
+                <button id="btnSubmitReview" style="background: #2c1810; color: white; border: none; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 15px; width: 100%;">Gửi Đánh Giá</button>
+            </div>
+
+            <div class="review-list" id="reviewsList">
+                <!-- JS sẽ render danh sách bình luận vào đây -->
+            </div>
+        </div>
+
         <!-- Sản phẩm liên quan -->
         <div class="related-products">
             <div class="section-header">

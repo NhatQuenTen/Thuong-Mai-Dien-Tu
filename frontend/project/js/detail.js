@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { collection, getFirestore, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, getFirestore, onSnapshot, query, where, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDzQyH_VLOeuO8Q0bvuFVZ2uPPP9uShR6c",
@@ -25,6 +25,197 @@ const db = getFirestore(app);
 
 let products = [];
 let currentProduct = null;
+let currentReviews = [];
+let currentStarFilter = 0;
+let selectedSubmitStar = 5;
+
+function renderStarsHTML(rating, size = "16px") {
+    let html = "";
+    const fullStars = Math.floor(rating);
+    const hasHalfStart = rating - fullStars >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStart ? 1 : 0);
+    
+    for (let i = 0; i < fullStars; i++) html += `<i class="fas fa-star" style="font-size:${size}"></i>`;
+    if (hasHalfStart) html += `<i class="fas fa-star-half-alt" style="font-size:${size}"></i>`;
+    for (let i = 0; i < emptyStars; i++) html += `<i class="far fa-star" style="font-size:${size}"></i>`;
+    return html;
+}
+
+function renderReviews() {
+    const summaryContainer = document.getElementById("reviewsSummary");
+    const listContainer = document.getElementById("reviewsList");
+    if (!summaryContainer || !listContainer) return;
+
+    if (currentReviews.length === 0) {
+        summaryContainer.innerHTML = '<div style="text-align:center; padding: 20px; width:100%; color:#666;">Chưa có đánh giá nào cho sản phẩm này.</div>';
+        listContainer.innerHTML = '';
+        return;
+    }
+
+    const total = currentReviews.length;
+    const avg = (currentReviews.reduce((sum, r) => sum + Number(r.star), 0) / total).toFixed(1);
+    
+    let stats = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, img: 0 };
+    currentReviews.forEach(r => {
+        if(stats[r.star] !== undefined) stats[r.star]++;
+        if (r.images && r.images.length > 0) stats.img++;
+    });
+
+    summaryContainer.innerHTML = `
+        <div class="rating-overall">
+            <h3>${avg}<span class="out-of">/5</span></h3>
+            <div class="stars" style="color: #ffc107;">
+                ${renderStarsHTML(avg, "20px")}
+            </div>
+            <p>${total} đánh giá</p>
+        </div>
+        
+        <div class="rating-filter">
+            <button class="${currentStarFilter === 0 ? 'active' : ''}" onclick="window.filterReviews(0)">Tất cả (${total})</button>
+            <button class="${currentStarFilter === 5 ? 'active' : ''}" onclick="window.filterReviews(5)">5 Sao (${stats[5] || 0})</button>
+            <button class="${currentStarFilter === 4 ? 'active' : ''}" onclick="window.filterReviews(4)">4 Sao (${stats[4] || 0})</button>
+            <button class="${currentStarFilter === 3 ? 'active' : ''}" onclick="window.filterReviews(3)">3 Sao (${stats[3] || 0})</button>
+            <button class="${currentStarFilter === 2 ? 'active' : ''}" onclick="window.filterReviews(2)">2 Sao (${stats[2] || 0})</button>
+            <button class="${currentStarFilter === 1 ? 'active' : ''}" onclick="window.filterReviews(1)">1 Sao (${stats[1] || 0})</button>
+        </div>
+    `;
+
+    const filteredReviews = currentStarFilter === 0 ? currentReviews : currentReviews.filter(r => r.star === currentStarFilter);
+
+    if (filteredReviews.length === 0) {
+        listContainer.innerHTML = '<div style="text-align:center; padding: 20px; color:#666;">Không có đánh giá phù hợp.</div>';
+        return;
+    }
+
+    listContainer.innerHTML = filteredReviews.map(r => {
+        const initials = r.customer ? r.customer.trim().split(' ').map(w => w[0]).slice(-2).join('').toUpperCase() : "AA";
+        const dateStr = r.date ? r.date.split('-').reverse().join('/') : "";
+        const imagesHtml = r.images && r.images.length > 0 ? 
+            `<div class="review-images">
+                ${r.images.map(img => `<img src="${img}" alt="Review Image">`).join("")}
+            </div>` : "";
+            
+        return `
+        <div class="review-item" style="padding-bottom: 20px; border-bottom: 1px solid #f0f0f0; margin-bottom: 20px;">
+            <div class="user-info" style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+                <div class="avatar" style="background: linear-gradient(135deg, #d4a373, #b7791f); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; width: 40px; height: 40px;">${initials}</div>
+                <div class="user-details">
+                    <div class="name" style="font-weight: 600; color: #2c1810; margin-bottom: 2px;">${r.customer || "Khách hàng"}</div>
+                    <div class="stars small-stars" style="color: #ffc107; font-size: 12px;">
+                        ${renderStarsHTML(r.star, "12px")}
+                    </div>
+                </div>
+            </div>
+            <div class="review-content">
+                <p style="color: #495057; line-height: 1.6; margin-bottom: 10px;">${r.content || ""}</p>
+                ${imagesHtml}
+                <div class="review-date" style="font-size: 13px; color: #868e96; margin-bottom: 10px;">
+                    ${dateStr} ${r.verified ? ' | <i class="fas fa-check-circle" style="color: #28a745;"></i> Đã mua hàng' : ''}
+                </div>
+            </div>
+            ${r.reply ? `<div style="background: #fff9f0; padding: 12px; border-radius: 8px; margin-top: 10px; border-left: 3px solid #b7791f; font-size: 14px;">
+                <div style="font-weight: 600; margin-bottom: 5px; color: #c17c2f;"><i class="fas fa-store"></i> Phản hồi từ cửa hàng:</div>
+                <div style="color: #495057;">${r.reply}</div>
+            </div>` : ""}
+            <div class="review-actions" style="margin-top:10px;">
+                <button style="background:none;border:none;color:#666;cursor:pointer;font-size:14px;"><i class="far fa-thumbs-up"></i> Hữu ích ${r.helpful ? `(${r.helpful})` : ''}</button>
+            </div>
+        </div>`;
+    }).join("");
+}
+
+window.filterReviews = function(star) {
+    currentStarFilter = star;
+    renderReviews();
+};
+
+function setupReviewForm() {
+    const btnToggle = document.getElementById("btnToggleReviewForm");
+    const container = document.getElementById("reviewFormContainer");
+    const stars = document.querySelectorAll("#starSelector i");
+    const btnSubmit = document.getElementById("btnSubmitReview");
+
+    if(btnToggle) {
+        btnToggle.addEventListener("click", () => {
+            container.style.display = container.style.display === "none" ? "block" : "none";
+        });
+    }
+
+    if(stars) {
+        stars.forEach(star => {
+            star.addEventListener("click", (e) => {
+                const val = parseInt(e.target.dataset.val);
+                selectedSubmitStar = val;
+                stars.forEach(s => {
+                    if (parseInt(s.dataset.val) <= val) {
+                        s.classList.remove("far");
+                        s.classList.add("fas");
+                    } else {
+                        s.classList.remove("fas");
+                        s.classList.add("far");
+                    }
+                });
+            });
+        });
+    }
+
+    if(btnSubmit) {
+        btnSubmit.addEventListener("click", async () => {
+            if (!currentProduct) return;
+            const name = document.getElementById("reviewName").value.trim();
+            const content = document.getElementById("reviewContent").value.trim();
+            if (!name || !content) {
+                showModal("Vui lòng nhập đầy đủ tên và nội dung đánh giá!", false);
+                return;
+            }
+
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = "Đang gửi...";
+
+            try {
+                await addDoc(collection(db, "reviews"), {
+                    customer: name,
+                    product: currentProduct.name,
+                    content: content,
+                    star: selectedSubmitStar,
+                    status: "approved",
+                    date: new Date().toISOString().split('T')[0],
+                    verified: false,
+                    reply: "" // Đồng bộ cấu trúc với bên Admin
+                });
+                showModal("Gửi đánh giá thành công! Cầm ơn bạn đã chia sẻ.", true);
+                document.getElementById("reviewName").value = "";
+                document.getElementById("reviewContent").value = "";
+                container.style.display = "none";
+                selectedSubmitStar = 5;
+                stars.forEach(s => { s.classList.remove("far"); s.classList.add("fas"); });
+            } catch (err) {
+                console.error("Lỗi chi tiết từ Firebase:", err);
+                showModal("Lỗi Firebase: " + (err.message || "Gửi thất bại"), false);
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = "Gửi Đánh Giá";
+            }
+        });
+    }
+}
+
+function subscribeProductReviews(productName) {
+    if (!productName) return;
+    const q = query(
+        collection(db, "reviews"), 
+        where("product", "==", productName),
+        where("status", "in", ["approved", "replied"])
+    );
+    
+    onSnapshot(q, (snapshot) => {
+        currentReviews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        currentReviews.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+        renderReviews();
+    }, (error) => {
+        console.error("Lỗi khi tải bình luận:", error);
+    });
+}
 
 function getProductIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
@@ -280,6 +471,7 @@ function renderProductDetail(product) {
     `;
 
     renderRelatedProducts(product);
+    subscribeProductReviews(product.name);
 }
 
 function renderNotFound() {
@@ -349,6 +541,7 @@ document.addEventListener("DOMContentLoaded", () => {
     subscribeProducts();
     updateCartCount();
     setupSearch();
+    setupReviewForm();
 });
 
 window.addToCart = addToCart;

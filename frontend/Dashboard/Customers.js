@@ -31,7 +31,7 @@ const CARD_BORDER = {
 const SAMPLE = [];
 
 // ─── STATE ───
-let customers = JSON.parse(localStorage.getItem('ms_customers') || 'null') || [];
+let customers = [];
 let filtered = [...customers];
 let currentPage = 1;
 const PAGE_SIZE = 8;
@@ -63,6 +63,61 @@ function genId() {
 }
 
 function saveStorage() { localStorage.setItem('ms_customers', JSON.stringify(customers)); }
+
+// ─── FIREBASE FIRESTORE SYNC ───
+function waitForFirebase() {
+    return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const check = () => {
+            if (window.firebaseDb) resolve(window.firebaseDb);
+            else if (attempts++ > 50) reject(new Error('Firebase DB not available'));
+            else setTimeout(check, 100);
+        };
+        check();
+    });
+}
+
+function subscribeCustomers() {
+    waitForFirebase().then(db => {
+        console.log('🔄 Subscribing to Firestore customers...');
+        db.collection('customers').onSnapshot(snapshot => {
+            customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            localStorage.setItem('ms_customers', JSON.stringify(customers));
+            filtered = [...customers];
+            console.log(`✅ Loaded ${customers.length} customers from Firestore`);
+            applyFilter();
+        }, error => {
+            console.error('❌ Firestore customers error:', error);
+        });
+    }).catch(err => console.warn('⚠️ Firebase not available for customers:', err.message));
+}
+
+async function saveCustomerToFirestore(customer) {
+    try {
+        const db = await waitForFirebase();
+        const data = { ...customer };
+        const docId = data.id; delete data.id;
+        if (docId && !docId.startsWith('KH-')) {
+            await db.collection('customers').doc(docId).set(data, { merge: true });
+        } else {
+            data.originalId = docId;
+            const ref = await db.collection('customers').add(data);
+            customer.id = ref.id;
+        }
+    } catch (e) {
+        console.error('Firestore save customer failed:', e);
+        saveStorage();
+    }
+}
+
+async function deleteCustomerFromFirestore(id) {
+    try {
+        const db = await waitForFirebase();
+        await db.collection('customers').doc(id).delete();
+    } catch (e) {
+        console.error('Firestore delete customer failed:', e);
+    }
+}
 
 function typeClass(t) {
     const m = { 'VIP': 'type-vip', 'Thường xuyên': 'type-regular', 'Mới': 'type-new', 'Không hoạt động': 'type-inactive' };

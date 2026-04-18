@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateStats();
     populateIconGrid();
     initEventListeners();
+    subscribeCategories();
 });
 
 // ============================================
@@ -107,6 +108,62 @@ function loadCategories() {
 
 function saveCategories() {
     localStorage.setItem('mobistore_categories', JSON.stringify(categories));
+}
+
+// ============================================
+// FIREBASE FIRESTORE SYNC
+// ============================================
+function waitForFirebase() {
+    return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const check = () => {
+            if (window.firebaseDb) resolve(window.firebaseDb);
+            else if (attempts++ > 50) reject(new Error('Firebase DB not available'));
+            else setTimeout(check, 100);
+        };
+        check();
+    });
+}
+
+function subscribeCategories() {
+    waitForFirebase().then(db => {
+        console.log('🔄 Subscribing to Firestore categories...');
+        db.collection('categories').onSnapshot(snapshot => {
+            categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            localStorage.setItem('mobistore_categories', JSON.stringify(categories));
+            console.log(`✅ Loaded ${categories.length} categories from Firestore`);
+            renderCategories();
+            updateStats();
+        }, error => {
+            console.error('❌ Firestore categories error:', error);
+        });
+    }).catch(err => console.warn('⚠️ Firebase not available for categories:', err.message));
+}
+
+async function saveCategoryToFirestore(category) {
+    try {
+        const db = await waitForFirebase();
+        const data = { ...category };
+        const docId = data.id; delete data.id;
+        if (docId && !docId.startsWith('CAT')) {
+            await db.collection('categories').doc(docId).set(data, { merge: true });
+        } else {
+            const ref = await db.collection('categories').add(data);
+            category.id = ref.id;
+        }
+    } catch (e) {
+        console.error('Firestore save category failed:', e);
+        saveCategories();
+    }
+}
+
+async function deleteCategoryFromFirestore(id) {
+    try {
+        const db = await waitForFirebase();
+        await db.collection('categories').doc(id).delete();
+    } catch (e) {
+        console.error('Firestore delete category failed:', e);
+    }
 }
 
 function generateId() {
@@ -456,12 +513,13 @@ function handleFormSubmit(e) {
         // UPDATE
         const index = categories.findIndex(c => c.id === editingCategoryId);
         if (index !== -1) {
-            categories[index] = {
+            const updated = {
                 ...categories[index],
                 name, slug, description, status, order,
                 icon: selectedIcon,
                 color: color
             };
+            saveCategoryToFirestore(updated);
             showToast(`Đã cập nhật "${name}" thành công!`, 'success');
         }
     } else {
@@ -474,13 +532,10 @@ function handleFormSubmit(e) {
             productCount: 0,
             createdAt: new Date().toISOString()
         };
-        categories.unshift(newCategory);
+        saveCategoryToFirestore(newCategory);
         showToast(`Đã thêm "${name}" thành công!`, 'success');
     }
 
-    saveCategories();
-    renderCategories();
-    updateStats();
     closeCategoryModal();
 }
 
@@ -514,10 +569,7 @@ function confirmDelete() {
     const category = categories.find(c => c.id === deleteCategoryId);
     const name = category ? category.name : '';
 
-    categories = categories.filter(c => c.id !== deleteCategoryId);
-    saveCategories();
-    renderCategories();
-    updateStats();
+    deleteCategoryFromFirestore(deleteCategoryId);
     closeDeleteModal();
 
     showToast(`Đã xóa "${name}" thành công!`, 'success');

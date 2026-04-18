@@ -333,6 +333,211 @@
     font-size: 16px;
 }
 
+/* ========== REVIEWS & RATINGS ========== */
+.product-reviews-container {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+
+.reviews-summary {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    padding: 30px;
+    background: #fff9f0;
+    border-radius: 16px;
+    margin-bottom: 30px;
+    border: 1px solid #ffe8cc;
+}
+
+.rating-overall {
+    text-align: center;
+    padding-right: 40px;
+    border-right: 1px solid #f0e0c9;
+}
+
+.rating-overall h3 {
+    font-size: 40px;
+    color: #c17c2f;
+    margin-bottom: 5px;
+    font-weight: 800;
+}
+
+.rating-overall .out-of {
+    font-size: 24px;
+    color: #b7791f;
+    font-weight: 600;
+}
+
+.rating-overall .stars {
+    font-size: 20px;
+    color: #ffc107;
+    margin-bottom: 5px;
+}
+
+.rating-overall p {
+    color: #666;
+    font-size: 14px;
+}
+
+.rating-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.rating-filter button {
+    background: white;
+    border: 1px solid #e9ecef;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #2c1810;
+    transition: all 0.3s;
+}
+
+.rating-filter button:hover {
+    border-color: #b7791f;
+    color: #b7791f;
+}
+
+.rating-filter button.active {
+    background: #b7791f;
+    color: white;
+    border-color: #b7791f;
+}
+
+.review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.review-item {
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.review-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    background: #e9ecef;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+    font-size: 20px;
+}
+
+.user-details .name {
+    font-weight: 600;
+    color: #2c1810;
+    margin-bottom: 2px;
+}
+
+.user-details .small-stars {
+    font-size: 12px;
+    color: #ffc107;
+}
+
+.review-content p {
+    color: #495057;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.review-images {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.review-images img {
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #e9ecef;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.review-images img:hover {
+    transform: scale(1.05);
+}
+
+.review-date {
+    font-size: 13px;
+    color: #868e96;
+    margin-bottom: 10px;
+}
+
+.review-actions button {
+    background: transparent;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: color 0.2s;
+}
+
+.review-actions button:hover {
+    color: #b7791f;
+}
+
+.review-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 30px;
+}
+
+.review-pagination .btn-page {
+    width: 36px;
+    height: 36px;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.review-pagination .btn-page:hover {
+    border-color: #b7791f;
+    color: #b7791f;
+}
+
+.review-pagination .btn-page.active {
+    background: linear-gradient(45deg, #d4a373, #b7791f);
+    color: white;
+    border-color: transparent;
+}
+
 /* ========== MODAL THÔNG BÁO ========== */
 .custom-modal {
     position: fixed;
@@ -463,6 +668,26 @@
     
     .related-card-info .price {
         font-size: 14px;
+    }
+    
+    .product-reviews-container {
+        padding: 20px 15px;
+        margin: 20px auto;
+    }
+    
+    .reviews-summary {
+        flex-direction: column;
+        gap: 20px;
+        align-items: flex-start;
+    }
+    
+    .rating-overall {
+        border-right: none;
+        border-bottom: 1px solid #f0e0c9;
+        padding-right: 0;
+        padding-bottom: 20px;
+        width: 100%;
+        text-align: center;
     }
 }
 
