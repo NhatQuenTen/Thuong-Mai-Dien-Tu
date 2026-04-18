@@ -235,31 +235,17 @@ function setupSearch() {
     const search = () => {
         if (!input) return;
 
-        const keyword = input.value.trim().toLowerCase();
-        if (!keyword) {
-            renderFilteredProducts();
-            return;
-        }
+        const keyword = input.value.trim();
+        if (!keyword) return;
 
-        const results = getFilteredProducts().filter((product) =>
-            product.name.toLowerCase().includes(keyword) ||
-            (product.brand && product.brand.toLowerCase().includes(keyword))
-        );
-
-        renderProducts("all-products", results, 12);
-
-        if (results.length === 0) {
-            document.getElementById("all-products").innerHTML = `
-                <div style="grid-column:1/-1; text-align:center; padding:60px;">
-                    <i class="fas fa-search" style="font-size:48px; color:#ccc;"></i>
-                    <p>Không tìm thấy sản phẩm "${keyword}"</p>
-                </div>
-            `;
-        }
+        localStorage.setItem("searchKeyword", keyword);
+        window.location.href = "products.html";
     };
 
     if (btn) btn.addEventListener("click", search);
-    if (input) input.addEventListener("keypress", (event) => event.key === "Enter" && search());
+    if (input) input.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") search();
+    });
 }
 
 function isLoggedIn() {
