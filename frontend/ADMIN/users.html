@@ -274,6 +274,7 @@
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
         // Firebase config
@@ -302,6 +303,11 @@
 
         // Load users from Firestore
         async function loadUsers() {
+            if (!auth.currentUser) {
+                showStatus("Vui lòng đăng nhập admin trước khi tải danh sách người dùng.", "error");
+                return;
+            }
+
             try {
                 const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
                 const querySnapshot = await getDocs(q);
@@ -533,8 +539,15 @@
         cancelBtn.addEventListener('click', hideForm);
         document.getElementById('saveBtn').addEventListener('click', saveUser);
 
-        // Load users on page load
-        loadUsers();
+        // Load users only after Firebase Auth restores the admin session
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                showStatus("Vui lòng đăng nhập admin để xem danh sách người dùng.", "error");
+                return;
+            }
+
+            loadUsers();
+        });
     </script>
 </head>
 <body>

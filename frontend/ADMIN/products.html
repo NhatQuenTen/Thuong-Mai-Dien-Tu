@@ -360,6 +360,7 @@ const CATEGORY_NAME_MAP = {
 };
 
 const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 const db = firebase.firestore();
 const list = document.getElementById("list");
 const submitButton = document.getElementById("submitButton");
@@ -563,24 +564,45 @@ function buildProductRow(product, productId, index) {
     `;
 }
 
-db.collection("products").onSnapshot((snapshot) => {
-    list.innerHTML = "";
-    productCache = new Map();
+let unsubscribeProducts = null;
 
-    if (snapshot.empty) {
-        list.innerHTML = `<tr><td colspan="7">Firebase đã kết nối nhưng chưa có sản phẩm nào.</td></tr>`;
+function startProductListener() {
+    if (unsubscribeProducts) {
+        unsubscribeProducts();
+        unsubscribeProducts = null;
+    }
+
+    unsubscribeProducts = db.collection("products").onSnapshot((snapshot) => {
+        list.innerHTML = "";
+        productCache = new Map();
+
+        if (snapshot.empty) {
+            list.innerHTML = `<tr><td colspan="7">Firebase đã kết nối nhưng chưa có sản phẩm nào.</td></tr>`;
+            return;
+        }
+
+        const sortedDocs = getSortedSnapshotDocs(snapshot);
+
+        sortedDocs.forEach((doc, index) => {
+            productCache.set(doc.id, doc.data());
+            list.innerHTML += buildProductRow(doc.data(), doc.id, index + 1);
+        });
+    }, (error) => {
+        console.error("Lỗi đọc sản phẩm từ Firebase:", error);
+        list.innerHTML = `<tr><td colspan="7">Không thể tải dữ liệu từ Firebase.</td></tr>`;
+    });
+}
+
+auth.onAuthStateChanged((user) => {
+    if (!user) {
+        list.innerHTML = `<tr><td colspan="7">Bạn cần đăng nhập admin trước khi quản lý sản phẩm.</td></tr>`;
+        setTimeout(() => {
+            window.location.href = "login.html";
+        }, 800);
         return;
     }
 
-    const sortedDocs = getSortedSnapshotDocs(snapshot);
-
-    sortedDocs.forEach((doc, index) => {
-        productCache.set(doc.id, doc.data());
-        list.innerHTML += buildProductRow(doc.data(), doc.id, index + 1);
-    });
-}, (error) => {
-    console.error("Lỗi đọc sản phẩm từ Firebase:", error);
-    list.innerHTML = `<tr><td colspan="7">Không thể tải dữ liệu từ Firebase.</td></tr>`;
+    startProductListener();
 });
 
 function editProduct(id) {

@@ -106,6 +106,7 @@
 
         .highlight {
             background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -185,7 +186,25 @@
         .login-btn:hover {
             opacity: 0.9;
         }
+
+        .secondary-btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 8px;
+            color: #dbeafe;
+            cursor: pointer;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 </head>
 
 <body>
@@ -241,7 +260,9 @@
                 </div>
 
                 <button type="submit" class="login-btn">Đăng Nhập</button>
+                <button type="button" id="seedAdminBtn" class="secondary-btn">Tạo lại admin mặc định</button>
             </form>
+            <p id="loginStatus" style="margin-top: 15px; min-height: 20px; color: #94a3b8;"></p>
 
         </div>
     </div>
@@ -249,22 +270,219 @@
 </div>
 
 <script>
+const ADMIN_ACCOUNTS = [
+    { email: "admin@gmail.com", password: "123456" },
+    { email: "admin@mobistore.vn", password: "admin123" }
+];
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDzQyH_VLOeuO8Q0bvuFVZ2uPPP9uShR6c",
+    authDomain: "myteamproject-36c2f.firebaseapp.com",
+    projectId: "myteamproject-36c2f",
+    storageBucket: "myteamproject-36c2f.firebasestorage.app",
+    messagingSenderId: "790145988623",
+    appId: "1:790145988623:web:112b090cd32a4c28dd4b7a"
+};
+
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const ADMIN_LOGIN_API = "http://localhost:3001/api/admin-login";
+const loginStatus = document.getElementById("loginStatus");
+const seedAdminBtn = document.getElementById("seedAdminBtn");
+
 function togglePass() {
     const pass = document.getElementById("passwordInput");
     pass.type = pass.type === "password" ? "text" : "password";
 }
 
-document.getElementById("loginForm").addEventListener("submit", function(e){
+function setStatus(message, isError = false) {
+    loginStatus.textContent = message || "";
+    loginStatus.style.color = isError ? "#fca5a5" : "#94a3b8";
+}
+
+function isKnownAdminCredential(email, password) {
+    return ADMIN_ACCOUNTS.some((account) => account.email === email && account.password === password);
+}
+
+async function ensureAdminRecord(user, fallbackEmail) {
+    const userRef = db.collection("users").doc(user.uid);
+    const snapshot = await userRef.get();
+    const payload = {
+        uid: user.uid,
+        email: user.email || fallbackEmail,
+        emailNormalized: (user.email || fallbackEmail || "").toLowerCase(),
+        displayName: user.displayName || "Admin",
+        role: "admin",
+        updatedAt: new Date()
+    };
+
+    if (!snapshot.exists) {
+        await userRef.set({
+            ...payload,
+            createdAt: new Date()
+        });
+        return;
+    }
+
+    if (snapshot.data()?.role !== "admin") {
+        await userRef.set({
+            ...snapshot.data(),
+            ...payload,
+            role: "admin",
+            updatedAt: new Date()
+        }, { merge: true });
+    }
+}
+
+async function signInAdminWithEmailPassword(email, password) {
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+    try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        return {
+            user: userCredential.user,
+            payload: { email }
+        };
+    } catch (firebaseError) {
+        if (firebaseError.code === "auth/user-not-found") {
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            return {
+                user: userCredential.user,
+                payload: { email }
+            };
+        }
+
+        throw firebaseError;
+    }
+}
+
+async function loginAdmin(email, password) {
+    if (!isKnownAdminCredential(email, password)) {
+        throw new Error("Sai tài khoản hoặc mật khẩu admin.");
+    }
+
+    try {
+        const response = await fetch(ADMIN_LOGIN_API, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error(payload.error || "Sai tài khoản hoặc mật khẩu admin.");
+            }
+
+            console.warn("Admin backend trả về lỗi, chuyển sang Firebase Auth trực tiếp:", payload.error || response.status);
+            return await signInAdminWithEmailPassword(email, password);
+        }
+
+        try {
+            await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+            const userCredential = await auth.signInWithCustomToken(payload.token);
+            return {
+                user: userCredential.user,
+                payload: { email: payload.email || email }
+            };
+        } catch (authError) {
+            console.warn("Không đăng nhập được bằng custom token, chuyển sang Firebase Auth trực tiếp:", authError);
+            return await signInAdminWithEmailPassword(email, password);
+        }
+    } catch (error) {
+        if (error instanceof TypeError || error.message === "Failed to fetch") {
+            console.warn("Không gọi được backend admin-login, chuyển sang Firebase Auth trực tiếp.");
+            return await signInAdminWithEmailPassword(email, password);
+        }
+
+        throw error;
+    }
+}
+
+async function seedDefaultAdmin() {
+    const defaultAdmin = ADMIN_ACCOUNTS[0];
+
+    try {
+        const loginResult = await loginAdmin(defaultAdmin.email, defaultAdmin.password);
+        try {
+            await ensureAdminRecord(loginResult.user, defaultAdmin.email);
+        } catch (recordError) {
+            console.warn("Không ghi được hồ sơ admin sau khi tạo:", recordError);
+        }
+
+        localStorage.setItem("mobistore_auth", JSON.stringify({
+            user: defaultAdmin.email,
+            uid: loginResult.user.uid,
+            loginTime: new Date().toISOString(),
+            token: "firebase-custom-token"
+        }));
+
+        setStatus("Đã tạo admin mặc định.");
+        alert("Đã tạo admin mặc định: admin@gmail.com / 123456");
+        return;
+    } catch (createError) {
+        throw createError;
+    }
+}
+
+document.getElementById("loginForm").addEventListener("submit", async function(e){
     e.preventDefault();
 
-    const email = document.getElementById("emailInput").value;
+    const email = document.getElementById("emailInput").value.trim().toLowerCase();
     const pass = document.getElementById("passwordInput").value;
+    const submitButton = this.querySelector(".login-btn");
 
-    if(email === "admin@gmail.com" && pass === "123456"){
+    try {
+        submitButton.disabled = true;
+        submitButton.textContent = "Đang đăng nhập...";
+        setStatus("Đang xác thực tài khoản admin...");
+
+        const loginResult = await loginAdmin(email, pass);
+        await ensureAdminRecord(loginResult.user, loginResult.payload.email || email);
+
+        localStorage.setItem("mobistore_auth", JSON.stringify({
+            user: loginResult.payload.email || email,
+            uid: loginResult.user.uid,
+            loginTime: new Date().toISOString(),
+            token: "firebase-custom-token"
+        }));
+
+        setStatus("Đăng nhập thành công.");
         alert("Đăng nhập thành công!");
         window.location.href = "admin.html";
-    } else {
-        alert("Sai tài khoản!");
+    } catch (error) {
+        console.error(error);
+
+        let message = "Không thể đăng nhập admin.";
+        if (error.code === "auth/operation-not-allowed") {
+            message = "Firebase Auth Email/Password chưa được bật. Hãy bật provider này trong Firebase Console.";
+        } else if (error.message) {
+            message = error.message;
+        }
+
+        setStatus(message, true);
+        alert(message);
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "Đăng Nhập";
+    }
+});
+
+seedAdminBtn.addEventListener("click", async () => {
+    try {
+        seedAdminBtn.disabled = true;
+        setStatus("Đang tạo admin mặc định...");
+        await seedDefaultAdmin();
+    } catch (error) {
+        console.error(error);
+        setStatus(error.message || "Không thể tạo admin mặc định.", true);
+        alert(error.message || "Không thể tạo admin mặc định.");
+    } finally {
+        seedAdminBtn.disabled = false;
     }
 });
 </script>

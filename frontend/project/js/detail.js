@@ -306,17 +306,15 @@ function showModal(message, isSuccess = true) {
         modal.classList.remove("show");
         setTimeout(() => modal.remove(), 300);
     };
+}
 
-    setTimeout(() => {
-        if (modal.parentNode) {
-            modal.classList.remove("show");
-            setTimeout(() => modal.remove(), 300);
-        }
-    }, 2500);
+function getCartStorageKey() {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+    return currentUser?.id ? `cart_${currentUser.id}` : "cart";
 }
 
 function updateCartCount() {
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    const cart = JSON.parse(localStorage.getItem(getCartStorageKey()) || "[]");
     const total = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
     const cartCountElem = document.getElementById("cartCount");
     if (cartCountElem) cartCountElem.innerText = total;
@@ -347,8 +345,9 @@ function addToCart(productId, quantity = 1) {
     const product = products.find((item) => String(item.id) === String(productId));
     if (!product) return;
 
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    const cart = JSON.parse(localStorage.getItem(getCartStorageKey()) || "[]");
     const existingIndex = cart.findIndex((item) => String(item.id) === String(productId));
+    const currentPrice = Number(product.price) || 0;
 
     if (existingIndex !== -1) {
         cart[existingIndex].quantity += quantity;
@@ -356,13 +355,15 @@ function addToCart(productId, quantity = 1) {
         cart.push({
             id: product.id,
             name: product.name,
-            price: product.price,
+            price: currentPrice,
+            originalPrice: Number(product.oldPrice) || 0,
+            discount: Number(product.discount) || 0,
             image: product.image,
             quantity
         });
     }
 
-    localStorage.setItem("cart", JSON.stringify(cart));
+    localStorage.setItem(getCartStorageKey(), JSON.stringify(cart));
     updateCartCount();
     showModal(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`, true);
 }
@@ -393,7 +394,7 @@ function renderRelatedProducts(product) {
     }
 
     container.innerHTML = related.map((item) => `
-        <div class="related-card" onclick="location.href='detail.html?id=${item.id}'">
+        <div class="related-card" onclick="location.href='detail.html?id=${encodeURIComponent(item.id)}'">
             <img src="${item.image}" alt="${item.name}" onerror="this.src='https://placehold.co/300x300?text=No+Image'">
             <div class="related-card-info">
                 <h4>${item.name}</h4>
