@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { collection, getFirestore, onSnapshot, query, where, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDzQyH_VLOeuO8Q0bvuFVZ2uPPP9uShR6c",
@@ -22,12 +23,24 @@ const CATEGORY_NAME_MAP = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 let products = [];
 let currentProduct = null;
 let currentReviews = [];
 let currentStarFilter = 0;
 let selectedSubmitStar = 5;
+let firebaseUser = null;
+
+// Theo dõi trạng thái đăng nhập từ Firebase SDK
+onAuthStateChanged(auth, (user) => {
+    firebaseUser = user;
+    if (user) {
+        console.log("Firebase Auth: Đã xác thực người dùng", user.uid);
+    } else {
+        console.log("Firebase Auth: Chưa đăng nhập hoặc đang load...");
+    }
+});
 
 function renderStarsHTML(rating, size = "16px") {
     let html = "";
@@ -134,9 +147,28 @@ function setupReviewForm() {
     const container = document.getElementById("reviewFormContainer");
     const stars = document.querySelectorAll("#starSelector i");
     const btnSubmit = document.getElementById("btnSubmitReview");
+    const nameInput = document.getElementById("reviewName");
 
     if(btnToggle) {
         btnToggle.addEventListener("click", () => {
+            const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+            if (!currentUser) {
+                showModal("Vui lòng đăng nhập để thực hiện đánh giá!", false);
+                setTimeout(() => {
+                    localStorage.setItem("redirectAfterLogin", window.location.href);
+                    window.location.href = "signin.html";
+                }, 1500);
+                return;
+            }
+            
+            // Điền tên người dùng đã đăng nhập và khóa input
+            if (nameInput) {
+                nameInput.value = currentUser.name || currentUser.displayName || "";
+                nameInput.readOnly = true;
+                nameInput.style.background = "#f1f3f5";
+                nameInput.style.color = "#495057";
+            }
+
             container.style.display = container.style.display === "none" ? "block" : "none";
         });
     }
@@ -173,7 +205,18 @@ function setupReviewForm() {
             btnSubmit.textContent = "Đang gửi...";
 
             try {
+                // Ưu tiên lấy UID trực tiếp từ Firebase Auth SDK để khớp với Rules
+                const uid = firebaseUser ? firebaseUser.uid : (auth.currentUser ? auth.currentUser.uid : null);
+                
+                if (!uid) {
+                    showModal("Hệ thống chưa xác thực được tài khoản của bạn. Vui lòng đợi trong giây lát hoặc thử đăng nhập lại.", false);
+                    btnSubmit.disabled = false;
+                    btnSubmit.textContent = "Gửi Đánh Giá";
+                    return;
+                }
+
                 await addDoc(collection(db, "reviews"), {
+                    userId: uid,
                     customer: name,
                     product: currentProduct.name,
                     content: content,
@@ -183,8 +226,9 @@ function setupReviewForm() {
                     verified: false,
                     reply: "" // Đồng bộ cấu trúc với bên Admin
                 });
-                showModal("Gửi đánh giá thành công! Cầm ơn bạn đã chia sẻ.", true);
-                document.getElementById("reviewName").value = "";
+                showModal("Gửi đánh giá thành công! Cảm ơn bạn đã chia sẻ.", true);
+                
+                // Reset form nhưng giữ lại tên nếu vẫn login
                 document.getElementById("reviewContent").value = "";
                 container.style.display = "none";
                 selectedSubmitStar = 5;
