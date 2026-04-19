@@ -1,5 +1,4 @@
 
-
 const firebaseConfig = {
     apiKey: "AIzaSyDzQyH_VLOeuO8Q0bvuFVZ2uPPP9uShR6c",
     authDomain: "myteamproject-36c2f.firebaseapp.com",

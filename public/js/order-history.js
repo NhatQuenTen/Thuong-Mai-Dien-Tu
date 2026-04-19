@@ -20,29 +20,21 @@ function getOrderStorageKey(userId = getUserId()) {
 }
 
 function loadUserOrders() {
-  const user = getCurrentUser();
-  if (!user) return [];
-
-  const scopedKey = getOrderStorageKey(getUserId(user));
-  const scopedOrders = JSON.parse(localStorage.getItem(scopedKey) || "null");
-  if (Array.isArray(scopedOrders)) return scopedOrders;
-
   return [];
 }
 
 function clearLegacyOrderCaches(activeUserId) {
   try {
-    const activeKey = getOrderStorageKey(activeUserId);
     localStorage.removeItem("ps_orders");
 
-    const removableKeys = [];
-    for (let index = 0; index < localStorage.length; index += 1) {
-      const key = localStorage.key(index);
-      if (!key || !key.startsWith("ps_orders_")) continue;
-      if (key !== activeKey) removableKeys.push(key);
+    // Keep user-scoped cache keys to avoid losing UI data if network/auth restoration is slow.
+    if (activeUserId) {
+      const activeKey = getOrderStorageKey(activeUserId);
+      const cached = localStorage.getItem(activeKey);
+      if (!cached) {
+        localStorage.setItem(activeKey, "[]");
+      }
     }
-
-    removableKeys.forEach((key) => localStorage.removeItem(key));
   } catch (error) {
     console.warn("Không thể dọn cache đơn hàng cũ:", error.message);
   }
@@ -333,68 +325,92 @@ async function persistOrderToFirestore(order) {
   }
 }
 
+async function deleteOrderFromFirestore(orderId) {
+  try {
+    const { db } = await waitForFirebase();
+    await db.collection("orders").doc(orderId).delete();
+  } catch (error) {
+    console.warn("Không thể xóa đơn hàng trên Firebase:", error.message);
+  }
+}
+
 async function syncOrdersToFirestore() {
   const tasks = orders.map((order) => persistOrderToFirestore(order));
   await Promise.all(tasks);
 }
 
+let unsubscribeOrdersSnapshot = null;
+
 function subscribeFirebaseOrders() {
   waitForFirebase()
     .then(({ db, auth }) => {
-      const user = getCurrentUser();
-      if (!user) return;
+      auth.onAuthStateChanged((authUser) => {
+        if (unsubscribeOrdersSnapshot) {
+          unsubscribeOrdersSnapshot();
+          unsubscribeOrdersSnapshot = null;
+        }
 
-      const authUid = auth?.currentUser?.uid || getUserId(user);
-      if (!authUid) {
-        console.warn("Không có UID đăng nhập để đồng bộ đơn hàng");
-        return;
-      }
+        if (!authUser) {
+          orders = [];
+          filtered = [];
+          applyFilter();
+          return;
+        }
 
-      if (getUserId(user) !== authUid) {
-        localStorage.setItem(
-          "currentUser",
-          JSON.stringify({
-            ...user,
-            id: authUid,
-          }),
-        );
-      }
+        const user = getCurrentUser() || {};
+        const authUid = authUser.uid;
 
-      clearLegacyOrderCaches(authUid);
-      orders = [];
-      filtered = [];
-      applyFilter();
+        if (getUserId(user) !== authUid) {
+          localStorage.setItem(
+            "currentUser",
+            JSON.stringify({
+              ...user,
+              id: authUid,
+              uid: authUid,
+              email: user.email || authUser.email || "",
+              name: user.name || authUser.displayName || "Khách hàng",
+              avatar: user.avatar || authUser.photoURL || "",
+            }),
+          );
+        }
 
-      db.collection("orders")
-        .where("userId", "==", authUid)
-        .onSnapshot(
-          (snapshot) => {
-            const remoteOrders = snapshot.docs.map((doc) =>
-              normalizeOrder({ id: doc.id, ...doc.data() }, doc.id),
-            );
+        clearLegacyOrderCaches(authUid);
+        orders = [];
+        filtered = [];
+        applyFilter();
 
-            remoteOrders.sort((a, b) => {
-              const left =
-                a.createdAt?.seconds != null
-                  ? a.createdAt.seconds * 1000
-                  : new Date(a.createdAt || a.date || 0).getTime();
-              const right =
-                b.createdAt?.seconds != null
-                  ? b.createdAt.seconds * 1000
-                  : new Date(b.createdAt || b.date || 0).getTime();
-              return right - left;
-            });
+        unsubscribeOrdersSnapshot = db
+          .collection("orders")
+          .where("userId", "==", authUid)
+          .onSnapshot(
+            (snapshot) => {
+              const remoteOrders = snapshot.docs.map((doc) =>
+                normalizeOrder({ id: doc.id, ...doc.data() }, doc.id),
+              );
 
-            orders = remoteOrders;
-            const key = getOrderStorageKey(authUid);
-            localStorage.setItem(key, JSON.stringify(orders));
-            filtered = [...orders];
-            applyFilter();
-          },
-          (error) => {
-            console.error("Firestore orders listener failed:", error);
-          },
-        );
+              remoteOrders.sort((a, b) => {
+                const left =
+                  a.createdAt?.seconds != null
+                    ? a.createdAt.seconds * 1000
+                    : new Date(a.createdAt || a.date || 0).getTime();
+                const right =
+                  b.createdAt?.seconds != null
+                    ? b.createdAt.seconds * 1000
+                    : new Date(b.createdAt || b.date || 0).getTime();
+                return right - left;
+              });
+
+              orders = remoteOrders;
+              const key = getOrderStorageKey(authUid);
+              localStorage.setItem(key, JSON.stringify(orders));
+              filtered = [...orders];
+              applyFilter();
+            },
+            (error) => {
+              console.error("Firestore orders listener failed:", error);
+            },
+          );
+      });
     })
     .catch((error) => {
       console.warn("Không thể lắng nghe đơn hàng Firebase:", error.message);
@@ -793,6 +809,23 @@ function closeLogoutConfirm() {
   document.body.style.overflow = "";
 }
 
+function clearFirebaseAuthCache() {
+  const authPrefixes = ["firebase:authUser:", "firebase:host:"];
+  const removeKeysByPrefix = (storage) => {
+    const keys = [];
+    for (let index = 0; index < storage.length; index++) {
+      const key = storage.key(index);
+      if (key && authPrefixes.some((prefix) => key.startsWith(prefix))) {
+        keys.push(key);
+      }
+    }
+    keys.forEach((key) => storage.removeItem(key));
+  };
+
+  removeKeysByPrefix(localStorage);
+  removeKeysByPrefix(sessionStorage);
+}
+
 function initLogout() {
   const btn = $("logoutBtn");
   const confirmBtn = $("logoutConfirmBtn");
@@ -819,6 +852,8 @@ function initLogout() {
   confirmBtn.addEventListener("click", async (e) => {
     e.preventDefault();
 
+    localStorage.setItem("ps_force_logout", "1");
+
     if (window.googleAuth && typeof window.googleAuth.logout === "function") {
       try {
         await window.googleAuth.logout();
@@ -828,14 +863,34 @@ function initLogout() {
           error,
         );
       }
+    } else if (
+      window.firebaseAuth &&
+      typeof window.firebaseAuth.signOut === "function"
+    ) {
+      try {
+        await window.firebaseAuth.signOut();
+      } catch (error) {
+        console.warn(
+          "Firebase auth signOut failed, fallback to local cleanup:",
+          error,
+        );
+      }
     }
 
+    const currentUser = getCurrentUser();
+    if (currentUser?.id) {
+      localStorage.removeItem(`ps_orders_${currentUser.id}`);
+    }
     localStorage.removeItem("currentUser");
+    localStorage.removeItem("redirectAfterLogin");
+    localStorage.removeItem("ps_user");
     sessionStorage.removeItem("googleUserData");
+    clearFirebaseAuthCache();
     closeLogoutConfirm();
+    window.dispatchEvent(new CustomEvent("userLoggedOut"));
     toast("Đã đăng xuất. Đang chuyển hướng đến đăng nhập...", "info");
     setTimeout(() => {
-      window.location.href = "signin.html";
+      window.location.replace("signin.html");
     }, 1200);
   });
 }
@@ -849,34 +904,28 @@ function openCancelModal(id) {
   showModal("cancelBackdrop");
 }
 
-$("cancelYes").addEventListener("click", () => {
+$("cancelYes").addEventListener("click", async () => {
   if (!$("cancelReason").value) {
     toast("Vui lòng chọn lý do hủy đơn!", "warning");
     return;
   }
   const o = orders.find((x) => x.id === cancelId);
   if (!o) return;
-  o.status = "Đã hủy";
-  o.cancelReason = $("cancelReason").value;
-  o.timeline = [
-    ...o.timeline.filter((t) => t.done),
-    {
-      step: "Đã hủy",
-      time: new Date().toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      done: true,
-      cancelled: true,
-    },
-  ];
-  saveOrders();
+  const orderId = cancelId;
+  const user = getCurrentUser();
+  const userId = getUserId(user);
+
+  orders = orders.filter((x) => x.id !== orderId);
+  filtered = filtered.filter((x) => x.id !== orderId);
+  const storageKey = getOrderStorageKey(userId);
+  localStorage.setItem(storageKey, JSON.stringify(orders));
+
   hideModal("cancelBackdrop");
   applyFilter();
-  toast(`Đã hủy đơn hàng ${cancelId} thành công!`, "info");
+
+  await deleteOrderFromFirestore(orderId);
+
+  toast(`Đã hủy và xóa đơn hàng ${orderId} thành công!`, "info");
   cancelId = null;
 });
 

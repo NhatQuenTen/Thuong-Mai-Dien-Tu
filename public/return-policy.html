@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Liên hệ Chăm sóc khách hàng | PhoneStore</title>
+    <title>Chính sách đổi trả | PhoneStore</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -35,25 +35,7 @@
                         <span class="cart-count">0</span>
                     </div>
                 </a>
-                <div class="profile-area">
-                    <div class="profile-trigger">
-                        <img src="https://ui-avatars.com/api/?name=User&background=b7791f&color=fff&size=40&rounded=true" alt="Avatar" class="profile-avatar">
-                        <span class="profile-name" style="display:none;">User</span>
-                        <i class="fas fa-chevron-down profile-icon"></i>
-                    </div>
-                    <div class="profile-dropdown" style="display:none;">
-                        <a href="profile.html" class="dropdown-item">
-                            <i class="fas fa-user-circle"></i> Thông tin cá nhân
-                        </a>
-                        <a href="order-history.html" class="dropdown-item">
-                            <i class="fas fa-receipt"></i> Lịch sử mua hàng
-                        </a>
-                        <button class="dropdown-item logout-btn">
-                            <i class="fas fa-sign-out-alt"></i> Đăng xuất
-                        </button>
-                    </div>
-                    <a href="signin.html" class="login-btn" style="display:none;">Đăng nhập</a>
-                </div>
+                <a href="profile.html" id="profileLink"><i class="fas fa-user"></i></a>
             </div>
         </div>
     </header>
@@ -76,50 +58,80 @@
                 <li><a href="#">Đơn Hàng & Vận Chuyển <i class="fas fa-chevron-down"></i></a></li>
                 <li><a href="#">Trả Hàng & Hoàn Tiền <i class="fas fa-chevron-down"></i></a></li>
                 <li>
-                    <a href="#">Thông Tin Chung <i class="fas fa-chevron-up"></i></a>
+                    <a href="#">Thông Tin Chung <i class="fas fa-chevron-down"></i></a>
                     <ul class="help-sidebar-submenu">
                         <li><a href="warranty.html">Chính sách bảo hành</a></li>
                         <li><a href="shipping-policy.html">Chính sách vận chuyển</a></li>
-                        <li><a href="return-policy.html">Chính sách đổi trả</a></li>
-                        <li><a href="contact.html" class="active">Liên hệ</a></li>
+                        <li><a href="return-policy.html" class="active">Chính sách đổi trả</a></li>
+                        <li><a href="contact.html">Liên hệ</a></li>
                     </ul>
                 </li>
             </ul>
         </div>
-        
+
         <!-- Content -->
         <div class="help-content">
-            <h2 class="help-title">[Dịch vụ] Cách liên hệ Chăm sóc khách hàng PhoneStore</h2>
-            
-            <div class="help-section">
-                <h3><i class="fas fa-exclamation-triangle"></i> Lưu ý về cuộc gọi từ PhoneStore:</h3>
-                <p>Để tránh giả mạo, PhoneStore sẽ hiển thị cuộc gọi ra như sau:</p>
-                <ul>
-                    <li>Với thuê bao Viettel/Vinaphone/Mobifone: tên hiển thị là <strong>PHONESTORE</strong>.</li>
-                    <li>Với thuê bao thuộc các nhà mạng khác hoặc điện thoại bàn: hiển thị số điện thoại có đuôi <strong>8888</strong>.</li>
-                </ul>
-            </div>
-            
-            <div class="help-section">
-                <h3 style="color: #ff4757;"><i class="fas fa-thumbtack"></i> Hướng dẫn liên hệ Chăm sóc khách hàng PhoneStore (CSKH)</h3>
-                <p>Bộ phận Chăm sóc khách hàng PhoneStore (CSKH) hoạt động 24/7 và hoàn toàn miễn phí, bạn có thể liên hệ theo hướng dẫn sau:</p>
-                <ul>
-                    <li><strong>Bước 1:</strong> Chọn Tôi/Me</li>
-                    <li><strong>Bước 2:</strong> Chọn Trò chuyện với PhoneStore</li>
-                    <li><strong>Bước 3:</strong> Chọn các thắc mắc đã có sẵn hoặc nhập thông tin yêu cầu để PhoneStore hỗ trợ bạn nhé</li>
-                </ul>
-                <div class="contact-image-wrapper">
-                    <img src="https://via.placeholder.com/250x500.png/fff5e6/b7791f?text=Support+Chat" alt="Hướng dẫn Chat">
-                    <p style="font-size: 12px; color: #888; margin-top: 10px;">Kiểm tra lịch sử tin nhắn tại mục Trò Chuyện</p>
+            <h2 class="help-title">🔄 Chính sách đổi trả hàng tại PhoneStore</h2>
+
+            <div class="help-section" style="margin-top: 30px;">
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #16a34a;">
+                    <h3 style="margin: 0 0 10px 0; color: #16a34a; font-size: 16px;">1. Điều kiện đổi trả</h3>
+                    <p style="margin: 5px 0; color: #333; font-weight: 500;">Khách hàng được đổi/trả khi:</p>
+                    <ul style="margin: 5px 0; padding-left: 20px; color: #333;">
+                        <li>Sản phẩm bị lỗi kỹ thuật do nhà sản xuất</li>
+                        <li>Giao sai sản phẩm, sai mẫu, sai số lượng</li>
+                        <li>Sản phẩm bị hư hỏng trong quá trình vận chuyển</li>
+                    </ul>
                 </div>
-            </div>
-            
-            <div class="help-section">
-                <h3 style="color: #ff4757;">Kiểm tra lịch sử tin nhắn (Chat)</h3>
-                <ul>
-                    <li>Để xem lịch sử tin nhắn, bạn truy cập mục <strong>Tôi > Chọn Trò Chuyện Với PhoneStore > Kéo lên để xem lịch sử Chat</strong></li>
-                    <li>Lịch sử Chat sẽ được lưu trữ tối đa 180 ngày</li>
-                </ul>
+
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #16a34a;">
+                    <h3 style="margin: 0 0 10px 0; color: #16a34a; font-size: 16px;">2. Thời gian đổi trả</h3>
+                    <ul style="margin: 5px 0; padding-left: 20px; color: #333;">
+                        <li>Trong vòng <strong>7 ngày</strong> kể từ ngày nhận hàng</li>
+                    </ul>
+                </div>
+
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #16a34a;">
+                    <h3 style="margin: 0 0 10px 0; color: #16a34a; font-size: 16px;">3. Điều kiện sản phẩm</h3>
+                    <ul style="margin: 5px 0; padding-left: 20px; color: #333;">
+                        <li>Còn nguyên tem, hộp, phụ kiện</li>
+                        <li>Không bị trầy xước, hư hỏng do người dùng</li>
+                        <li>Có hóa đơn / bằng chứng mua hàng</li>
+                    </ul>
+                </div>
+
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #16a34a;">
+                    <h3 style="margin: 0 0 10px 0; color: #16a34a; font-size: 16px;">4. Trường hợp không áp dụng</h3>
+                    <ul style="margin: 5px 0; padding-left: 20px; color: #333;">
+                        <li>Sản phẩm đã qua sử dụng, bị tác động vật lý</li>
+                        <li>Lỗi do người dùng (rơi, nước vào, cháy nổ...)</li>
+                        <li>Quá thời hạn đổi trả</li>
+                    </ul>
+                </div>
+
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #16a34a;">
+                    <h3 style="margin: 0 0 10px 0; color: #16a34a; font-size: 16px;">5. Hình thức đổi trả</h3>
+                    <ul style="margin: 5px 0; padding-left: 20px; color: #333;">
+                        <li>Đổi sản phẩm mới tương đương</li>
+                        <li>Hoàn tiền (nếu hết hàng)</li>
+                    </ul>
+                </div>
+
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #16a34a;">
+                    <h3 style="margin: 0 0 10px 0; color: #16a34a; font-size: 16px;">6. Chi phí đổi trả</h3>
+                    <ul style="margin: 5px 0; padding-left: 20px; color: #333;">
+                        <li><strong>Lỗi từ shop → miễn phí</strong></li>
+                        <li>Khách đổi do nhu cầu cá nhân → khách chịu phí</li>
+                    </ul>
+                </div>
+
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+                    <p style="margin: 0; color: #856404; font-weight: 500;">
+                        <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                        Để biết thêm chi tiết hoặc có thắc mắc, vui lòng liên hệ: 
+                        <strong>📞 1900 1234</strong> hoặc <strong>✉️ support@phonestore.vn</strong>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -147,7 +159,7 @@
                 <h3>Hỗ trợ khách hàng</h3>
                 <a href="#">Hướng dẫn mua hàng</a>
                 <a href="#">Phương thức thanh toán</a>
-                <a href="#">Chính sách đổi trả</a>
+                <a href="return-policy.html">Chính sách đổi trả</a>
                 <a href="contact.html">Liên hệ</a>
                 <a href="warranty.html">Chính sách bảo hành</a>
             </div>
@@ -173,7 +185,6 @@
         </div>
     </footer>
 
-    <script src="js/profile-ui.js"></script>
     <script type="module" src="js/main.js"></script>
 
 </body>
