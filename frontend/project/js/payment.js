@@ -154,11 +154,18 @@ function prefillForm(currentUser, payload) {
   $("email").value = currentUser?.email || "";
   $("phone").value = currentUser?.phone || "";
 
+  // Load saved addresses and get default one
+  const savedAddresses = JSON.parse(localStorage.getItem("ps_addrs") || "[]");
+  const defaultAddress = savedAddresses.find((a) => a.default);
+  if (defaultAddress && defaultAddress.full) {
+    $("address").value = defaultAddress.full;
+  }
+
   if (payload?.form) {
     $("fullName").value = payload.form.fullName || $("fullName").value;
     $("email").value = payload.form.email || $("email").value;
     $("phone").value = payload.form.phone || $("phone").value;
-    $("address").value = payload.form.address || "";
+    $("address").value = payload.form.address || $("address").value;
     $("note").value = payload.form.note || "";
     $("paymentMethod").value = payload.form.paymentMethod || "cod";
   }

@@ -174,9 +174,64 @@
         background: #dc2626;
       }
 
+      .filter-bar {
+        margin-bottom: 16px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #334155;
+      }
+
+      .filter-bar label {
+        color: #e2e8f0;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .filter-bar select {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #f8fafc;
+        font-size: 14px;
+        cursor: pointer;
+        flex: 1;
+        max-width: 300px;
+      }
+
+      .filter-bar select:hover {
+        border-color: #475569;
+      }
+
+      .filter-bar select:focus {
+        outline: none;
+        border-color: #fde68a;
+        box-shadow: 0 0 0 2px rgba(253, 230, 138, 0.1);
+      }
+
+      .filter-result {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-left: auto;
+        white-space: nowrap;
+      }
+
       @media (max-width: 900px) {
         .status-select {
           width: 150px;
+        }
+        .filter-bar {
+          flex-wrap: wrap;
+        }
+        .filter-bar select {
+          max-width: 100%;
+        }
+        .filter-result {
+          margin-left: 0;
+          width: 100%;
+          margin-top: 8px;
         }
       }
     </style>
@@ -204,6 +259,20 @@
       <div class="card">
         <div id="statusLine" class="status-line">
           Đang tải đơn hàng từ Firebase...
+        </div>
+        <div class="filter-bar">
+          <label>Lọc theo trạng thái:</label>
+          <select id="statusFilter" onchange="filterOrdersByStatus()">
+            <option value="">Tất cả đơn hàng</option>
+            <option value="Chờ xác nhận">Chờ xác nhận</option>
+            <option value="Đã xác nhận">Đã xác nhận</option>
+            <option value="Đang giao hàng">Đang giao hàng</option>
+            <option value="Đã giao hàng thành công">
+              Đã giao hàng thành công
+            </option>
+            <option value="Đã hủy">Đã hủy</option>
+          </select>
+          <div id="filterResult" class="filter-result"></div>
         </div>
         <div class="table-wrap">
           <table>
@@ -255,6 +324,9 @@
       const statusLine = document.getElementById("statusLine");
       const updatedAtText = document.getElementById("updatedAt");
       const ordersBody = document.getElementById("ordersBody");
+      const statusFilter = document.getElementById("statusFilter");
+      const filterResult = document.getElementById("filterResult");
+      let allOrders = [];
 
       function showStatus(message, isError = false) {
         statusLine.textContent = message;
@@ -396,6 +468,22 @@
         return order.payment?.status || order.paymentStatus || "Chờ xác nhận";
       }
 
+      function filterOrdersByStatus() {
+        const selectedStatus = statusFilter.value.trim();
+        let filteredOrders = allOrders;
+
+        if (selectedStatus) {
+          filteredOrders = allOrders.filter(
+            (order) => order.status === selectedStatus,
+          );
+          filterResult.textContent = `Hiển thị ${filteredOrders.length} đơn hàng`;
+        } else {
+          filterResult.textContent = "";
+        }
+
+        renderOrders(filteredOrders);
+      }
+
       function renderOrders(orders) {
         if (!orders.length) {
           ordersBody.innerHTML =
@@ -493,15 +581,20 @@
           .orderBy("createdAt", "desc")
           .onSnapshot(
             (snapshot) => {
-              const orders = snapshot.docs.map((doc) => ({
+              allOrders = snapshot.docs.map((doc) => ({
                 id: doc.id,
                 ...doc.data(),
               }));
-              renderOrders(orders);
+
+              // Reset filter when data updates
+              statusFilter.value = "";
+              filterResult.textContent = "";
+
+              renderOrders(allOrders);
 
               const nowText = new Date().toLocaleString("vi-VN");
-              updatedAtText.textContent = `Đã đồng bộ lúc: ${nowText} | Tổng đơn: ${orders.length}`;
-              showStatus(`Đang hiển thị ${orders.length} đơn hàng.`);
+              updatedAtText.textContent = `Đã đồng bộ lúc: ${nowText} | Tổng đơn: ${allOrders.length}`;
+              showStatus(`Đang hiển thị ${allOrders.length} đơn hàng.`);
             },
             (error) => {
               console.error("Không thể tải đơn hàng:", error);
