@@ -101,3 +101,134 @@
         font-weight: normal;
         font-size: 13px;
     }
+
+    /* ========== RESPONSIVE DESIGN ========== */
+
+    /* Tablet - 768px and below */
+    @media (max-width: 768px) {
+        .auth-container {
+            max-width: 100%;
+            margin: 40px 20px;
+            padding: 30px 20px;
+            border-radius: 20px;
+        }
+
+        .auth-header h2 {
+            font-size: 24px;
+        }
+
+        .auth-header p {
+            font-size: 14px;
+        }
+
+        .form-group label {
+            font-size: 14px;
+        }
+
+        .form-group input {
+            padding: 12px;
+            font-size: 14px;
+        }
+
+        .btn-auth {
+            padding: 12px;
+            font-size: 15px;
+        }
+
+        .auth-footer {
+            font-size: 13px;
+        }
+
+        .term-checkbox {
+            font-size: 12px;
+        }
+
+        .term-checkbox input {
+            width: 16px;
+            height: 16px;
+        }
+    }
+
+    /* Mobile - 480px and below */
+    @media (max-width: 480px) {
+        body {
+            padding: 0;
+        }
+
+        .auth-container {
+            max-width: 100%;
+            margin: 20px 10px;
+            padding: 20px 15px;
+            border-radius: 16px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .auth-header {
+            margin-bottom: 20px;
+        }
+
+        .auth-header h2 {
+            font-size: 20px;
+        }
+
+        .auth-header p {
+            font-size: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .form-group input {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 10px;
+        }
+
+        .btn-auth {
+            padding: 11px;
+            font-size: 14px;
+            margin-top: 8px;
+            border-radius: 30px;
+        }
+
+        .auth-footer {
+            margin-top: 20px;
+            font-size: 12px;
+        }
+
+        .error-message {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 12px;
+        }
+
+        .success-message {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 12px;
+        }
+
+        .term-checkbox {
+            gap: 8px;
+            margin: 15px 0;
+            font-size: 11px;
+        }
+
+        .term-checkbox input {
+            width: 16px;
+            height: 16px;
+            min-width: 16px;
+        }
+
+        .term-checkbox label {
+            font-size: 11px;
+        }
+    }

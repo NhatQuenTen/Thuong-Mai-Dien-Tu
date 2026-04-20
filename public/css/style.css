@@ -382,6 +382,9 @@ header {
   position: relative;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .product-card:hover {
@@ -427,6 +430,7 @@ header {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .product-image img {
@@ -444,6 +448,9 @@ header {
 .product-info {
   padding: 16px;
   border-top: 1px solid #f0f0f0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .product-brand {
@@ -490,6 +497,7 @@ header {
 .product-actions {
   display: flex;
   gap: 10px;
+  margin-top: auto;
 }
 
 .btn-cart {
@@ -507,6 +515,7 @@ header {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  min-height: 40px;
 }
 
 .btn-cart:hover {
@@ -531,6 +540,7 @@ header {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  min-height: 40px;
 }
 
 .btn-buy-now:hover,
@@ -769,11 +779,34 @@ footer {
     padding: 8px 16px;
     font-size: 12px;
   }
+
+  .promo-banner-content h1 {
+    font-size: 28px;
+  }
+
+  .countdown-timer {
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .countdown-item {
+    min-width: 60px;
+    padding: 12px 10px;
+  }
+
+  .countdown-item span:first-child {
+    font-size: 24px;
+  }
+
+  .countdown-item span:last-child {
+    font-size: 10px;
+  }
 }
 
 @media (max-width: 480px) {
   .product-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 
   .product-image {
@@ -782,11 +815,171 @@ footer {
   }
 
   .product-info {
-    padding: 12px;
+    padding: 10px;
+  }
+
+  .product-brand {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .product-name {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .product-price {
+    margin-bottom: 8px;
+  }
+
+  .current-price {
+    font-size: 14px;
+  }
+
+  .old-price {
+    font-size: 11px;
   }
 
   .btn-cart {
     padding: 8px;
+    font-size: 10px;
+    min-height: 36px;
+  }
+
+  .btn-buy-now,
+  .btn-cart-secondary,
+  .btn-wishlist {
+    padding: 8px;
+    font-size: 10px;
+    min-height: 36px;
+  }
+
+  .product-actions {
+    gap: 8px;
+  }
+
+  .promo-banner {
+    padding: 40px 15px;
+  }
+
+  .promo-banner-content h1 {
+    font-size: 20px;
+    margin: 10px 0;
+  }
+
+  .promo-banner-content p {
+    font-size: 13px;
+  }
+
+  .countdown-timer {
+    gap: 8px;
+    margin-top: 15px;
+  }
+
+  .countdown-item {
+    min-width: 50px;
+    padding: 10px 8px;
+    border-radius: 8px;
+  }
+
+  .countdown-item span:first-child {
+    font-size: 18px;
+  }
+
+  .countdown-item span:last-child {
+    font-size: 9px;
+  }
+
+  .flash-sale-section {
+    padding: 0 15px;
+  }
+
+  .promo-cards {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .promo-card {
+    padding: 20px 15px;
+  }
+
+  .promo-card-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .promo-card-icon i {
+    font-size: 28px;
+  }
+
+  .promo-card h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .promo-card p {
+    font-size: 12px;
+  }
+
+  .combo-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .combo-card {
+    flex-direction: column;
+  }
+
+  .combo-image {
+    width: 100%;
+    padding: 15px;
+    height: auto;
+  }
+
+  .combo-info {
+    padding: 15px;
+  }
+
+  .combo-info h3 {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+
+  .combo-info p {
+    font-size: 12px;
+  }
+
+  .voucher-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .voucher-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+    padding: 15px;
+  }
+
+  .voucher-left,
+  .voucher-right {
+    text-align: center;
+  }
+
+  .voucher-value {
+    font-size: 20px;
+  }
+
+  .voucher-condition {
+    font-size: 11px;
+  }
+
+  .btn-voucher {
+    padding: 6px 16px;
+    font-size: 12px;
+  }
+
+  .voucher-code {
     font-size: 11px;
   }
 }
