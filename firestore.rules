@@ -82,15 +82,8 @@ service cloud.firestore {
       // Tất cả mọi người có thể đọc review
       allow get, list: if true;
       
-<<<<<<< HEAD
-      // Người dùng xác thực có thể tạo review
-      // Yêu cầu: request phải có userId và nó phải match với auth uid
-      allow create: if isAuthenticated() && 
-                       request.resource.data.userId == request.auth.uid;
-=======
       // Người dùng xác thực có thể tạo review cho chính họ
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
->>>>>>> 3b29171ca659bcef49f294cffb7ba5fba7f2ea75
       
       // Người dùng có thể cập nhật review của chính họ
       allow update: if isOwner(resource.data.userId);

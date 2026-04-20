@@ -340,6 +340,14 @@ function initProfileForm() {
       user.gender = $("pfGender").value;
       user.idCard = $("pfIdCard").value.trim();
       saveUser(user);
+
+      // Also update currentUser so changes reflect globally
+      const currentUserData = JSON.parse(
+        localStorage.getItem("currentUser") || "{}",
+      );
+      currentUserData.phone = phone;
+      localStorage.setItem("currentUser", JSON.stringify(currentUserData));
+
       renderUserUI();
       cancelEdit();
       toast("Cập nhật thông tin thành công!", "success");

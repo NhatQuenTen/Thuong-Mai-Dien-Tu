@@ -222,7 +222,15 @@ function syncSelectedCartIds(cartItems) {
     nextSelected.size === 0 &&
     cartItems.length > 0
   ) {
-    cartItems.forEach((item) => nextSelected.add(String(item.id)));
+    // Check if user came from buyNow - only select that product
+    const buyNowProductId = localStorage.getItem("buyNowProductId");
+    if (buyNowProductId && validIds.has(buyNowProductId)) {
+      nextSelected.add(buyNowProductId);
+      localStorage.removeItem("buyNowProductId");
+    } else {
+      // Otherwise select all products
+      cartItems.forEach((item) => nextSelected.add(String(item.id)));
+    }
     hasSelectionInitialized = true;
   }
 
@@ -697,10 +705,8 @@ function setupSearch() {
 
 document.addEventListener("DOMContentLoaded", () => {
   PROMO_CODES = getDefaultPromoCodes();
-  const copiedCode = getStoredCopiedPromoCode();
-  if (copiedCode) {
-    appliedPromoCode = copiedCode;
-  }
+  // Không tự áp dụng mã đã sao chép; người dùng phải tự nhập/dán rồi bấm Áp dụng.
+  appliedPromoCode = "";
 
   renderCartPage();
   updateCartCount();

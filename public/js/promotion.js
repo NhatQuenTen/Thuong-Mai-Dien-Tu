@@ -1,117 +1,193 @@
-// ========== DOM READY ==========
-document.addEventListener('DOMContentLoaded', function() {
-    console.log(' Promotion page loaded');
-    
-    if (typeof products === 'undefined') {
-        console.error(' Không tìm thấy data.js!');
-        return;
-    }
-    
-    // Render sản phẩm flash sale và giảm giá
-    renderFlashSaleProducts();
-    
-    // Setup countdown timer
-    startCountdown();
-    
-    // Setup search
-    setupSearch();
-    
-    // Setup click vào sản phẩm để chuyển trang chi tiết
-    setupProductClick();
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  collection,
+  getFirestore,
+  onSnapshot,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // Render mã khuyến mãi cố định để copy và áp dụng ở giỏ hàng
-    PROMO_CODES = getDefaultPromoCodes();
-    renderVoucherCards();
-    
-    // Update cart count
-    updateCartCount();
-    // Setup back to top button
-    setupBackToTop();
+const firebaseConfig = {
+  apiKey: "AIzaSyDzQyH_VLOeuO8Q0bvuFVZ2uPPP9uShR6c",
+  authDomain: "myteamproject-36c2f.firebaseapp.com",
+  projectId: "myteamproject-36c2f",
+  storageBucket: "myteamproject-36c2f.firebasestorage.app",
+  messagingSenderId: "790145988623",
+  appId: "1:790145988623:web:112b090cd32a4c28dd4b7a",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let products = [];
+
+// ========== DOM READY ==========
+document.addEventListener("DOMContentLoaded", function () {
+  console.log(" Promotion page loaded");
+
+  // Đồng bộ sản phẩm theo Firestore để ảnh luôn cập nhật theo Admin.
+  subscribeProducts();
+
+  // Setup countdown timer
+  startCountdown();
+
+  // Setup search
+  setupSearch();
+
+  // Setup click vào sản phẩm để chuyển trang chi tiết
+  setupProductClick();
+
+  // Render mã khuyến mãi cố định để copy và áp dụng ở giỏ hàng
+  PROMO_CODES = getDefaultPromoCodes();
+  renderVoucherCards();
+
+  // Update cart count
+  updateCartCount();
+  // Setup back to top button
+  setupBackToTop();
 });
+
+function subscribeProducts() {
+  onSnapshot(
+    collection(db, "products"),
+    (snapshot) => {
+      products = snapshot.docs.map((doc) => {
+        const data = doc.data() || {};
+
+        return {
+          id: doc.id,
+          name: data.name || "Sản phẩm chưa có tên",
+          price: Number(data.price) || 0,
+          brand: data.brand || "",
+          category: data.category || "",
+          image: resolveImageUrl(data.image),
+          isSale: Boolean(data.isSale),
+          discount: Number(data.discount) || 0,
+          updatedAtMs: getProductActivityValue(data),
+        };
+      });
+
+      renderFlashSaleProducts();
+    },
+    (error) => {
+      console.error("Không thể đọc sản phẩm từ Firebase:", error);
+      const container = document.getElementById("flash-sale-products");
+      if (container) {
+        container.innerHTML = "<p>Không thể tải dữ liệu khuyến mãi.</p>";
+      }
+    },
+  );
+}
+
+function resolveImageUrl(imagePath) {
+  if (!imagePath) return "https://placehold.co/300x200?text=No+Image";
+
+  const normalizedPath = String(imagePath).replace(/\\/g, "/").trim();
+
+  if (
+    normalizedPath.startsWith("http://") ||
+    normalizedPath.startsWith("https://")
+  ) {
+    return normalizedPath;
+  }
+
+  if (normalizedPath.startsWith("./") || normalizedPath.startsWith("../")) {
+    return normalizedPath;
+  }
+
+  if (normalizedPath.startsWith("assets/images/")) {
+    return normalizedPath;
+  }
+
+  return `assets/images/${normalizedPath.split("/").pop()}`;
+}
 
 // ========== BACK TO TOP BUTTON ==========
 function setupBackToTop() {
-    const backToTopBtn = document.getElementById('backToTop');
-    if (!backToTopBtn) return;
-    
-    // Hiển thị nút khi cuộn xuống 300px
-    window.addEventListener('scroll', function() {
-        if (window.scrollY > 300) {
-            backToTopBtn.classList.add('show');
-        } else {
-            backToTopBtn.classList.remove('show');
-        }
+  const backToTopBtn = document.getElementById("backToTop");
+  if (!backToTopBtn) return;
+
+  // Hiển thị nút khi cuộn xuống 300px
+  window.addEventListener("scroll", function () {
+    if (window.scrollY > 300) {
+      backToTopBtn.classList.add("show");
+    } else {
+      backToTopBtn.classList.remove("show");
+    }
+  });
+
+  // Cuộn lên đầu trang khi click
+  backToTopBtn.addEventListener("click", function () {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
     });
-    
-    // Cuộn lên đầu trang khi click
-    backToTopBtn.addEventListener('click', function() {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    });
+  });
 }
 
 // ========== RENDER FLASH SALE ==========
 function renderFlashSaleProducts() {
-    const container = document.getElementById('flash-sale-products');
-    if (!container) return;
-    
-    // Chỉ hiển thị sản phẩm có sale và sắp xếp từ giảm giá cao xuống thấp
-    const flashSaleProducts = products
-        .filter(p => p && (p.isSale === true || Number(p.discount) > 0))
-        .sort((a, b) => {
-            const discountDiff = Number(b.discount || 0) - Number(a.discount || 0);
-            if (discountDiff !== 0) return discountDiff;
+  const container = document.getElementById("flash-sale-products");
+  if (!container) return;
 
-            const timeDiff = getProductActivityValue(b) - getProductActivityValue(a);
-            if (timeDiff !== 0) return timeDiff;
+  // Chỉ hiển thị sản phẩm có sale và sắp xếp từ giảm giá cao xuống thấp
+  const flashSaleProducts = products
+    .filter((p) => p && (p.isSale === true || Number(p.discount) > 0))
+    .sort((a, b) => {
+      const discountDiff = Number(b.discount || 0) - Number(a.discount || 0);
+      if (discountDiff !== 0) return discountDiff;
 
-            return String(b.id).localeCompare(String(a.id));
-        });
-    
-    if (flashSaleProducts.length === 0) {
-        container.innerHTML = '<p>Đang cập nhật...</p>';
-        return;
-    }
-    
-    container.innerHTML = flashSaleProducts.map(product => createFlashSaleCard(product)).join('');
+      const timeDiff = getProductActivityValue(b) - getProductActivityValue(a);
+      if (timeDiff !== 0) return timeDiff;
+
+      return String(b.id).localeCompare(String(a.id));
+    });
+
+  if (flashSaleProducts.length === 0) {
+    container.innerHTML = "<p>Đang cập nhật...</p>";
+    return;
+  }
+
+  container.innerHTML = flashSaleProducts
+    .map((product) => createFlashSaleCard(product))
+    .join("");
 }
 
 function getProductActivityValue(product) {
-    const updatedAtMs = Number(product?.updatedAtMs) || 0;
-    const updatedAt = typeof product?.updatedAt?.toMillis === 'function'
-        ? product.updatedAt.toMillis()
-        : 0;
-    const createdAtMs = Number(product?.createdAtMs) || 0;
-    const createdAt = typeof product?.createdAt?.toMillis === 'function'
-        ? product.createdAt.toMillis()
-        : 0;
+  const updatedAtMs = Number(product?.updatedAtMs) || 0;
+  const updatedAt =
+    typeof product?.updatedAt?.toMillis === "function"
+      ? product.updatedAt.toMillis()
+      : 0;
+  const createdAtMs = Number(product?.createdAtMs) || 0;
+  const createdAt =
+    typeof product?.createdAt?.toMillis === "function"
+      ? product.createdAt.toMillis()
+      : 0;
 
-    return Math.max(updatedAtMs, updatedAt, createdAtMs, createdAt);
+  return Math.max(updatedAtMs, updatedAt, createdAtMs, createdAt);
 }
 
 // ========== CREATE FLASH SALE CARD ==========
 function createFlashSaleCard(product) {
-    const discountedPrice = product.discount > 0 
-        ? product.price * (100 - product.discount) / 100 
-        : product.price;
-    
-    // Random progress bar percentage
-    const soldPercent = Math.floor(Math.random() * 60) + 30;
-    
-    return `
-        <div class="product-card flash-sale-card" data-id="${product.id}">
+  const discountedPrice =
+    product.discount > 0
+      ? (product.price * (100 - product.discount)) / 100
+      : product.price;
+
+  // Random progress bar percentage
+  const soldPercent = Math.floor(Math.random() * 60) + 30;
+
+  return `
+        <div class="product-card flash-sale-card" data-id="${product.id}" data-name="${String(product.name || "").replace(/"/g, "&quot;")}">
             <div class="product-badge">
                 <span class="badge-flash"> FLASH SALE</span>
-                ${product.discount > 0 ? `<span class="badge-sale">-${product.discount}%</span>` : ''}
+                ${product.discount > 0 ? `<span class="badge-sale">-${product.discount}%</span>` : ""}
             </div>
             <div class="product-image">
                 <img src="${product.image}" alt="${product.name}" 
                      onerror="this.src='https://placehold.co/300x200?text=No+Image'">
             </div>
             <div class="product-info">
-                <div class="product-brand">${product.brand || ''}</div>
+                <div class="product-brand">${product.brand || ""}</div>
                 <div class="product-name">${product.name}</div>
                 <div class="product-price">
                     <span class="current-price">${formatPrice(discountedPrice)}</span>
@@ -138,17 +214,18 @@ function createFlashSaleCard(product) {
 
 // ========== CREATE PRODUCT CARD ==========
 function createProductCard(product) {
-    const discountedPrice = product.discount > 0 
-        ? product.price * (100 - product.discount) / 100 
-        : product.price;
-    
-    let badgeHtml = '';
-    if (product.isNew) badgeHtml += '<span class="badge-new">Mới</span>';
-    if (product.isSale || product.discount > 0) {
-        badgeHtml += `<span class="badge-sale">-${product.discount || 10}%</span>`;
-    }
-    
-    return `
+  const discountedPrice =
+    product.discount > 0
+      ? (product.price * (100 - product.discount)) / 100
+      : product.price;
+
+  let badgeHtml = "";
+  if (product.isNew) badgeHtml += '<span class="badge-new">Mới</span>';
+  if (product.isSale || product.discount > 0) {
+    badgeHtml += `<span class="badge-sale">-${product.discount || 10}%</span>`;
+  }
+
+  return `
         <div class="product-card" data-id="${product.id}">
             <div class="product-badge">${badgeHtml}</div>
             <div class="product-image">
@@ -156,11 +233,11 @@ function createProductCard(product) {
                      onerror="this.src='https://placehold.co/300x200?text=No+Image'">
             </div>
             <div class="product-info">
-                <div class="product-brand">${product.brand || ''}</div>
+                <div class="product-brand">${product.brand || ""}</div>
                 <div class="product-name">${product.name}</div>
                 <div class="product-price">
                     <span class="current-price">${formatPrice(discountedPrice)}</span>
-                    ${product.discount > 0 ? `<span class="old-price">${formatPrice(product.price)}</span>` : ''}
+                    ${product.discount > 0 ? `<span class="old-price">${formatPrice(product.price)}</span>` : ""}
                 </div>
                 <div class="product-actions">
                     <button class="btn-cart" onclick="window.addToCart('${String(product.id).replace(/'/g, "\\'")}')">
@@ -177,110 +254,126 @@ function createProductCard(product) {
 
 // ========== CLICK VÀO SẢN PHẨM - CHUYỂN SANG TRANG CHI TIẾT ==========
 function setupProductClick() {
-    // Lấy container của flash-sale-products
-    const flashSaleContainer = document.getElementById('flash-sale-products');
-    if (flashSaleContainer) {
-        flashSaleContainer.addEventListener('click', function(e) {
-            // Không xử lý nếu click vào button mua ngay
-            if (e.target.closest('button')) {
-                return;
-            }
-            
-            const productCard = e.target.closest('.product-card');
-            if (!productCard) return;
-            
-            const productId = productCard.getAttribute('data-id');
-            if (productId) {
-                console.log(` Chuyển sang chi tiết sản phẩm ID: ${productId}`);
-                window.location.href = `detail.html?id=${encodeURIComponent(productId)}`;
-            }
-        });
-    }
-    
+  // Lấy container của flash-sale-products
+  const flashSaleContainer = document.getElementById("flash-sale-products");
+  if (flashSaleContainer) {
+    flashSaleContainer.addEventListener("click", function (e) {
+      // Không xử lý nếu click vào button mua ngay
+      if (e.target.closest("button")) {
+        return;
+      }
+
+      const productCard = e.target.closest(".product-card");
+      if (!productCard) return;
+
+      const productId = productCard.getAttribute("data-id");
+      const productName = productCard.getAttribute("data-name");
+      if (productId) {
+        console.log(` Chuyển sang chi tiết sản phẩm ID: ${productId}`);
+        const nameQuery = productName
+          ? `&name=${encodeURIComponent(productName)}`
+          : "";
+        window.location.href = `detail.html?id=${encodeURIComponent(productId)}${nameQuery}`;
+      }
+    });
+  }
 }
 
 // ========== COUNTDOWN TIMER ==========
 function startCountdown() {
-    // Set end time to 3 days from now
-    const endTime = new Date();
-    endTime.setDate(endTime.getDate() + 3);
-    endTime.setHours(23, 59, 59, 999);
-    
-    function updateCountdown() {
-        const now = new Date();
-        const diff = endTime - now;
-        
-        if (diff <= 0) {
-            document.getElementById('days').textContent = '00';
-            document.getElementById('hours').textContent = '00';
-            document.getElementById('minutes').textContent = '00';
-            document.getElementById('seconds').textContent = '00';
-            return;
-        }
-        
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        
-        document.getElementById('days').textContent = days.toString().padStart(2, '0');
-        document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
-        document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
-        document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+  // Set end time to 3 days from now
+  const endTime = new Date();
+  endTime.setDate(endTime.getDate() + 3);
+  endTime.setHours(23, 59, 59, 999);
+
+  function updateCountdown() {
+    const now = new Date();
+    const diff = endTime - now;
+
+    if (diff <= 0) {
+      document.getElementById("days").textContent = "00";
+      document.getElementById("hours").textContent = "00";
+      document.getElementById("minutes").textContent = "00";
+      document.getElementById("seconds").textContent = "00";
+      return;
     }
-    
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    document.getElementById("days").textContent = days
+      .toString()
+      .padStart(2, "0");
+    document.getElementById("hours").textContent = hours
+      .toString()
+      .padStart(2, "0");
+    document.getElementById("minutes").textContent = minutes
+      .toString()
+      .padStart(2, "0");
+    document.getElementById("seconds").textContent = seconds
+      .toString()
+      .padStart(2, "0");
+  }
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
 }
 
 // ========== SETUP SEARCH ==========
 function setupSearch() {
-    const searchInput = document.getElementById('searchInput');
-    const searchBtn = document.getElementById('searchBtn');
-    
-    if (searchBtn) {
-        searchBtn.addEventListener('click', function() {
-            const keyword = searchInput.value.trim();
-            if (keyword) {
-                window.location.href = `products.html?search=${encodeURIComponent(keyword)}`;
-            }
-        });
-    }
-    
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const keyword = searchInput.value.trim();
-                if (keyword) {
-                    window.location.href = `products.html?search=${encodeURIComponent(keyword)}`;
-                }
-            }
-        });
-    }
+  const searchInput = document.getElementById("searchInput");
+  const searchBtn = document.getElementById("searchBtn");
+
+  if (searchBtn) {
+    searchBtn.addEventListener("click", function () {
+      const keyword = searchInput.value.trim();
+      if (keyword) {
+        window.location.href = `products.html?search=${encodeURIComponent(keyword)}`;
+      }
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        const keyword = searchInput.value.trim();
+        if (keyword) {
+          window.location.href = `products.html?search=${encodeURIComponent(keyword)}`;
+        }
+      }
+    });
+  }
 }
 
 // ========== VOUCHER FUNCTIONS ==========
 function copyVoucher(code) {
-    const normalizedCode = String(code || '').trim().toUpperCase();
-    if (!normalizedCode) return;
+  const normalizedCode = String(code || "")
+    .trim()
+    .toUpperCase();
+  if (!normalizedCode) return;
 
-    localStorage.setItem('copiedPromoCode', normalizedCode);
-    localStorage.setItem('copiedPromoAt', new Date().toISOString());
+  localStorage.setItem("copiedPromoCode", normalizedCode);
+  localStorage.setItem("copiedPromoAt", new Date().toISOString());
 
-    navigator.clipboard.writeText(normalizedCode).then(() => {
-        showCopyVoucherPopup(`Đã sao chép mã khuyến mãi: ${normalizedCode}`);
-    }).catch(() => {
-        showCopyVoucherPopup(`Đã lưu mã khuyến mãi: ${normalizedCode}`);
+  navigator.clipboard
+    .writeText(normalizedCode)
+    .then(() => {
+      showCopyVoucherPopup(`Đã sao chép mã khuyến mãi: ${normalizedCode}`);
+    })
+    .catch(() => {
+      showCopyVoucherPopup(`Đã lưu mã khuyến mãi: ${normalizedCode}`);
     });
 }
 
 function showCopyVoucherPopup(message) {
-    const oldModal = document.querySelector('.custom-modal');
-    if (oldModal) oldModal.remove();
+  const oldModal = document.querySelector(".custom-modal");
+  if (oldModal) oldModal.remove();
 
-    const modal = document.createElement('div');
-    modal.className = 'custom-modal';
-    modal.innerHTML = `
+  const modal = document.createElement("div");
+  modal.className = "custom-modal";
+  modal.innerHTML = `
         <div class="custom-modal-content success">
             <i class="fas fa-check-circle"></i>
             <p>${message}</p>
@@ -288,46 +381,83 @@ function showCopyVoucherPopup(message) {
         </div>
     `;
 
-    document.body.appendChild(modal);
-    setTimeout(() => modal.classList.add('show'), 10);
+  document.body.appendChild(modal);
+  setTimeout(() => modal.classList.add("show"), 10);
 
-    modal.querySelector('.modal-close-btn').onclick = () => {
-        modal.classList.remove('show');
-        setTimeout(() => modal.remove(), 300);
-    };
+  modal.querySelector(".modal-close-btn").onclick = () => {
+    modal.classList.remove("show");
+    setTimeout(() => modal.remove(), 300);
+  };
 
-    setTimeout(() => {
-        if (modal.parentNode) {
-            modal.classList.remove('show');
-            setTimeout(() => modal.remove(), 300);
-        }
-    }, 2200);
+  setTimeout(() => {
+    if (modal.parentNode) {
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 300);
+    }
+  }, 2200);
 }
 
 let PROMO_CODES = [];
 
 function getDefaultPromoCodes() {
-    return [
-        { id: 'ALL5A', code: 'ALL5A', title: 'Giảm 5%', percent: 5, desc: 'Áp dụng mọi sản phẩm', status: 'active' },
-        { id: 'ALL5B', code: 'ALL5B', title: 'Giảm 5%', percent: 5, desc: 'Áp dụng mọi sản phẩm', status: 'active' },
-        { id: 'ALL10A', code: 'ALL10A', title: 'Giảm 10%', percent: 10, desc: 'Áp dụng mọi sản phẩm', status: 'active' },
-        { id: 'ALL10B', code: 'ALL10B', title: 'Giảm 10%', percent: 10, desc: 'Áp dụng mọi sản phẩm', status: 'active' },
-        { id: 'ALL15A', code: 'ALL15A', title: 'Giảm 15%', percent: 15, desc: 'Áp dụng mọi sản phẩm', status: 'active' }
-    ];
+  return [
+    {
+      id: "ALL5A",
+      code: "ALL5A",
+      title: "Giảm 5%",
+      percent: 5,
+      desc: "Áp dụng mọi sản phẩm",
+      status: "active",
+    },
+    {
+      id: "ALL5B",
+      code: "ALL5B",
+      title: "Giảm 5%",
+      percent: 5,
+      desc: "Áp dụng mọi sản phẩm",
+      status: "active",
+    },
+    {
+      id: "ALL10A",
+      code: "ALL10A",
+      title: "Giảm 10%",
+      percent: 10,
+      desc: "Áp dụng mọi sản phẩm",
+      status: "active",
+    },
+    {
+      id: "ALL10B",
+      code: "ALL10B",
+      title: "Giảm 10%",
+      percent: 10,
+      desc: "Áp dụng mọi sản phẩm",
+      status: "active",
+    },
+    {
+      id: "ALL15A",
+      code: "ALL15A",
+      title: "Giảm 15%",
+      percent: 15,
+      desc: "Áp dụng mọi sản phẩm",
+      status: "active",
+    },
+  ];
 }
 
 function renderVoucherCards() {
-    const container = document.getElementById('voucherCardsContainer');
-    if (!container) return;
+  const container = document.getElementById("voucherCardsContainer");
+  if (!container) return;
 
-    const vouchers = PROMO_CODES.length > 0 ? PROMO_CODES : getDefaultPromoCodes();
+  const vouchers =
+    PROMO_CODES.length > 0 ? PROMO_CODES : getDefaultPromoCodes();
 
-    container.innerHTML = vouchers.map((voucher) => {
-        return `
+  container.innerHTML = vouchers
+    .map((voucher) => {
+      return `
             <article class="voucher-card">
                 <div>
                     <h4>${voucher.code}</h4>
-                    <p>${voucher.desc || 'Áp dụng mọi sản phẩm'}</p>
+                    <p>${voucher.desc || "Áp dụng mọi sản phẩm"}</p>
                 </div>
                 <div class="voucher-meta">
                     <span class="voucher-badge">Giảm ${voucher.percent}%</span>
@@ -335,68 +465,70 @@ function renderVoucherCards() {
                 </div>
             </article>
         `;
-    }).join('');
+    })
+    .join("");
 }
 
 // ========== COMBO FUNCTIONS ==========
 function addComboToCart(comboId) {
-    alert(` Đã thêm combo ${comboId} vào giỏ hàng!`);
-    // Thêm logic xử lý combo ở đây
+  alert(` Đã thêm combo ${comboId} vào giỏ hàng!`);
+  // Thêm logic xử lý combo ở đây
 }
 
 // ========== CART FUNCTIONS ==========
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
 function addToCart(productId) {
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
-    
-    const existing = cart.find(item => item.id === productId);
-    if (existing) {
-        existing.quantity++;
-    } else {
-        cart.push({ ...product, quantity: 1 });
-    }
-    
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
-    
-    // Feedback
-    const btn = event?.target?.closest('.btn-cart');
-    if (btn) {
-        const originalHtml = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i> Đã thêm';
-        setTimeout(() => btn.innerHTML = originalHtml, 1500);
-    }
+  const product = products.find((p) => p.id === productId);
+  if (!product) return;
+
+  const existing = cart.find((item) => item.id === productId);
+  if (existing) {
+    existing.quantity++;
+  } else {
+    cart.push({ ...product, quantity: 1 });
+  }
+
+  localStorage.setItem("cart", JSON.stringify(cart));
+  updateCartCount();
+
+  // Feedback
+  const btn = event?.target?.closest(".btn-cart");
+  if (btn) {
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i> Đã thêm';
+    setTimeout(() => (btn.innerHTML = originalHtml), 1500);
+  }
 }
 
 function updateCartCount() {
-    const count = JSON.parse(localStorage.getItem(getCartStorageKey()) || "[]")
-        .reduce((sum, item) => sum + item.quantity, 0);
-    const cartSpan = document.querySelector('.cart-count');
-    if (cartSpan) cartSpan.textContent = count;
+  const count = JSON.parse(
+    localStorage.getItem(getCartStorageKey()) || "[]",
+  ).reduce((sum, item) => sum + item.quantity, 0);
+  const cartSpan = document.querySelector(".cart-count");
+  if (cartSpan) cartSpan.textContent = count;
 }
 
 function getCartStorageKey() {
-    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
-    return currentUser?.id ? `cart_${currentUser.id}` : "cart";
+  const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+  return currentUser?.id ? `cart_${currentUser.id}` : "cart";
 }
 
 function getCart() {
-    return JSON.parse(localStorage.getItem(getCartStorageKey()) || "[]");
+  return JSON.parse(localStorage.getItem(getCartStorageKey()) || "[]");
 }
 
 function saveCart(cartData) {
-    localStorage.setItem(getCartStorageKey(), JSON.stringify(cartData));
+  localStorage.setItem(getCartStorageKey(), JSON.stringify(cartData));
 }
 
 function showCartAddedModal(productName, quantity = 1) {
-    const existingModal = document.querySelector(".custom-modal");
-    if (existingModal) existingModal.remove();
+  const existingModal = document.querySelector(".custom-modal");
+  if (existingModal) existingModal.remove();
 
-    const modal = document.createElement("div");
-    modal.className = "custom-modal";
-    modal.innerHTML = `
+  const modal = document.createElement("div");
+  modal.className = "custom-modal";
+  modal.innerHTML = `
         <div class="custom-modal-content success">
             <i class="fas fa-check-circle"></i>
             <p>Đã thêm ${quantity} sản phẩm vào giỏ hàng${productName ? `: ${productName}` : ""}</p>
@@ -404,82 +536,91 @@ function showCartAddedModal(productName, quantity = 1) {
         </div>
     `;
 
-    document.body.appendChild(modal);
-    setTimeout(() => modal.classList.add("show"), 10);
+  document.body.appendChild(modal);
+  setTimeout(() => modal.classList.add("show"), 10);
 
-    modal.querySelector(".modal-close-btn").onclick = () => {
-        modal.classList.remove("show");
-        setTimeout(() => modal.remove(), 300);
-    };
+  modal.querySelector(".modal-close-btn").onclick = () => {
+    modal.classList.remove("show");
+    setTimeout(() => modal.remove(), 300);
+  };
 }
 
 window.addToCart = function (productId) {
-    const product = products.find((item) => String(item.id) === String(productId));
-    if (!product) return;
+  const product = products.find(
+    (item) => String(item.id) === String(productId),
+  );
+  if (!product) return;
 
-    const cart = getCart();
-    const existing = cart.find((item) => String(item.id) === String(productId));
-    const currentPrice = product.discount > 0
-        ? Math.round(product.price * (100 - product.discount) / 100)
-        : product.price;
+  const cart = getCart();
+  const existing = cart.find((item) => String(item.id) === String(productId));
+  const currentPrice =
+    product.discount > 0
+      ? Math.round((product.price * (100 - product.discount)) / 100)
+      : product.price;
 
-    if (existing) {
-        existing.quantity += 1;
-    } else {
-        cart.push({
-            id: product.id,
-            name: product.name,
-            brand: product.brand,
-            image: product.image,
-            price: currentPrice,
-            originalPrice: product.price,
-            discount: product.discount || 0,
-            quantity: 1
-        });
-    }
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    cart.push({
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      image: product.image,
+      price: currentPrice,
+      originalPrice: product.price,
+      discount: product.discount || 0,
+      quantity: 1,
+    });
+  }
 
-    saveCart(cart);
-    updateCartCount();
-    showCartAddedModal(product.name, 1);
+  saveCart(cart);
+  updateCartCount();
+  showCartAddedModal(product.name, 1);
 };
 
 window.buyNow = function (productId) {
-    const product = products.find((item) => String(item.id) === String(productId));
-    if (!product) return;
+  const product = products.find(
+    (item) => String(item.id) === String(productId),
+  );
+  if (!product) return;
 
-    const cart = getCart();
-    const existing = cart.find((item) => String(item.id) === String(productId));
-    const currentPrice = product.discount > 0
-        ? Math.round(product.price * (100 - product.discount) / 100)
-        : product.price;
+  const cart = getCart();
+  const existing = cart.find((item) => String(item.id) === String(productId));
+  const currentPrice =
+    product.discount > 0
+      ? Math.round((product.price * (100 - product.discount)) / 100)
+      : product.price;
 
-    if (existing) {
-        existing.quantity += 1;
-    } else {
-        cart.push({
-            id: product.id,
-            name: product.name,
-            brand: product.brand,
-            image: product.image,
-            price: currentPrice,
-            originalPrice: product.price,
-            discount: product.discount || 0,
-            quantity: 1
-        });
-    }
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    cart.push({
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      image: product.image,
+      price: currentPrice,
+      originalPrice: product.price,
+      discount: product.discount || 0,
+      quantity: 1,
+    });
+  }
 
-    saveCart(cart);
-    updateCartCount();
-    
-    // Redirect to cart after a short delay
-    setTimeout(() => {
-        window.location.href = "cart.html";
-    }, 500);
+  saveCart(cart);
+  updateCartCount();
+
+  // Mark this product as the one to select in cart page
+  localStorage.setItem("buyNowProductId", String(productId));
+
+  // Redirect to cart after a short delay
+  setTimeout(() => {
+    window.location.href = "cart.html";
+  }, 500);
 };
 
 // ========== UTILITY ==========
 function formatPrice(price) {
-    return price?.toLocaleString('vi-VN') + '₫' || '0₫';
+  return price?.toLocaleString("vi-VN") + "₫" || "0₫";
 }
 
-console.log(' promotion.js loaded - Đã thêm chức năng click vào sản phẩm');
+console.log(" promotion.js loaded - Đã thêm chức năng click vào sản phẩm");
