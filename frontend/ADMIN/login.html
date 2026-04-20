@@ -210,6 +210,61 @@
       .secondary-btn:hover {
         background: rgba(255, 255, 255, 0.06);
       }
+
+      .message-backdrop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(10, 14, 26, 0.7);
+        z-index: 99;
+      }
+
+      .message-backdrop.show {
+        display: flex;
+      }
+
+      .message-modal {
+        width: min(420px, calc(100% - 36px));
+        border-radius: 14px;
+        padding: 22px 18px 16px;
+        background: #10182b;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+        text-align: center;
+      }
+
+      .message-modal i {
+        color: #34d399;
+        font-size: 34px;
+        margin-bottom: 10px;
+      }
+
+      .message-modal h3 {
+        margin: 0 0 8px;
+        color: #f1f5f9;
+        font-size: 20px;
+      }
+
+      .message-modal p {
+        margin: 0;
+        color: #94a3b8;
+      }
+
+      .message-actions {
+        margin-top: 16px;
+      }
+
+      .message-ok {
+        border: none;
+        border-radius: 8px;
+        padding: 10px 14px;
+        min-width: 100px;
+        color: #fff;
+        cursor: pointer;
+        background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -290,6 +345,22 @@
       </div>
     </div>
 
+    <div
+      id="messageBackdrop"
+      class="message-backdrop"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="message-modal">
+        <i class="fas fa-circle-check"></i>
+        <h3 id="messageTitle">Thông báo</h3>
+        <p id="messageText">Nội dung thông báo</p>
+        <div class="message-actions">
+          <button id="messageOk" class="message-ok">OK</button>
+        </div>
+      </div>
+    </div>
+
     <script>
       const ADMIN_ACCOUNTS = [
         { email: "admin@gmail.com", password: "123456" },
@@ -311,6 +382,11 @@
       const ADMIN_LOGIN_API = "http://localhost:3001/api/admin-login";
       const loginStatus = document.getElementById("loginStatus");
       const seedAdminBtn = document.getElementById("seedAdminBtn");
+      const messageBackdrop = document.getElementById("messageBackdrop");
+      const messageTitle = document.getElementById("messageTitle");
+      const messageText = document.getElementById("messageText");
+      const messageOk = document.getElementById("messageOk");
+      let messageCloseHandler = null;
 
       function togglePass() {
         const pass = document.getElementById("passwordInput");
@@ -320,6 +396,22 @@
       function setStatus(message, isError = false) {
         loginStatus.textContent = message || "";
         loginStatus.style.color = isError ? "#fca5a5" : "#94a3b8";
+      }
+
+      function showMessagePopup(title, message, onClose) {
+        messageTitle.textContent = title;
+        messageText.textContent = message;
+        messageCloseHandler = onClose || null;
+        messageBackdrop.classList.add("show");
+      }
+
+      function closeMessagePopup() {
+        messageBackdrop.classList.remove("show");
+        if (typeof messageCloseHandler === "function") {
+          const handler = messageCloseHandler;
+          messageCloseHandler = null;
+          handler();
+        }
       }
 
       function isKnownAdminCredential(email, password) {
@@ -519,8 +611,13 @@
             );
 
             setStatus("Đăng nhập thành công.");
-            alert("Đăng nhập thành công!");
-            window.location.href = "admin.html";
+            showMessagePopup(
+              "Đăng nhập thành công",
+              "Chào mừng bạn quay lại trang quản trị.",
+              () => {
+                window.location.href = "admin.html";
+              },
+            );
           } catch (error) {
             console.error(error);
 
@@ -551,6 +648,13 @@
           alert(error.message || "Không thể tạo admin mặc định.");
         } finally {
           seedAdminBtn.disabled = false;
+        }
+      });
+
+      messageOk.addEventListener("click", closeMessagePopup);
+      messageBackdrop.addEventListener("click", (event) => {
+        if (event.target === messageBackdrop) {
+          closeMessagePopup();
         }
       });
     </script>
