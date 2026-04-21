@@ -500,7 +500,7 @@ function formatPrice(price) {
 function renderRelatedProducts(product) {
   const related = [...products]
     .filter(
-      (item) => item.category === product.category && item.id !== product.id,
+      (item) => item.brand === product.brand && item.id !== product.id,
     )
     .sort((a, b) => b.createdAt - a.createdAt)
     .slice(0, 4);
