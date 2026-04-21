@@ -88,10 +88,9 @@ function updateQuantity(productId, delta) {
   let cart = getCart();
   const itemIndex = cart.findIndex((i) => String(i.id) === String(productId));
   if (itemIndex !== -1) {
-    cart[itemIndex].quantity += delta;
-    if (cart[itemIndex].quantity <= 0) {
-      cart.splice(itemIndex, 1);
-    }
+    const currentQty = Number(cart[itemIndex].quantity) || 1;
+    const nextQty = currentQty + delta;
+    cart[itemIndex].quantity = nextQty < 1 ? 1 : nextQty;
     saveCart(cart);
   }
 }
@@ -257,7 +256,7 @@ function renderCartPage() {
                 <td>
                     <div class="cart-quantity">
                         <button class="quantity-btn" onclick="updateQuantity(${item.id}, -1)">-</button>
-                        <span>${qty}</span>
+                    <span class="quantity-value">${qty}</span>
                         <button class="quantity-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
                     </div>
                 </td>

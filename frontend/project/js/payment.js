@@ -3,6 +3,8 @@
 const PAYMENT_COLLECTION = "orders";
 const PAYMENT_CACHE_KEY = "checkoutOrder";
 const STATUS_PENDING = "Chờ xác nhận";
+const CASH_PAYMENT_VALUE = "cod";
+const CASH_PAYMENT_LABEL = "Tiền mặt khi nhận hàng";
 
 const $ = (id) => document.getElementById(id);
 const fmt = (value) =>
@@ -101,18 +103,12 @@ function showToast(message, type = "success") {
   );
 }
 
-function resolvePaymentMethod(methodValue) {
-  const map = {
-    cod: "Tiền mặt khi nhận hàng",
-    bank: "Chuyển khoản ngân hàng",
-    momo: "Ví MoMo",
-    vnpay: "VNPay",
-  };
-  return map[methodValue] || map.cod;
+function resolvePaymentMethod() {
+  return CASH_PAYMENT_LABEL;
 }
 
-function resolvePaymentStatus(methodValue) {
-  return methodValue === "cod" ? "Chờ xác nhận" : "Chờ thanh toán";
+function resolvePaymentStatus() {
+  return "Chờ xác nhận";
 }
 
 function resolveAddressText(formData) {
@@ -167,8 +163,10 @@ function prefillForm(currentUser, payload) {
     $("phone").value = payload.form.phone || $("phone").value;
     $("address").value = payload.form.address || $("address").value;
     $("note").value = payload.form.note || "";
-    $("paymentMethod").value = payload.form.paymentMethod || "cod";
+    $("paymentMethod").value = CASH_PAYMENT_VALUE;
   }
+
+  $("paymentMethod").value = CASH_PAYMENT_VALUE;
 }
 
 function renderEmptyState(message) {
@@ -202,7 +200,7 @@ async function submitOrder(event) {
     email: $("email").value.trim(),
     address: $("address").value.trim(),
     note: $("note").value.trim(),
-    paymentMethod: $("paymentMethod").value,
+    paymentMethod: CASH_PAYMENT_VALUE,
   };
 
   if (

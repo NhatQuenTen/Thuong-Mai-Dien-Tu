@@ -182,10 +182,8 @@ function updateQuantity(productId, delta) {
   );
   if (itemIndex === -1) return;
 
-  cart[itemIndex].quantity = (cart[itemIndex].quantity || 1) + delta;
-  if (cart[itemIndex].quantity <= 0) {
-    cart.splice(itemIndex, 1);
-  }
+  const nextQty = (cart[itemIndex].quantity || 1) + delta;
+  cart[itemIndex].quantity = nextQty < 1 ? 1 : nextQty;
 
   saveCart(cart);
 }
@@ -417,7 +415,7 @@ function applyVoucherFromCode(rawCode, showFeedback = true) {
     appliedPromoCode = "";
     if (showFeedback)
       showModal(
-        `⚠️ Mã ${code} đã được sử dụng 1 lần trước đó. Mỗi mã chỉ áp dụng 1 lần.`,
+        `Mã ${code} đã được sử dụng 1 lần trước đó. Mỗi mã chỉ áp dụng 1 lần.`,
         false,
       );
     renderCartPage();
@@ -431,10 +429,7 @@ function applyVoucherFromCode(rawCode, showFeedback = true) {
   if (calculation.blockedByMultiItems) {
     appliedPromoCode = "";
     if (showFeedback)
-      showModal(
-        "⚠️ Mã chỉ áp dụng với 1 sản phẩm duy nhất. Giỏ hàng từ 2 món sẽ không được giảm.",
-        false,
-      );
+      showModal("Mã chỉ áp dụng với 1 sản phẩm duy nhất", false);
     renderCartPage();
     return;
   }
@@ -618,7 +613,7 @@ function renderCartPage() {
                 <td>
                     <div class="cart-quantity">
                         <button class="quantity-btn" onclick='updateQuantity(${JSON.stringify(item.id)}, -1)'>-</button>
-                        <span>${qty}</span>
+                    <span class="quantity-value">${qty}</span>
                         <button class="quantity-btn" onclick='updateQuantity(${JSON.stringify(item.id)}, 1)'>+</button>
                     </div>
                 </td>
