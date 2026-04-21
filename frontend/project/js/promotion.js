@@ -18,6 +18,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 let products = [];
+let searchKeyword = "";
 
 // ========== DOM READY ==========
 document.addEventListener("DOMContentLoaded", function () {
@@ -129,7 +130,7 @@ function renderFlashSaleProducts() {
   if (!container) return;
 
   // Chỉ hiển thị sản phẩm có sale và sắp xếp từ giảm giá cao xuống thấp
-  const flashSaleProducts = products
+  let flashSaleProducts = products
     .filter((p) => p && (p.isSale === true || Number(p.discount) > 0))
     .sort((a, b) => {
       const discountDiff = Number(b.discount || 0) - Number(a.discount || 0);
@@ -141,8 +142,20 @@ function renderFlashSaleProducts() {
       return String(b.id).localeCompare(String(a.id));
     });
 
+  // Lọc theo từ khóa tìm kiếm
+  if (searchKeyword) {
+    flashSaleProducts = flashSaleProducts.filter((p) => {
+      const name = (p.name || "").toLowerCase();
+      const brand = (p.brand || "").toLowerCase();
+      const keyword = searchKeyword.toLowerCase();
+      return name.includes(keyword) || brand.includes(keyword);
+    });
+  }
+
   if (flashSaleProducts.length === 0) {
-    container.innerHTML = "<p>Đang cập nhật...</p>";
+    container.innerHTML = searchKeyword
+      ? "<p>Không tìm thấy sản phẩm khuyến mãi phù hợp</p>"
+      : "<p>Đang cập nhật...</p>";
     return;
   }
 
@@ -326,22 +339,19 @@ function setupSearch() {
   const searchInput = document.getElementById("searchInput");
   const searchBtn = document.getElementById("searchBtn");
 
+  const search = () => {
+    searchKeyword = searchInput.value.trim();
+    renderFlashSaleProducts();
+  };
+
   if (searchBtn) {
-    searchBtn.addEventListener("click", function () {
-      const keyword = searchInput.value.trim();
-      if (keyword) {
-        window.location.href = `products.html?search=${encodeURIComponent(keyword)}`;
-      }
-    });
+    searchBtn.addEventListener("click", search);
   }
 
   if (searchInput) {
     searchInput.addEventListener("keypress", function (e) {
       if (e.key === "Enter") {
-        const keyword = searchInput.value.trim();
-        if (keyword) {
-          window.location.href = `products.html?search=${encodeURIComponent(keyword)}`;
-        }
+        search();
       }
     });
   }
