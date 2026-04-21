@@ -98,15 +98,64 @@ function renderUserUI() {
 // ─── HELPERS ────────────────────────────────
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => new Intl.NumberFormat("vi-VN").format(n) + " ₫";
-const fmtDate = (iso) => {
-  const d = new Date(iso);
-  return d.toLocaleDateString("vi-VN", {
+const toDateValue = (value) => {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  if (typeof value === "number") {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim();
+    if (!normalized) return null;
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(normalized)
+      ? new Date(`${normalized}T00:00:00`)
+      : new Date(normalized);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  if (typeof value === "object") {
+    if (typeof value.toDate === "function") {
+      const d = value.toDate();
+      return d instanceof Date && !Number.isNaN(d.getTime()) ? d : null;
+    }
+
+    const rawSeconds =
+      value.seconds ?? value._seconds ?? value.timestamp ?? value.unix;
+    if (rawSeconds != null) {
+      const seconds = Number(rawSeconds);
+      if (!Number.isNaN(seconds)) {
+        const d = new Date(seconds * 1000);
+        return Number.isNaN(d.getTime()) ? null : d;
+      }
+    }
+  }
+
+  return null;
+};
+const fmtDate = (value, fallback = "") => {
+  const d = toDateValue(value);
+  if (!d) return fallback || "Không xác định";
+
+  return d.toLocaleString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
+};
+const getOrderDateValue = (order) =>
+  order?.date || order?.createdAt || order?.noteCreatedAt || null;
+const getOrderCreatedTime = (order) => {
+  const dateValue =
+    toDateValue(order?.createdAt) || toDateValue(order?.date) || null;
+  return dateValue ? dateValue.getTime() : 0;
 };
 const orderSubtotal = (o) =>
   (Array.isArray(o.items) ? o.items : []).reduce(
@@ -260,13 +309,7 @@ function normalizeOrder(raw = {}, fallbackId = "") {
 }
 
 function buildTimelineForStatus(status, createdAt = new Date()) {
-  const timestamp = new Date(createdAt).toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const timestamp = fmtDate(createdAt, fmtDate(new Date()));
 
   if (status === "Đã hủy") {
     return [
@@ -389,14 +432,8 @@ function subscribeFirebaseOrders() {
               );
 
               remoteOrders.sort((a, b) => {
-                const left =
-                  a.createdAt?.seconds != null
-                    ? a.createdAt.seconds * 1000
-                    : new Date(a.createdAt || a.date || 0).getTime();
-                const right =
-                  b.createdAt?.seconds != null
-                    ? b.createdAt.seconds * 1000
-                    : new Date(b.createdAt || b.date || 0).getTime();
+                const left = getOrderCreatedTime(a);
+                const right = getOrderCreatedTime(b);
                 return right - left;
               });
 
@@ -540,6 +577,7 @@ function renderList() {
       const canCancel = ["Chờ xác nhận", "Đã xác nhận"].includes(o.status);
       const isDelivered = o.status === "Đã giao hàng thành công";
       const isShipping = o.status === "Đang giao hàng";
+      const orderDate = fmtDate(getOrderDateValue(o), fmtDate(new Date()));
 
       return `
         <div class="order-card" style="animation-delay:${idx * 0.07}s">
@@ -548,7 +586,7 @@ function renderList() {
               <i class="fas fa-receipt" style="font-size:11px;margin-right:4px"></i>${o.id}
             </span>
                         <span class="order-card-date">
-                            <i class="fas fa-calendar-alt"></i> ${fmtDate(o.date || o.createdAt || new Date().toISOString())}
+                    <i class="fas fa-calendar-alt"></i> ${orderDate}
                         </span>
                         <span class="order-status-badge ${statusClassName(o.status)}">
                             <i class="fas ${STATUS_ICON[o.status] || "fa-clock"}"></i> ${STATUS_LABEL[o.status] || o.status}
@@ -669,7 +707,7 @@ function openDetail(id) {
 
   $("modalOrderId").innerHTML = `<i class="fas fa-receipt"></i> ${o.id}`;
   $("modalDate").textContent =
-    `Đặt ngày: ${fmtDate(o.date || o.createdAt || new Date().toISOString())}`;
+    `Đặt ngày: ${fmtDate(getOrderDateValue(o), fmtDate(new Date()))}`;
 
   // Timeline
   renderTimeline(o);
@@ -751,7 +789,7 @@ function renderTimeline(o) {
   const steps =
     Array.isArray(o.timeline) && o.timeline.length > 0
       ? o.timeline
-      : buildTimelineForStatus(o.status, o.date || o.createdAt || new Date());
+      : buildTimelineForStatus(o.status, getOrderDateValue(o) || new Date());
   const doneCount = steps.filter((s) => s.done && !s.cancelled).length;
   const total = steps.length;
   let pct = total > 1 ? Math.max(0, ((doneCount - 1) / (total - 1)) * 100) : 0;

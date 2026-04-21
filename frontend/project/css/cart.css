@@ -143,9 +143,17 @@
 }
 
 .quantity-value {
-  font-weight: 600;
+  font-weight: 800;
+  color: #c17c2f;
+  font-size: 18px;
+  line-height: 1;
   min-width: 30px;
   text-align: center;
+}
+
+.cart-quantity > span {
+  font-weight: 800;
+  color: #c17c2f;
 }
 
 .cart-total-item {

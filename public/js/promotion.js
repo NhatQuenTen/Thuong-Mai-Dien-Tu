@@ -358,7 +358,38 @@ function setupSearch() {
 }
 
 // ========== VOUCHER FUNCTIONS ==========
-function copyVoucher(code) {
+async function copyTextToClipboard(text) {
+  if (navigator?.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // fallback below
+    }
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  textarea.style.pointerEvents = "none";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } catch {
+    copied = false;
+  }
+
+  textarea.remove();
+  return copied;
+}
+
+async function copyVoucher(code) {
   const normalizedCode = String(code || "")
     .trim()
     .toUpperCase();
@@ -367,25 +398,27 @@ function copyVoucher(code) {
   localStorage.setItem("copiedPromoCode", normalizedCode);
   localStorage.setItem("copiedPromoAt", new Date().toISOString());
 
-  navigator.clipboard
-    .writeText(normalizedCode)
-    .then(() => {
-      showCopyVoucherPopup(`Đã sao chép mã khuyến mãi: ${normalizedCode}`);
-    })
-    .catch(() => {
-      showCopyVoucherPopup(`Đã lưu mã khuyến mãi: ${normalizedCode}`);
-    });
+  const copied = await copyTextToClipboard(normalizedCode);
+  if (copied) {
+    showCopyVoucherPopup(`Đã sao chép mã giảm giá: ${normalizedCode}`);
+    return;
+  }
+
+  showCopyVoucherPopup(
+    `Không thể tự sao chép. Vui lòng sao chép thủ công mã: ${normalizedCode}`,
+    false,
+  );
 }
 
-function showCopyVoucherPopup(message) {
+function showCopyVoucherPopup(message, isSuccess = true) {
   const oldModal = document.querySelector(".custom-modal");
   if (oldModal) oldModal.remove();
 
   const modal = document.createElement("div");
   modal.className = "custom-modal";
   modal.innerHTML = `
-        <div class="custom-modal-content success">
-            <i class="fas fa-check-circle"></i>
+        <div class="custom-modal-content ${isSuccess ? "success" : "error"}">
+            <i class="fas ${isSuccess ? "fa-check-circle" : "fa-exclamation-circle"}"></i>
             <p>${message}</p>
             <button class="modal-close-btn">Đóng</button>
         </div>
@@ -406,6 +439,8 @@ function showCopyVoucherPopup(message) {
     }
   }, 2200);
 }
+
+window.copyVoucher = copyVoucher;
 
 let PROMO_CODES = [];
 
