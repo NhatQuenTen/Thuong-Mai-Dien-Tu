@@ -18,8 +18,11 @@ function Sync-Files {
             New-Item -ItemType Directory -Path $targetFolder | Out-Null
         }
         
-        # Copy files
-        Copy-Item -Path "$sourceFolder\*" -Destination $targetFolder -Recurse -Force -ErrorAction Stop
+        # Mirror source into target so removed files disappear too
+        robocopy $sourceFolder $targetFolder /MIR /NFL /NDL /NJH /NJS /NP | Out-Null
+        if ($LASTEXITCODE -ge 8) {
+            throw "Robocopy failed with exit code $LASTEXITCODE"
+        }
         
         Write-Host "✅ Sync completed at $(Get-Date -Format 'HH:mm:ss')" -ForegroundColor Green
         

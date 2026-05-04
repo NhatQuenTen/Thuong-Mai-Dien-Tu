@@ -1,5 +1,6 @@
 {
     "claudeCodeChat.permissions.yoloMode": false,
+    "liveServer.settings.CustomBrowser": "chrome",
     "files.watcherExclude": {
         "**/node_modules/**": true,
         "**/.git/**": true

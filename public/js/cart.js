@@ -149,10 +149,8 @@ function calculateSubtotal() {
   const cart = getCart();
   let subtotal = 0;
   cart.forEach((item) => {
-    const product = products.find((p) => p.id === item.id);
-    if (product) {
-      subtotal += product.price * (item.quantity || 1);
-    }
+    const price = Number(item.price) || 0;
+    subtotal += price * (item.quantity || 1);
   });
   return subtotal;
 }
@@ -237,33 +235,36 @@ function renderCartPage() {
   let cartItemsHtml = "";
 
   cart.forEach((item) => {
-    const product = products.find((p) => String(p.id) === String(item.id));
-    if (!product) return;
-
+    // Use properties stored in cart item (saved by main.js) as primary source
     const qty = item.quantity || 1;
-    const total = product.price * qty;
+    const price = Number(item.price) || 0;
+    const total = price * qty;
     subtotal += total;
 
+    const safeId = String(item.id);
+    const imageSrc = item.image || "https://placehold.co/200x200?text=No+Image";
+    const name = item.name || "Sản phẩm";
+
     cartItemsHtml += `
-            <tr>
-                <td>
-                    <div class="cart-product">
-                        <div class="cart-product-img"><img src="${product.image}"></div>
-                        <div class="cart-product-info"><h4>${product.name}</h4></div>
-                    </div>
-                </td>
-                <td class="cart-price">${formatPrice(product.price)}</td>
-                <td>
-                    <div class="cart-quantity">
-                        <button class="quantity-btn" onclick="updateQuantity(${item.id}, -1)">-</button>
-                    <span class="quantity-value">${qty}</span>
-                        <button class="quantity-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
-                    </div>
-                </td>
-                <td class="cart-total-item">${formatPrice(total)}</td>
-                <td><button class="cart-remove" onclick="removeFromCart(${item.id})"><i class="fas fa-trash"></i></button></td>
-            </tr>
-        `;
+        <tr>
+          <td>
+            <div class="cart-product">
+              <div class="cart-product-img"><img src="${imageSrc}" alt="${name}"></div>
+              <div class="cart-product-info"><h4>${name}</h4></div>
+            </div>
+          </td>
+          <td class="cart-price">${formatPrice(price)}</td>
+          <td>
+            <div class="cart-quantity">
+              <button class="quantity-btn" onclick="updateQuantity('${safeId}', -1)">-</button>
+            <span class="quantity-value">${qty}</span>
+              <button class="quantity-btn" onclick="updateQuantity('${safeId}', 1)">+</button>
+            </div>
+          </td>
+          <td class="cart-total-item">${formatPrice(total)}</td>
+          <td><button class="cart-remove" onclick="removeFromCart('${safeId}')"><i class="fas fa-trash"></i></button></td>
+        </tr>
+      `;
   });
 
   if (!cartItemsHtml.trim()) {

@@ -27,8 +27,8 @@ echo.
 
 REM Step 1: Copy frontend/project to public
 echo 📁 Copying frontend/project to public...
-xcopy "frontend\project" "public" /E /I /Y /Q
-if errorlevel 1 (
+robocopy "frontend\project" "public" /MIR /NFL /NDL /NJH /NJS /NP >nul
+if errorlevel 8 (
     echo ❌ Copy failed!
     pause
     exit /b 1

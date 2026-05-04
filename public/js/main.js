@@ -198,10 +198,10 @@ function createProductCard(product) {
                     ${product.discount > 0 ? `<span class="old-price">${formatPrice(product.price)}</span>` : ""}
                 </div>
                 <div class="product-actions">
-                    <button class="btn-cart" onclick="event.stopPropagation(); window.addToCart('${String(product.id).replace(/'/g, "\\'")}')">
+                    <button class="btn-cart" onclick="(event||window.event).stopPropagation(); window.addToCart('${String(product.id).replace(/'/g, "\\'")}')">
                         <i class="fas fa-shopping-cart"></i> Thêm giỏ
                     </button>
-                    <button class="btn-buy-now" onclick="event.stopPropagation(); window.buyNow('${String(product.id).replace(/'/g, "\\'")}')">
+                    <button class="btn-buy-now" onclick="(event||window.event).stopPropagation(); window.buyNow('${String(product.id).replace(/'/g, "\\'")}')">
                         <i class="fas fa-bolt"></i> Mua hàng
                     </button>
                 </div>
@@ -356,38 +356,34 @@ window.goToProductDetail = function (productId) {
 };
 
 window.buyNow = function (productId) {
-  if (!isLoggedIn()) {
-    localStorage.setItem("redirectAfterLogin", window.location.href);
-    const confirmLogin = confirm(
-      "Bạn cần đăng nhập để mua hàng. Đăng nhập ngay?",
-    );
-    if (confirmLogin) window.location.href = "signin.html";
-    return;
-  }
-
+  // Add product to shared cart (works whether user is logged in or not)
   const product = products.find(
     (item) => String(item.id) === String(productId),
   );
   if (!product) return;
 
-  const userId = getCurrentUser().id;
-  const cartKey = "cart_" + userId;
-  const cart = JSON.parse(localStorage.getItem(cartKey)) || [];
+  const cartKey = getCartStorageKey();
+  const cart = JSON.parse(localStorage.getItem(cartKey) || "[]");
   const existing = cart.find((item) => String(item.id) === String(productId));
 
-  if (existing) existing.quantity++;
-  else cart.push({ ...product, quantity: 1 });
+  if (existing) existing.quantity = Number(existing.quantity || 1) + 1;
+  else
+    cart.push({
+      id: product.id,
+      name: product.name,
+      price: Number(product.price) || 0,
+      originalPrice: Number(product.oldPrice) || 0,
+      discount: Number(product.discount) || 0,
+      image: product.image,
+      quantity: 1,
+    });
 
   localStorage.setItem(cartKey, JSON.stringify(cart));
   updateCartCount();
 
-  // Mark this product as the one to select in cart page
+  // Mark product for cart page selection and redirect to cart
   localStorage.setItem("buyNowProductId", String(productId));
-
-  // Redirect to cart after a short delay
-  setTimeout(() => {
-    window.location.href = "cart.html";
-  }, 500);
+  setTimeout(() => (window.location.href = "cart.html"), 300);
 };
 
 function getCartStorageKey() {
@@ -427,15 +423,7 @@ function showCartAddedModal(productName, quantity = 1) {
 }
 
 window.addToCart = function (productId) {
-  if (!isLoggedIn()) {
-    localStorage.setItem("redirectAfterLogin", window.location.href);
-    const confirmLogin = confirm(
-      "Báº¡n cáº§n Ä‘Äƒng nháº­p Ä‘á»ƒ thÃªm sáº£n pháº©m vÃ o giá». ÄÄƒng nháº­p ngay?",
-    );
-    if (confirmLogin) window.location.href = "signin.html";
-    return;
-  }
-
+  // Add product to shared cart and show the nice modal (works when logged out)
   const product = products.find(
     (item) => String(item.id) === String(productId),
   );
@@ -449,7 +437,7 @@ window.addToCart = function (productId) {
       : product.price;
 
   if (existing) {
-    existing.quantity += 1;
+    existing.quantity = Number(existing.quantity || 1) + 1;
   } else {
     cart.push({
       id: product.id,
